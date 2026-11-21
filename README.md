@@ -359,6 +359,8 @@ Con el proyecto abierto, basta con solicitarlo directamente. Una vez instalada l
 | *"Actualiza SFP en este proyecto."* | Se proponen únicamente las mejoras nuevas aplicables al caso |
 | *"Retira SFP de este proyecto."* | Se retira lo instalado, sin afectar cambios posteriores |
 
+Para ver cómo queda un proyecto con la metodología instalada y un primer cambio ya especificado, revisar el [proyecto de ejemplo](examples/proyecto-con-sfp).
+
 ### Actualizar o retirar
 
 | Objetivo | Cómo hacerlo |
@@ -431,14 +433,16 @@ Cualquier persona puede proponer cambios. Solo los mantenedores, [williamslml](h
 
 1. Hacer un *fork* del repositorio, que es una copia propia, con el botón **Fork** de la página principal.
 2. Clonar esa copia y crear una rama con un nombre descriptivo: `tipo/efecto-en-pocas-palabras`.
-3. Hacer los cambios y comprobar que los scripts siguen siendo válidos:
+3. Hacer los cambios y ejecutar las comprobaciones. No necesitan internet ni modifican nada fuera de carpetas temporales:
    ```bash
-   for f in scripts/*.sh scripts/hooks/*.sh; do bash -n "$f" || echo "FALLA: $f"; done
-   python -I -c "import ast; [ast.parse(open(f, encoding='utf-8').read()) for f in ['scripts/manifest_tool.py', 'scripts/integrations_helpers.py']]"
-   bash scripts/integrations.sh --help >/dev/null
+   bash tests/ejecutar.sh
+   python tests/verificar_formato.py
    ```
-4. Subir la rama a la copia propia y abrir una solicitud de cambios (PR) hacia `master`, completando la plantilla que aparece.
+   La primera prueba los scripts. La segunda revisa que los textos cumplan el formato del proyecto (sin emojis, sin voseo, sin firmas de IA, enlaces válidos).
+4. Subir la rama a la copia propia y abrir una solicitud de cambios (PR) hacia `master`, completando la plantilla que aparece. Las mismas comprobaciones se ejecutan solas en GitHub y sirven de aviso para quien revisa.
 5. Un mantenedor revisa la solicitud. Puede pedir ajustes y, con su aprobación, se mezcla.
+
+Hay una versión corta de estos pasos en [CONTRIBUTING.md](CONTRIBUTING.md). Los problemas de seguridad no se reportan públicamente: seguir [SECURITY.md](SECURITY.md).
 
 ### Reglas del proyecto
 
@@ -512,8 +516,13 @@ spec-first-protocol/
 ├── SKILL.md            # Lo que lee el asistente: reglas, pasos y mapa de documentos
 ├── README.md           # Este archivo
 ├── CHANGELOG.md        # Historial de versiones y mejoras para proyectos ya instalados
+├── CONTRIBUTING.md     # Cómo proponer cambios, en resumen
+├── SECURITY.md         # Cómo reportar una vulnerabilidad
 ├── LICENSE
+├── .github/            # Plantillas de issues y de solicitudes de cambios, revisores y verificación automática
 ├── assets/             # Logo (versión para tema claro y para tema oscuro)
+├── examples/           # Un proyecto de ejemplo con SFP instalado y un cambio especificado
+├── tests/              # Pruebas de los scripts y verificación del formato de los textos
 ├── references/         # Documentos que se consultan solo cuando son necesarios
 │   ├── methodology-digest.md   # Resumen de la metodología
 │   ├── sfp-con-orquestador.md  # Texto completo, para coordinar varios asistentes
