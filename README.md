@@ -492,7 +492,7 @@ spec-first-protocol/
 
 ## Cómo contribuir
 
-Cualquier persona puede proponer cambios. Solo los mantenedores, [williamslml](https://github.com/williamslml) y [ncuzcoz-cloud](https://github.com/ncuzcoz-cloud), pueden aceptarlos.
+Cualquier persona puede proponer cambios. Solo los mantenedores, [williamslml](https://github.com/williamslml) y [ncuzcoz-cloud](https://github.com/ncuzcoz-cloud), pueden aceptarlos. El formato del proyecto aplica a todas las personas, incluidos los mantenedores.
 
 ### Para proponer un cambio
 
@@ -509,14 +509,19 @@ Cualquier persona puede proponer cambios. Solo los mantenedores, [williamslml](h
 
 ### Reglas del proyecto
 
+Estas reglas valen para todas las personas, incluidos los mantenedores:
+
+- Escribir los mensajes de commit y las solicitudes de cambios con el formato de [Convenciones de Git](#convenciones-de-git): qué cambió, por qué y cómo comprobarlo. Los nombres de rama tienen la forma `tipo/efecto-en-pocas-palabras`.
 - Mantener la skill autocontenida: sin rutas absolutas ni dependencias de documentos externos.
 - Añadir una entrada al [CHANGELOG](CHANGELOG.md) con su apartado "Delta para proyectos ya instalados". Cada línea indica si un proyecto ya instalado debe recibir el cambio (`[accion: si]`, con la condición y la propuesta) o no (`[accion: no]`).
 - Si cambia una versión fijada de una herramienta complementaria, probar instalación, verificación y retiro en un proyecto de ejemplo.
-- Redactar en español neutro y en lenguaje claro, también en los commits.
+- Redactar en español neutro y en lenguaje claro, sin emojis, también en los commits.
+- No incluir firmas de asistentes de IA en los commits.
 
-### Cómo se revisa
+### Quién acepta y cómo se revisa
 
-La rama `master` está protegida: todo cambio entra por una solicitud de cambios con la aprobación de un mantenedor. Quien abre una solicitud no puede aprobar la suya. No se permiten subidas forzadas ni borrar la rama.
+- **Colaboraciones de otras personas:** llegan por solicitud de cambios. Cualquiera de los dos mantenedores la revisa, puede pedir ajustes y, si está conforme, la mezcla. Nadie aprueba su propia solicitud.
+- **Mantenedores:** pueden subir cambios directamente a `master`, sin la aprobación del otro, pero con el mismo formato que todas las personas. Si un cambio no lo cumple, el otro mantenedor puede pedir que se corrija.
 
 ## Licencia
 
