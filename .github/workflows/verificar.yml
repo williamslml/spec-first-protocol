@@ -1,0 +1,36 @@
+name: Verificar
+
+# Comprueba que los scripts funcionan y que los textos cumplen el formato del proyecto.
+# No impide mezclar cambios: sirve de aviso para quien revisa.
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  pruebas:
+    name: Pruebas y formato
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Ejecutar las pruebas de los scripts
+        run: bash tests/ejecutar.sh
+
+      - name: Verificar el formato de los textos
+        run: python3 tests/verificar_formato.py
+
+      - name: Verificar los mensajes de commit de la solicitud
+        if: github.event_name == 'pull_request'
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: python3 tests/verificar_formato.py --commits "$BASE..$HEAD"
