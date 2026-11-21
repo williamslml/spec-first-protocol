@@ -127,6 +127,11 @@ if [ -n "$PY" ]; then
 else
   omitida "proyecto de ejemplo" "no hay Python 3"
 fi
+if command -v node >/dev/null 2>&1; then
+  (cd "$EJ" && node --test) >/dev/null 2>&1 && ok "las pruebas del código del ejemplo pasan" || falla "las pruebas del código del ejemplo fallan"
+else
+  omitida "pruebas del código del ejemplo" "no hay Node.js"
+fi
 
 # --------------------------------------------------------------------------------------------
 seccion "5. Filtro de firmas de asistentes de IA en los commits"

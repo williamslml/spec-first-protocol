@@ -5,8 +5,8 @@
 - [x] Llamar a la validación antes de guardar a la persona.
 - [x] Mostrar el motivo en el formulario.
 - [x] Ejecutar todas las pruebas y confirmar que pasan.
-- [x] Revisión independiente por alguien que no escribió el código, con la especificación y el cambio a la vista.
+- [x] Revisión independiente (ver [revision.md](revision.md)) por alguien que no escribió el código.
 - [x] Registrar la decisión y la lección aprendida.
 
 ## Verificación final
-`npm test`: 14 pruebas, todas correctas. Sin cambios en el comportamiento de los registros válidos.
+`npm test`: 5 pruebas, todas correctas. Sin cambios en el comportamiento de los registros válidos.

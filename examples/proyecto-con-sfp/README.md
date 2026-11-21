@@ -1,23 +1,53 @@
-# Proyecto de ejemplo con SFP instalado
+# Ejemplo: una tienda en línea con SFP instalado
 
-Esta carpeta muestra cómo queda un proyecto pequeño después de instalar Spec-First Protocol y de hacer un primer cambio siguiendo la metodología. No es código real: es una referencia para ver los archivos y su contenido.
-
-El proyecto ficticio es una tienda en línea. El cambio de ejemplo es **validar el correo electrónico** al registrar a una persona.
-
-## Qué mirar y en qué orden
-
-1. [INSTRUCCIONES.md](INSTRUCCIONES.md): el punto de entrada que lee el asistente al empezar. Resume el flujo, dónde vive cada cosa y qué requiere aprobación.
-2. [specs/cambios/validar-correo/](specs/cambios/validar-correo/): la especificación del cambio, escrita y aprobada antes de programar. Tiene cuatro archivos: propuesta, requisitos, diseño y tareas.
-3. [docs/adr/0001-validacion-en-el-servidor.md](docs/adr/0001-validacion-en-el-servidor.md): una decisión que se registró para que nadie tenga que redescubrirla.
-4. [docs/lecciones/correos-con-signo-mas.md](docs/lecciones/correos-con-signo-mas.md): algo que se aprendió durante el cambio y conviene no repetir.
-5. [.sfp/manifest.json](.sfp/manifest.json): el registro de lo que instaló la skill, con el que se puede verificar o retirar todo sin dañar el resto del proyecto.
-
-## Cómo se verifica
-
-Desde la carpeta de la skill:
+Esta carpeta es un proyecto pequeño, con código y pruebas que funcionan, para ver cómo se trabaja con Spec-First Protocol día a día. La tienda es ficticia; los archivos y el flujo son los reales.
 
 ```bash
-sh scripts/verify.sh examples/proyecto-con-sfp
+cd examples/proyecto-con-sfp
+npm test        # 5 pruebas, todas correctas (requiere Node.js 18 o superior)
 ```
 
-Comprueba que lo registrado en el manifiesto sigue en su lugar.
+## Cómo fue el primer cambio
+
+Alguien pidió: *"Que el registro rechace los correos mal escritos."* Esto fue lo que ocurrió:
+
+```mermaid
+flowchart LR
+    A["Petición"] --> B["Propuesta<br/>y requisitos"]
+    B --> C{"Una persona<br/>aprueba"}
+    C -- "Pide ajustes" --> B
+    C -- "Aprobada" --> D["Pruebas primero,<br/>luego el código"]
+    D --> E["Revisión<br/>independiente"]
+    E --> F["Decisión y<br/>lección guardadas"]
+```
+
+Y así se vio la conversación:
+
+> **Persona:** Que el registro rechace los correos mal escritos.
+>
+> **Asistente:** Es un cambio no trivial, así que primero te dejo la especificación en `specs/cambios/validar-correo/`. Antes de programar necesito tu aprobación. Una pregunta: ¿validamos en el navegador, en el servidor o en ambos?
+>
+> **Persona:** En el servidor manda; el navegador solo avisa.
+>
+> **Asistente:** Anotado como decisión 0001. Aprobada la propuesta, escribo primero las pruebas y después el código.
+>
+> **Asistente (más tarde):** Terminado. Una revisión independiente encontró que se rechazaba `ana+pedidos@ejemplo.com`. Ya está corregido, con su prueba, y quedó como lección para no repetirlo.
+
+## Qué hay en cada lugar
+
+| Archivo | Para qué sirve |
+| --- | --- |
+| [INSTRUCCIONES.md](INSTRUCCIONES.md) | Lo primero que lee el asistente: flujo, dónde vive cada cosa y qué requiere aprobación |
+| [specs/cambios/validar-correo/](specs/cambios/validar-correo/) | Un cambio terminado: propuesta, requisitos, diseño, tareas y revisión independiente |
+| [specs/cambios/exportar-pedidos/](specs/cambios/exportar-pedidos/propuesta.md) | Un cambio **detenido a propósito**: el asistente hizo la propuesta y espera respuestas antes de programar |
+| [docs/adr/](docs/adr/0001-validacion-en-el-servidor.md) | Decisiones importantes, para que nadie tenga que redescubrirlas |
+| [docs/lecciones/](docs/lecciones/correos-con-signo-mas.md) | Errores reales y cómo evitarlos la próxima vez |
+| [src/](src/registro.js) y [tests/](tests/registro.test.js) | El código y una prueba por cada requisito |
+| [.sfp/manifest.json](.sfp/manifest.json) | Registro de lo que instaló la skill, con huellas, para poder retirarlo sin dañar el resto |
+
+## Qué observar
+
+- **La especificación va antes que el código.** Los requisitos tienen una prueba cada uno.
+- **El asistente se detiene cuando corresponde.** El segundo cambio muestra una propuesta que no avanza sin aprobación.
+- **Lo aprendido se guarda.** La lección del signo más ya no depende de la memoria de nadie.
+- **Todo es reversible.** Desde la carpeta de la skill, `sh scripts/uninstall.sh examples/proyecto-con-sfp` muestra qué se retiraría, sin tocar nada.

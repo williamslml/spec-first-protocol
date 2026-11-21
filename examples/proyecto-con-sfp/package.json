@@ -1,0 +1,9 @@
+{
+  "name": "tienda-ejemplo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Proyecto ficticio que muestra cómo queda un proyecto con Spec-First Protocol.",
+  "scripts": {
+    "test": "node --test"
+  }
+}
