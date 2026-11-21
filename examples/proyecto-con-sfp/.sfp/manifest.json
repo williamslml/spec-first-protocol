@@ -1,0 +1,52 @@
+{
+  "schema": 2,
+  "tool": "project-setup",
+  "skill_version": "1.14.0",
+  "installed_at": "2026-11-20",
+  "source_methodology": {
+    "variant": "sin-orquestador",
+    "methodology": "SFP",
+    "version_or_hash": "1.14.0"
+  },
+  "classification": {
+    "project_state": "existente",
+    "intrusion": "integrar",
+    "orchestration": "none"
+  },
+  "runtimes": [
+    "generico"
+  ],
+  "backup": {
+    "type": "git-tag",
+    "ref": "pre-sfp"
+  },
+  "actions": [
+    {
+      "id": 1,
+      "type": "create",
+      "path": "INSTRUCCIONES.md",
+      "risk": "bajo",
+      "reversible": true,
+      "note": "punto de entrada con el flujo de trabajo",
+      "sha256": "59f27bc42a56c059855d11773a24bb2243ea28b0ff5d1f5fd83175bcdf1715da"
+    },
+    {
+      "id": 2,
+      "type": "create",
+      "path": "docs/adr/0001-validacion-en-el-servidor.md",
+      "risk": "bajo",
+      "reversible": true,
+      "note": "primera decisión registrada",
+      "sha256": "471e9ec549f124c8745a251656e6bf8cee6f54846d06fc4abddd7adc7b3a457c"
+    },
+    {
+      "id": 3,
+      "type": "create",
+      "path": "docs/lecciones/correos-con-signo-mas.md",
+      "risk": "bajo",
+      "reversible": true,
+      "note": "primera lección aprendida",
+      "sha256": "3d3eb7b56ad4f278fc0d2d932637c3e5551a670da313ba1d7e2bec54aa78b27e"
+    }
+  ]
+}

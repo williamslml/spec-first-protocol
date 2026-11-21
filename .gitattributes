@@ -7,3 +7,6 @@
 # Copias de terceros: byte a byte, sin conversión de finales de línea (sus huellas están en vendor/README.md).
 references/vendor/addyosmani-agent-skills/*.md -text
 references/vendor/0xbigboss-claude-code/*.md -text
+
+# El ejemplo debe tener siempre el mismo contenido byte a byte, porque el manifiesto guarda huellas.
+examples/** text eol=lf
