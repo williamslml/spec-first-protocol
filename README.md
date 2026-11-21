@@ -1,11 +1,9 @@
 <div align="center">
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/logo-oscuro.png">
-  <img src="assets/logo.png" alt="Logo de SFP" width="160">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/logo-oscuro.svg">
+  <img src="assets/logo.svg" alt="spec-first-protocol" width="300">
 </picture>
-
-# spec-first-protocol
 
 **Trabaja con asistentes de IA de forma ordenada: primero se define por escrito qué se va a hacer, y después se implementa.**
 
@@ -520,7 +518,7 @@ spec-first-protocol/
 ├── SECURITY.md         # Cómo reportar una vulnerabilidad
 ├── LICENSE
 ├── .github/            # Plantillas de issues y de solicitudes de cambios, revisores y verificación automática
-├── assets/             # Logo (versión para tema claro y para tema oscuro)
+├── assets/             # Logo en versión oscura (tema claro) y blanca (tema oscuro)
 ├── examples/           # Un proyecto de ejemplo con SFP instalado y un cambio especificado
 ├── tests/              # Pruebas de los scripts y verificación del formato de los textos
 ├── references/         # Documentos que se consultan solo cuando son necesarios
