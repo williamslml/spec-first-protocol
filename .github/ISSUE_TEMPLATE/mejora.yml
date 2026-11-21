@@ -1,0 +1,28 @@
+name: Sugerir una mejora
+description: Una idea para que la skill o su documentación sean mejores.
+labels: ["mejora"]
+body:
+  - type: textarea
+    id: que-se-quiere-lograr
+    attributes:
+      label: Qué se quiere lograr
+      description: El problema o la necesidad, explicados sin jerga.
+    validations:
+      required: true
+  - type: textarea
+    id: propuesta
+    attributes:
+      label: Qué propones
+      description: Cómo imaginas que funcionaría.
+    validations:
+      required: true
+  - type: textarea
+    id: alternativas
+    attributes:
+      label: Alternativas que consideraste
+      description: Otras formas de resolverlo, o lo que haces hoy.
+  - type: textarea
+    id: quien-se-beneficia
+    attributes:
+      label: A quién ayudaría
+      description: Por ejemplo, a equipos con varios asistentes, o a proyectos ya existentes.
