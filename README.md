@@ -492,17 +492,31 @@ spec-first-protocol/
 
 ## Cómo contribuir
 
-1. Crear una rama desde `master` con un nombre descriptivo: `tipo/efecto-en-pocas-palabras`.
-2. Mantener la skill autocontenida: sin rutas absolutas ni dependencias de documentos externos.
-3. Antes de cada commit, verificar que los scripts siguen siendo válidos:
+Cualquier persona puede proponer cambios. Solo los mantenedores, [williamslml](https://github.com/williamslml) y [ncuzcoz-cloud](https://github.com/ncuzcoz-cloud), pueden aceptarlos.
+
+### Para proponer un cambio
+
+1. Hacer un *fork* del repositorio, que es una copia propia, con el botón **Fork** de la página principal.
+2. Clonar esa copia y crear una rama con un nombre descriptivo: `tipo/efecto-en-pocas-palabras`.
+3. Hacer los cambios y comprobar que los scripts siguen siendo válidos:
    ```bash
    for f in scripts/*.sh scripts/hooks/*.sh; do bash -n "$f" || echo "FALLA: $f"; done
    python -I -c "import ast; [ast.parse(open(f, encoding='utf-8').read()) for f in ['scripts/manifest_tool.py', 'scripts/integrations_helpers.py']]"
    bash scripts/integrations.sh --help >/dev/null
    ```
-4. Añadir una entrada al [CHANGELOG](CHANGELOG.md) con su apartado "Delta para proyectos ya instalados". Cada línea indica si un proyecto ya instalado debe recibir el cambio (`[accion: si]`, con la condición y la propuesta) o no (`[accion: no]`).
-5. Si cambia una versión fijada de una herramienta complementaria, probar instalación, verificación y retiro en un proyecto de ejemplo.
-6. Redactar en español neutro y en lenguaje claro, también en los commits.
+4. Subir la rama a la copia propia y abrir una solicitud de cambios (PR) hacia `master`, completando la plantilla que aparece.
+5. Un mantenedor revisa la solicitud. Puede pedir ajustes y, con su aprobación, se mezcla.
+
+### Reglas del proyecto
+
+- Mantener la skill autocontenida: sin rutas absolutas ni dependencias de documentos externos.
+- Añadir una entrada al [CHANGELOG](CHANGELOG.md) con su apartado "Delta para proyectos ya instalados". Cada línea indica si un proyecto ya instalado debe recibir el cambio (`[accion: si]`, con la condición y la propuesta) o no (`[accion: no]`).
+- Si cambia una versión fijada de una herramienta complementaria, probar instalación, verificación y retiro en un proyecto de ejemplo.
+- Redactar en español neutro y en lenguaje claro, también en los commits.
+
+### Cómo se revisa
+
+La rama `master` está protegida: todo cambio entra por una solicitud de cambios con la aprobación de un mantenedor. Quien abre una solicitud no puede aprobar la suya. No se permiten subidas forzadas ni borrar la rama.
 
 ## Licencia
 
