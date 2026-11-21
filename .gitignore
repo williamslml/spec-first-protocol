@@ -1,0 +1,16 @@
+# Artefactos de Python
+__pycache__/
+*.py[cod]
+
+# Temporales de los scripts (escrituras atómicas) y de editores
+*.tmp
+*.swp
+*~
+
+# Sistemas operativos
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Pruebas locales de la skill sobre proyectos de ejemplo
+/test-projects/

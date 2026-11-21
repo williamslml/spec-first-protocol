@@ -1,0 +1,260 @@
+# Changelog — skill `spec-first-protocol` (antes `project-setup`)
+
+Lo usa el modo Actualización (`SKILL.md`): compara `manifest.json.skill_version` con la versión más reciente de aquí y propone solo el delta (lo cambiado), sin reinstalar todo.
+
+## Convención del delta (obligatoria desde 1.3.0, aplicada también a las versiones anteriores)
+
+Cada versión tiene un resumen en prosa (para quien mantiene el skill) y una sección **Delta para proyectos ya instalados**, una línea por cambio, en uno de estos dos formatos:
+
+```
+- [accion: si] aplica-si: <condición comprobable en el manifiesto o el proyecto> · propuesta: <qué ofrecer al usuario, con referencia> · <qué cambió>
+- [accion: no] <qué cambió> (solo afecta al skill o a instalaciones nuevas: nada que proponer)
+```
+
+- `verify.sh` sección 0 lista las líneas `[accion: si]` de las versiones posteriores a `skill_version`; la IA evalúa cada `aplica-si` contra el manifiesto y el proyecto y propone **solo** las que aplican, como ítems de un plan normal (Fases 4–7). Las `[accion: no]` no se mencionan al usuario salvo que pregunte.
+- `aplica-si` usa campos del manifiesto (`templates.md` sección 1) o hechos comprobables; si no se puede evaluar, se pregunta al usuario.
+- Las pruebas de mantenimiento (`project-setup-dev`, fuera del paquete) comprueban que toda entrada siga este formato.
+
+## 1.14.0
+
+Resumen: los documentos del skill se reescribieron en lenguaje claro, para que los entienda cualquier persona.
+- Se reescribieron 19 documentos (unas 3.700 líneas), incluidos los dos textos completos de la metodología: frases más cortas, listas en lugar de párrafos densos y cada término técnico explicado la primera vez que aparece en cada documento. Los anglicismos se tradujeron o se explicaron.
+- No cambió ninguna regla, paso, número, nombre de archivo, comando, bloque de código ni marcador. La numeración de las secciones sigue igual. Se comprobó automáticamente contra la versión anterior y con todas las pruebas de los scripts.
+
+Delta para proyectos ya instalados:
+- [accion: no] solo cambia la redacción de los documentos del skill
+
+## 1.13.0
+
+Resumen: todo se escribe para personas reales, también los documentos del propio skill.
+- Se reemplazó el signo de párrafo, usado como abreviatura de "sección", por la palabra: "sección 4", "secciones 2 a 5". Fueron 444 apariciones en 23 archivos, incluidos los mensajes que muestran los scripts. Las guías de terceros incluidas quedan sin tocar.
+- La regla de lenguaje claro ya no exime a los archivos internos: el repositorio es público y los leen personas. Cuando un documento remite a otro, lo nombra con palabras y resume en una línea qué dice.
+
+Delta para proyectos ya instalados:
+- [accion: no] solo cambia el texto de los documentos y mensajes del skill
+
+## 1.12.0
+
+Resumen: nombres de rama legibles y tres reglas de seguridad para los remotes (repos remotos).
+- Ramas: un solo formato, que une los dos de las fuentes. El prefijo es el mismo tipo que los commits; la descripción dice el efecto; solo minúsculas, números y guiones, sin tildes; el ticket solo si el equipo lo usa; nada de nombres de personas, fechas ni palabras vacías; menos de ~50 caracteres. Incluye ejemplos de nombres mal y bien puestos.
+- Remotes: nunca contraseñas ni tokens (claves de acceso) en la dirección del remote; antes de cada push (envío) se dice adónde va y qué sube; agregar, cambiar o borrar remotes requiere aprobación. Las reglas de forks (copias de repos ajenos) quedan fuera a propósito.
+- `discover.sh` avisa `remoto_con_credenciales` si una dirección https guarda usuario o token; solo dice cuántas, nunca el valor.
+- Sección "Git" del punto de entrada y pregunta 25 actualizadas.
+
+Delta para proyectos ya instalados:
+- [accion: si] aplica-si: `discover.sh` informa `remoto_con_credenciales` · propuesta: avisar sin mostrar el valor, proponer el gestor de credenciales o SSH y recomendar cambiar el token · credenciales en remotes
+- [accion: si] aplica-si: la sección "Git" del punto de entrada no tiene las líneas de ramas legibles y remotes · propuesta: añadirlas desde `templates.md` sección 3 entre marcadores · ramas y remotes
+
+## 1.11.0
+
+Resumen: lenguaje claro y no técnico en todo lo que lee una persona.
+- Regla inviolable 11 de `SKILL.md`. Respuestas, preguntas, planes, reportes, documentos, commits y PRs se escriben para alguien que no conoce el código. Primero qué pasa y qué significa; jerga explicada o evitada; frases cortas. Nada de referencias que nadie va a seguir (secciones, rutas internas, líneas, hashes, "ver X"): se explica lo que dicen.
+- Plantillas de mensajes: la referencia al ticket pasa a ser opcional y solo si el equipo la usa; "Cómo probarlo" con pasos que cualquiera puede seguir.
+- El reporte final, el resumen del plan y el cierre de la entrevista se escriben en lenguaje claro. La sección "Idioma" del punto de entrada pasa a "Idioma y claridad".
+
+Delta para proyectos ya instalados:
+- [accion: si] aplica-si: el punto de entrada tiene sección "Idioma" sin la regla de lenguaje claro · propuesta: reemplazarla por "Idioma y claridad" de `templates.md` sección 3 entre marcadores · lenguaje claro
+
+## 1.10.0
+
+Resumen: mensajes de commit, PR y merge (fusión) legibles para quien no vio el código.
+- Sección 4 de `git-practices.md`: 8 reglas. El asunto dice el efecto, no cómo se hizo. El cuerpo empieza por el problema. "Qué cambia" se escribe desde quien usa el sistema. Se dice qué NO cambia. Se incluye "Cómo probarlo" y la referencia, sin jerga. Un cambio trivial se queda solo con el asunto.
+- Plantillas con ejemplo para el commit, la descripción de PR (Por qué · Qué cambia · Qué NO cambia · Cómo probarlo · Riesgos) y el commit de merge, más una revisión previa. La plantilla propia del repo manda si existe.
+- Nueva fila en sección 2: en un cambio no trivial, el cuerpo del commit es obligatorio (0xbigboss lo deja como opcional).
+- Sección "Git" del punto de entrada (sección 3 de `templates.md`) y pregunta 25 actualizadas.
+
+Delta para proyectos ya instalados:
+- [accion: si] aplica-si: la sección "Git" del punto de entrada no menciona mensajes legibles · propuesta: añadir la línea de mensajes legibles de `templates.md` sección 3 entre marcadores · mensajes legibles
+
+## 1.9.0
+
+Resumen: español neutro obligatorio.
+- Regla inviolable 10 de `SKILL.md`: en español, las respuestas, los archivos generados, los commits y las PRs van en español neutro, con tuteo o "usted". Nunca voseo ("vos", "tenés", "podés", "hacé"…) ni regionalismos, aunque el usuario los use.
+- Sección "Idioma" en el punto de entrada (sección 3 de `templates.md`), para que la cumpla cualquier agente que trabaje en el proyecto. Pregunta 27 de la entrevista y checklist de cobertura actualizados.
+
+Delta para proyectos ya instalados:
+- [accion: si] aplica-si: el punto de entrada del proyecto no tiene sección "Idioma" y el idioma acordado es español · propuesta: añadir la sección "Idioma" de `templates.md` sección 3 entre marcadores · español neutro
+
+## 1.8.0
+
+Resumen: buenas prácticas de git (commits, ramas, merge, PRs, versiones) **sin reinventarlas**.
+- `references/vendor/` incluye sin modificar `git-workflow-and-versioning` de addyosmani/agent-skills (MIT) y `git-best-practices` más `git-examples` de 0xbigboss/claude-code (Apache-2.0), con sus licencias, commit de origen y huellas (`vendor/README.md`).
+- `references/git-practices.md` adapta las fuentes a SFP. Prioridad: política del repo, luego SFP, luego las fuentes. Reglas de SFP que mandan sobre las fuentes: el agente no hace commits por su cuenta; nada de `reset --hard` sin aprobación; los worktrees (copias de trabajo) los decide la orquestación; los controles de calidad usan los comandos reales; push, merge, force-push y tags requieren aprobación; descubrir ramas sin depender de `gh`. Resuelve la contradicción sobre squash (unir commits) entre ambas fuentes.
+- Sección "Git" en el punto de entrada (sección 3 de `templates.md`), pregunta 25 ampliada, catálogo 7.55 en `SKILL.md`, checklist de cobertura y README.
+
+Delta para proyectos ya instalados:
+- [accion: si] aplica-si: el punto de entrada del proyecto no tiene sección "Git" · propuesta: confirmar las convenciones del repo (pregunta 25) y añadir la sección "Git" de `templates.md` sección 3 entre marcadores · convenciones de git
+
+## 1.7.0
+
+Resumen: opción neutral (vale para cualquier agente) para que commits y PRs salgan **sin firmas automáticas de agentes de IA**.
+- Sección 17 de `templates.md`: tres capas independientes. A. Ajuste de cada runtime (entorno del agente), solo si su documentación lo confirma (Claude Code: `attribution` con `commit`/`pr` vacíos y `sessionUrl: false`; `includeCoAuthoredBy` está obsoleto). B. Regla neutral en el punto de entrada. C. Hook `commit-msg` neutral (script que revisa el mensaje).
+- Nuevo `scripts/hooks/commit-msg-ai-attribution.sh` (POSIX sh + awk), fuente única del hook. Quita trailers (líneas al final) `Co-Authored-By` de agentes conocidos (por nombre o dominio de correo), líneas "Generated/Created with/by" que nombran a un agente y trailers como `Claude-Session:`. No toca el asunto, los coautores humanos, `Signed-off-by` ni `Assisted-by`. Se salta con `SFP_KEEP_AI_ATTRIBUTION=1`.
+- Dónde instalar el hook según el repo: `.git/hooks`, husky, gestores de hooks o `core.hooksPath` local. `core.hooksPath` global queda prohibido por defecto, porque anula los hooks de todos los repos; para todos se ofrece `init.templateDir`, que es global y `[MANUAL]`.
+- Entrevista 23.1 (pregunta antes si alguna política exige declarar la IA), catálogo 7.6 de `SKILL.md`, checklist de cobertura y fila de retiro en `uninstall.md`.
+
+Delta para proyectos ya instalados:
+- [accion: si] aplica-si: el usuario pide quitar la atribución de IA de commits o PRs, o el proyecto tiene un hook o una regla propia con ese fin sin marcadores de SFP · propuesta: entrevista 23.1 y las capas elegidas de `templates.md` sección 17 como ítems de plan (Fases 4-7) · atribución de IA
+
+## 1.6.2
+
+Resumen: documentación para publicar el repositorio.
+- `README.md`: qué es, requisitos, instalación, uso, fases, integraciones, scripts, estructura, actualización y retiro, seguridad, contribución y licencias de terceros.
+- `LICENSE` (MIT) y `.gitignore`.
+- El encabezado de `SKILL.md` usa el nombre actual de la skill.
+
+Delta para proyectos ya instalados:
+- [accion: no] documentación y licencia del repositorio (solo afecta al skill)
+
+## 1.6.1
+
+Resumen: correcciones de la revisión final de 1.6.0.
+- `integrations.sh` registra lo que instala en `.sfp/integrations.json` (selección y registros); `--check` y el nuevo `--uninstall` lo reutilizan. El retiro deshace lo del proyecto y deja lo global como `[MANUAL]` con su comando exacto.
+- RTK en el proyecto se detecta por su bloque `<!-- rtk-instructions` (antes bastaba cualquier mención de "rtk").
+- La detección de frontend ignora carpetas generadas (`.archify`, `htmlcov`, `coverage`, `site`, `_build`, `target`, `.sfp`).
+- Versiones de rtk (1.2.1) y uv (0.13.9) fijadas también en winget y en los instaladores `curl | sh`; en macOS, el instalador oficial con versión en lugar de brew.
+- Una entrada `serena` existente que no respeta la sección 6.1 se reporta como `[CONFLICTO]` (antes se daba por configurada). En el proyecto, Serena siempre se registra con `uvx`, que es portable.
+- El modo plan devuelve 3 si queda incompleto. Exige bash ≥ 4 de forma explícita. `.mcp.json` conserva su sangría.
+- Documentación: sección 6.2 reescrita (solo Claude Code, bash, global frente a proyecto, estado, relación con el manifiesto); `RTK_DISABLED=1` en las Fases 1/7 y en el Retiro; `rtk bypass` en lugar del alias obsoleto `rtk proxy`; referencias `superpowers:*` aclaradas en la sección 6.1.
+- Otros: `verify.sh` devuelve 3 si falta el respaldo; `manifest_tool.py` y los ayudantes imprimen UTF-8 en la consola de Windows; `.gitattributes` fija LF en `.sh` y `.py`; nombre antiguo `project-setup` retirado de los textos (no del esquema del manifiesto, por compatibilidad).
+
+Delta para proyectos ya instalados:
+- [accion: si] aplica-si: el proyecto tiene skills o MCP instalados con `integrations.sh` 1.6.0 (no existe `.sfp/integrations.json`) · propuesta: ejecutar `bash scripts/integrations.sh --apply` con la misma selección para registrarlos (lo ya presente no se reinstala) y, si RTK está activo, añadir `RTK_DISABLED=1` a los comandos de evidencia del punto de entrada · estado de integraciones
+- [accion: no] correcciones internas de `integrations.sh`, `verify.sh`, `lib.sh` y documentación del skill
+
+## 1.6.0
+
+Resumen: integración de cinco candidatas conocidas (Superpowers en subconjunto, Serena, RTK, archify y frontend-design) sin solaparse.
+- La sección 6 de `architecture.md` las nombra por función. Sección 6.1: matriz única de enrutamiento (quién hace qué: disparador → responsable → prohibido): SFP manda en specs, planes, tareas, sub-agentes, worktrees, revisión, gates y memoria. Sección 6.2: el instalador.
+- De Superpowers solo se instalan 5 skills sueltas (`test-driven-development`, `systematic-debugging`, `verification-before-completion`, `receiving-code-review`, `finishing-a-development-branch`); nunca el plugin ni su hook `SessionStart`.
+- Nuevo `scripts/integrations.sh` (Bash): versiones fijas, detección global/proyecto, repetible sin efectos extra, plan por defecto, `--apply` y `--check` (estado).
+- Alineados: regla 3 de `SKILL.md`, `tooling.md`, entrevista 19, plantilla del punto de entrada (sección 3) y checklist del digest (resumen). Nueva decisión abierta 7 del digest: TDD (pruebas primero) frente al orden de gates.
+- Correcciones de la auditoría: `verify.sh` ya no devuelve 0 ("sin fallas") sin manifiesto o sin git (ahora 3, incompleto); `discover.sh` informa `python` cuando Python 3 solo existe con ese nombre (Windows); `run.ps1` acepta `integrations` y usa `bash` en WSL.
+- Convivencia con la entrada 1.3.0 de neutralidad de herramientas: sigue vigente para **orquestadores y herramientas de specs**, y para todo archivo instalado que presente un producto como parte de SFP. Las candidatas del catálogo no son parte de SFP: se instalan como opciones con su fila de la matriz, así que esa entrada no les aplica.
+
+Delta para proyectos ya instalados:
+- [accion: si] aplica-si: el proyecto usa alguna de las cinco candidatas (aparece en `.claude/skills/`, `.mcp.json`, la configuración del runtime o el punto de entrada) sin la sección "Skills/herramientas y precedencia" de `templates.md` sección 3 · propuesta: añadir esa sección entre marcadores con las filas de `architecture.md` sección 6.1 de las herramientas presentes, y ejecutar `scripts/integrations.sh --check` · matriz de enrutamiento
+- [accion: si] aplica-si: existe el plugin `superpowers` habilitado, o skills de Superpowers excluidas por sección 6.1 (`brainstorming`, `writing-plans`, `executing-plans`, `subagent-driven-development`, `dispatching-parallel-agents`, `using-git-worktrees`, `requesting-code-review`, `using-superpowers`, `diagnosing-superpowers`, `writing-skills`) · propuesta: mostrar el solapamiento con SFP y ofrecer (decisión humana) desinstalar el plugin y dejar solo el subconjunto de sección 6.1 vía `integrations.sh` · solapamiento Superpowers
+- [accion: no] `verify.sh` devuelve 3 sin manifiesto o sin git; `discover.sh` detecta `python`; `run.ps1 integrations` (solo afecta a los scripts del skill)
+
+## 1.5.2
+
+Resumen: `SKILL.md` documenta dos buenas prácticas para distribuir el skill: autocontenido siempre, e instalación global como fuente de verdad (copia en el proyecto solo fija y justificada).
+
+Delta para proyectos ya instalados:
+- [accion: no] sección "Distribución del skill" en `SKILL.md` (solo afecta al skill)
+
+## 1.5.1
+
+Resumen: probado en Linux (Debian 12 con `dash`, Alpine 3.20 con BusyBox, y Alpine solo con `jq`, sin Python). Corrige dos fallos que en Windows no se veían:
+- `sfp-section.sh` no encontraba ninguna sección con `mawk` (el `awk` por defecto de Debian/Ubuntu no admite `{2,3}`).
+- Con el `grep` de BusyBox (sin `--exclude-dir` ni `-I`) fallaban en silencio la búsqueda de marcadores en `verify.sh` y `discover.sh`, la detección de nombres antiguos y la **búsqueda de credenciales filtradas** de `discover.sh`, que no avisaba de ninguna aunque las hubiera. Ahora usan `find` + `grep -l`, que funciona en todos.
+- La parte de `jq` queda probada.
+
+Delta para proyectos ya instalados:
+- [accion: si] aplica-si: el discovery de ese proyecto se hizo en un sistema con BusyBox (p. ej. Alpine o un contenedor mínimo) · propuesta: repetir `discover.sh` y revisar las secciones `riesgos-secretos` y `setup-previo`, que pudieron salir vacías por error · detección de credenciales y marcadores en BusyBox
+- [accion: no] `sfp-section.sh` con `mawk`; pruebas en contenedores Linux en `project-setup-dev/linux/`
+
+## 1.5.0
+
+Resumen: nombres propios de la metodología en lugar de "ai".
+- En los proyectos: carpeta `.sfp/` (antes `.ai-setup/`), marcadores `sfp:start` / `sfp:end` (antes `ai-setup:start/end`), etiqueta de respaldo `pre-sfp` (antes `pre-ai-setup`), plan exportado `sfp-plan-*.md` (antes `ai-setup-plan-*.md`).
+- Carpeta global de ejemplo `~/sfp/` (antes `~/ai/`; sigue siendo solo un ejemplo, y `discover.sh` aún detecta `~/ai` si existe).
+- Variables de los scripts `SFP_*` (antes `AI_SETUP_*`).
+- `discover.sh` y `verify.sh` detectan instalaciones con los nombres antiguos.
+
+Delta para proyectos ya instalados:
+- [accion: si] aplica-si: existe `.ai-setup/`, o `discover.sh` informa `instalacion_con_nombres_antiguos` · propuesta: con aprobación y tras un punto de retorno, renombrar `.ai-setup/` a `.sfp/` (`git mv`), cambiar en cada archivo listado los marcadores `ai-setup:start`/`ai-setup:end` por `sfp:start`/`sfp:end` (solo esas líneas), y en el manifiesto `backup.ref` si era `pre-ai-setup` (el tag puede quedarse con su nombre o crearse `pre-sfp` en el mismo commit); luego `fingerprint.sh --propose` / `--accept` para refrescar las huellas de los bloques fusionados y `verify.sh` · nomenclatura sfp
+- [accion: no] carpeta global de ejemplo `~/sfp/` y variables `SFP_*` de los scripts (nada en los proyectos)
+
+## 1.4.1
+
+Resumen: paquete más limpio. Las pruebas de los scripts (`scripts/tests/run.sh`), las evaluaciones de la IA (`scripts/tests/evals/`) y la guía `references/self-test.md` salen de la skill a una carpeta aparte, `project-setup-dev`. Solo sirven para mantenerla: nunca se usan al preparar un proyecto. `run.ps1` deja de ofrecer `tests`.
+
+Delta para proyectos ya instalados:
+- [accion: no] pruebas y evaluaciones movidas fuera del paquete; nada cambia en los proyectos ni en el flujo
+
+## 1.4.0
+
+Resumen:
+- Esquema formal del manifiesto (`references/manifest.schema.json`), validado por `scripts/manifest_tool.py check` desde `verify.sh` (erratas, huellas mal copiadas, ids repetidos, reglas entre campos).
+- `fingerprint.sh --propose/--accept` genera el manifiesto con las huellas para revisarlo y aprobarlo, sin copiarlas a mano.
+- `configure` con `format: json` registra los cambios clave por clave (`changes`); el retiro los revierte solo donde siguen como los dejó la instalación.
+- `discover.sh` reconoce capas con nombres en español o portugués y en mayúscula (.NET), carpetas con `*.csproj` y la raíz real de proyectos Java/Kotlin.
+- Evaluaciones del comportamiento de la IA (`scripts/tests/evals/`), con cabecera plana obligatoria en el plan exportado.
+
+Delta para proyectos ya instalados:
+- [accion: si] aplica-si: `verify.sh` informa FALLA en la sección "E. esquema del manifiesto" · propuesta: corregir cada campo señalado (erratas, formato de huellas, ids repetidos) como ítems de plan; si el manifiesto es `schema: 1`, migrarlo a `schema: 2` · manifiesto validado
+- [accion: si] aplica-si: hay acciones create/merge sin `sha256` · propuesta: `fingerprint.sh --propose`, revisar la propuesta con el usuario y `--accept`; huellas que difieren solo con `--refresh` y confirmación expresa · huellas sin copia manual (sustituye al procedimiento manual de 1.3.0)
+- [accion: si] aplica-si: hay acciones `configure` sobre archivos JSON sin `format`/`changes` · propuesta: añadir `"format": "json"` y calcular `changes` con `fingerprint.sh --propose` (contra `backup.ref`) para que el retiro sea automático · retiro de JSON clave por clave
+- [accion: si] aplica-si: `structure.rationale` se basó en una clasificación `indeterminado` de `discover.sh` en un proyecto con capas en español, .NET o Java · propuesta: repetir `discover.sh` y re-evaluar perfil/etapa (`project-structure.md` sección 3) · detección de capas ampliada
+- [accion: no] cabecera plana obligatoria del plan exportado (`templates.md` sección 16), `scripts/tests/evals/`, nuevas pruebas en `scripts/tests/run.sh`
+
+## 1.3.0
+
+Resumen:
+- Señales de estructura en `discover.sh`; perfiles por workspace en monorepos y reglas de desempate; producto repartido en varios repos.
+- Modo Retiro con procedimiento y `uninstall.sh` (por defecto solo simula), apoyado en huellas sha256.
+- Esta convención de delta; ficha del orquestador y plan exportado con formato fijo; lanzador PowerShell para Windows; pruebas automáticas de los scripts.
+- Neutralidad de herramientas de specs y skills en SFP (como el orquestador en 1.2.0).
+- Índice por pregunta de los textos SFP.
+- `verify.sh` y `fingerprint.sh` aceptan `python` como Python 3 (habitual en Windows) y normalizan finales de línea `\r\n`.
+
+Delta para proyectos ya instalados:
+- [accion: si] aplica-si: alguna acción create/merge del manifiesto no tiene `sha256` · propuesta: ejecutar `scripts/fingerprint.sh`, mostrar el resultado y registrar la huella solo de los ítems que el usuario confirme sin cambios desde el setup (o sin cambios según `git diff <backup.ref>`); añadir `id=` a los marcadores de esos bloques (`templates.md` secciones 1 a 2, `uninstall.md` sección 1) · sin huellas el retiro no puede ser automático
+- [accion: si] aplica-si: `structure.profile` es `monorepo` y no hay `structure.workspaces` · propuesta: decidir perfil y etapa por workspace (`project-structure.md` sección 3.2) y registrarlos · monorepo con varios perfiles
+- [accion: si] aplica-si: `structure.profile` existe y `structure.rationale` no cita una cifra de `discover.sh` ni una regla D1–D10 · propuesta: re-evaluar con la sección `estructura-de-codigo` de `discover.sh` y las reglas de `project-structure.md` secciones 3 a 3.1; proponer cambio solo si el resultado difiere · decisión de perfil/etapa reproducible
+- [accion: si] aplica-si: el proyecto usa una capa de especificación y el manifiesto no tiene `spec_layer` · propuesta: resolver `tooling.md` sección 1 y registrar herramienta y mapeo de artefactos · capa de specs neutral
+- [accion: si] aplica-si: el punto de entrada u otros archivos instalados presentan una herramienta de specs o un skill concreto como parte de SFP · propuesta: reescribir esa parte por función, entre marcadores (`templates.md` sección 3) · neutralidad de herramientas
+- [accion: si] aplica-si: existe `classification.orchestrator_profile` sin las 15 claves de área · propuesta: rehacer la ficha con el formato de `templates.md` sección 15 (repite `orchestration.md` sección B.1 solo para lo que falte o esté `PENDIENTE`) · ficha con formato fijo
+- [accion: si] aplica-si: el usuario indica que el producto vive en varios repos · propuesta: `scenarios.md` sección 5 y campo `product` del manifiesto en cada repo · producto multi-repo
+- [accion: no] `schema: 2` del manifiesto: `verify.sh` sigue aceptando `schema: 1`; se sube al añadir cualquiera de los campos nuevos
+- [accion: no] nueva sección `estructura-de-codigo` en `discover.sh`; sección `specs` sin nombres de herramienta como implementación
+- [accion: no] `uninstall.sh`, `fingerprint.sh`, `lib.sh`, `sfp-section.sh`, `run.ps1`, `scripts/tests/run.sh`, `references/uninstall.md`, `references/windows.md`, `references/tooling.md`, `references/sfp-index.md`
+- [accion: no] plan exportado con nombre, ubicación y contenido fijos (`templates.md` sección 16)
+- [accion: no] `verify.sh`: valida `structure.workspaces`, rutas fuera del proyecto, huellas (informativo) y lista este delta; acepta `python` como Python 3
+
+## 1.2.0
+
+Resumen:
+- Orquestador neutral (sección B.1 de `orchestration.md`): cuestionario de 15 áreas con fuente y fecha, sin citar ningún orquestador concreto.
+- Fallos de `verify.sh`: sin `jq` decía "sin fallas" sin verificar; columnas desplazadas en acciones sin `path`; ejecutaba `verify_command` sin permiso; respaldo fijo en `pre-ai-setup`; no mostraba archivos nuevos sin commit.
+- `discover.sh` sin duplicados ni avisos de `find`.
+- Erratas en `templates.md`, `interview.md` y `runtime-adapters.md`.
+
+Delta para proyectos ya instalados:
+- [accion: si] aplica-si: `classification.orchestration` no es `none` y no existe `classification.orchestrator_profile` · propuesta: resolver `orchestration.md` sección B.1, presentar la ficha (`templates.md` sección 15) y guardarla en el manifiesto · descubrimiento del orquestador
+- [accion: si] aplica-si: el punto de entrada instalado asume capacidades de un orquestador concreto sin ficha · propuesta: sustituir por el bloque "Orquestador" de `templates.md` sección 3, entre marcadores · orquestador agnóstico
+- [accion: si] aplica-si: existe un `gates.yml` instalado con la clave `señales_alto_riesgo` · propuesta: renombrarla a `senales_alto_riesgo` · clave sin ñ
+- [accion: si] aplica-si: hay acciones `move` sin `from` en el manifiesto · propuesta: completar `from` con la ruta de origen (del plan o de `git log --follow`) · `actions[].from`
+- [accion: no] correcciones de `verify.sh` y `discover.sh` (se usan al ejecutar; no dejan nada en el proyecto)
+- [accion: no] erratas en `interview.md` y `runtime-adapters.md`
+
+## 1.1.1
+
+Resumen: sección 3 de `project-structure.md`, procedimiento de 6 pasos para decidir perfil y etapa (con paso 0, estado actual del proyecto); campo `manifest.json.structure.rationale`.
+
+Delta para proyectos ya instalados:
+- [accion: si] aplica-si: existe `structure.profile` y `structure.rationale` está vacío · propuesta: completar `rationale` con la situación actual y la condición que decidió (`project-structure.md` sección 3, paso 5) · justificación registrada
+- [accion: no] `interview.md` 5.1 y `SKILL.md` 1.5 apuntan al procedimiento
+
+## 1.1.0
+
+Resumen:
+- Perfiles de estructura de código por tipo de proyecto y etapa (`project-structure.md`).
+- Verificación de la regla de dependencia (`structure-verification.md`).
+- `verify.sh`, `self-test.md` y plantilla `gates.yml`.
+- Campos `skill_version` y `structure` del manifiesto.
+
+Delta para proyectos ya instalados:
+- [accion: si] aplica-si: el manifiesto no tiene `structure` y el usuario no declaró usar su propia estructura · propuesta: ofrecer perfil y etapa (`project-structure.md` sección 3) y su verificación (`structure-verification.md`), como ítems opcionales · perfil de estructura
+- [accion: si] aplica-si: no existe `gates.yml` ni un archivo de gates/CI equivalente · propuesta: ofrecer la plantilla de `templates.md` sección 14 con los comandos reales del proyecto · quality gates ejecutables
+- [accion: si] aplica-si: el manifiesto no tiene `skill_version` · propuesta: añadirlo con la versión vigente al terminar la actualización · versión registrada
+- [accion: no] `verify.sh`, `self-test.md` y cambios de `architecture.md`, `interview.md`, `scenarios.md`, `methodology-digest.md`
+
+## 1.0.0
+
+Resumen: versión base. Instalador de SFP para cualquier entorno (con/sin orquestador), 8 fases, análisis reproducible (`discover.sh`), roles de agente definidos conversando con el usuario, catálogo opcional de qué instalar.
+
+Delta para proyectos ya instalados:
+- [accion: no] versión base: no hay instalaciones anteriores

@@ -1,0 +1,532 @@
+<div align="center">
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/logo-oscuro.png">
+  <img src="assets/logo.png" alt="Logo de SFP" width="160">
+</picture>
+
+# spec-first-protocol
+
+**Trabaja con asistentes de IA de forma ordenada: primero se define por escrito qué se va a hacer, y después se implementa.**
+
+<p>
+  <img src="https://img.shields.io/badge/versi%C3%B3n-1.14.0-2563eb?style=for-the-badge" alt="Versión 1.14.0">
+  <img src="https://img.shields.io/badge/licencia-MIT-22c55e?style=for-the-badge" alt="Licencia MIT">
+  <img src="https://img.shields.io/badge/idioma-espa%C3%B1ol-f97316?style=for-the-badge" alt="En español">
+  <a href="#compatibilidad"><img src="https://img.shields.io/badge/compatibilidad-cualquier_asistente-0ea5e9?style=for-the-badge" alt="Reglas compatibles con cualquier asistente de IA"></a>
+</p>
+
+[Inicio rápido](#inicio-rápido) · [El resultado](#cómo-se-ve-el-resultado) · [Cómo funciona](#cómo-funciona) · [Qué obtienes](#qué-obtienes) · [Compatibilidad](#compatibilidad) · [Instalación](#instalación) · [Uso](#cómo-usarla) · [Preguntas frecuentes](#preguntas-frecuentes) · [Cómo contribuir](#cómo-contribuir) · [Licencia](#licencia)
+
+</div>
+
+---
+
+**spec-first-protocol** (SFP) es una skill que instala en un proyecto una metodología con una regla central: **todo cambio importante se especifica por escrito y se aprueba antes de programarse.** Alrededor de esa regla, SFP añade controles de calidad según el riesgo, una revisión independiente, memoria del proyecto y aprobación humana para lo irreversible, y cada paso puede revisarse o deshacerse. Las reglas que deja escritas en el proyecto las puede leer y seguir cualquier asistente (ver [Compatibilidad](#compatibilidad)). Funciona en proyectos nuevos y existentes, con uno o varios asistentes.
+
+## Inicio rápido
+
+```bash
+git clone https://github.com/williamslml/spec-first-protocol.git <carpeta-de-skills>/spec-first-protocol
+```
+
+La carpeta de skills depende del asistente: ver [Compatibilidad](#compatibilidad). Con el proyecto abierto en el asistente:
+
+> *"Configura el Spec-First Protocol en este proyecto."*
+
+Detalles de instalación para Windows y uso completo más abajo, en [Instalación](#instalación) y [Cómo usarla](#cómo-usarla).
+
+## Cómo se ve el resultado
+
+La regla central de SFP es **especificar antes de programar**. Todo lo demás (controles de calidad, revisión, memoria, mensajes claros) sale de ahí. Así cambia el trabajo diario con un asistente, a partir de una petición como *"Agrega validación de email al registro"*:
+
+<table>
+<tr>
+<th width="50%">Sin SFP</th>
+<th width="50%">Con SFP</th>
+</tr>
+<tr>
+<td valign="top">
+
+- El asistente empieza a programar de inmediato.
+- Modifica 14 archivos, algunos sin relación con la petición.
+- No queda escrito qué se buscaba ni por qué.
+- Quien programó es quien da el visto bueno.
+- Semanas después, nadie sabe por qué se hizo.
+
+</td>
+<td valign="top">
+
+1. **Propone primero una especificación:** qué cambia y por qué, los requisitos, el diseño y una lista de tareas.
+2. **Se aprueba antes de escribir código.**
+3. Se programa **tarea por tarea**, con el rol y el modelo que corresponden al riesgo.
+4. Se pasan **controles de calidad** según el riesgo.
+5. **Otra revisión**, independiente de quien programó.
+6. La especificación se archiva y las decisiones y lecciones **quedan en el repositorio**.
+
+</td>
+</tr>
+</table>
+
+No todo requiere especificación. Un cambio es **importante** si toca varios archivos o módulos, modifica el comportamiento o los contratos, o tiene riesgo medio o alto. Un arreglo pequeño, como una errata o un ajuste de texto, se hace directo, con una verificación básica.
+
+```mermaid
+flowchart LR
+    Q{"¿Cambio<br/>importante?"} -- Sí --> S["Especificación<br/>escrita"]
+    S --> A{"¿Se<br/>aprueba?"}
+    A -- Sí --> I["Se programa<br/>por tareas"]
+    A -- "No: se ajusta" --> S
+    Q -- "No: directo" --> I
+    I --> C["Controles<br/>de calidad"] --> R["Revisión<br/>independiente"] --> M["Archivo y<br/>memoria"]
+```
+
+Los controles de calidad son proporcionales al riesgo: un cambio sencillo lleva solo verificación básica, y uno crítico suma pruebas, tipos, estilo, seguridad, arquitectura, regresión, documentación y revisión. Quien revisa recibe la especificación, las tareas y los cambios, no la conversación.
+
+## Cómo funciona
+
+Esto es lo que hace la skill para dejar SFP instalado en un proyecto, **en este orden**. El ciclo del trabajo diario es el de la sección anterior:
+
+1. **Analiza el proyecto**, sin modificar nada.
+2. **Formula algunas preguntas** sobre la forma de trabajo del equipo.
+3. **Propone un plan**: cada cambio, su riesgo y cómo revertirlo.
+4. **Aplica el plan únicamente si es aprobado.**
+
+> **Consejo:** para ver qué haría sin aplicar cambios: *"Analiza este proyecto y dime cómo aplicarías SFP, sin cambiar nada"*.
+
+Los mismos pasos en un diagrama, incluido qué ocurre si el plan no se aprueba y cómo termina el proceso:
+
+```mermaid
+flowchart LR
+    A["Analiza el proyecto<br/><sub>sin cambiar nada</sub>"] --> B["Hace preguntas<br/><sub>breves, por partes</sub>"]
+    B --> C["Propone un plan<br/><sub>cada cambio, su riesgo<br/>y cómo deshacerlo</sub>"]
+    C --> D{"¿Se aprueba?"}
+    D -- Sí --> E["Se aplica<br/><sub>con punto de retorno</sub>"]
+    D -- No --> F["Queda<br/>el plan, sin aplicar"]
+    E --> G["Se verifica<br/><sub>y se entrega un resumen</sub>"]
+```
+
+> **Importante:** hasta que el plan se aprueba, la skill **no escribe nada** en el proyecto.
+
+### Adaptación a cada proyecto
+
+En el segundo paso, las respuestas definen tres cosas:
+
+| Decisión | Opciones |
+|---|---|
+| Estado del proyecto | Nuevo o ya existente |
+| Cuánto puede cambiar el repositorio (si ya existe) | **Solo metodología** (no toca carpetas) · **Integrar** (añade, sin mover nada) · **Reestructurar** (puede mover y renombrar, con respaldo obligatorio) |
+| Cómo se coordina el trabajo | **Sin orquestador** (una sesión o varias independientes) · **Con orquestador** (una herramienta que coordina varios asistentes) |
+
+También se ajustan al proyecto el rigor de los controles de calidad (ligero, estándar o estricto), los roles y los modelos, las convenciones de git y el idioma de los documentos. Nada se instala por defecto: cada pieza debe justificarse con una respuesta.
+
+## Qué obtienes
+
+<table>
+<tr>
+<td width="50%" valign="top">
+
+### Primero la especificación, después el código
+Todo cambio importante empieza con una propuesta escrita: qué cambia, por qué, los requisitos, el diseño y las tareas. Se aprueba antes de programar, y es el núcleo de SFP.
+
+</td>
+<td width="50%" valign="top">
+
+### Las decisiones importantes se consultan
+Publicar código, borrar archivos, mezclar ramas o tocar producción siempre requiere aprobación explícita, y cada asistente recibe solo los permisos que necesita.
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+### Calidad y revisión según el riesgo
+Controles proporcionales al riesgo, con las pruebas y los revisores automáticos que el proyecto ya tiene. Y una revisión independiente: quien revisa no es quien programó.
+
+</td>
+<td valign="top">
+
+### Roles y modelos según el riesgo
+Cada tarea se asigna a un rol (arquitectura, desarrollo, interfaz, pruebas o revisión) y a un nivel de modelo: lo crítico va al más capaz y lo sencillo, a uno ligero. Los roles se definen con cada equipo.
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+### Memoria del proyecto
+Las decisiones importantes (ADR), los procedimientos (runbooks), las lecciones aprendidas y las especificaciones archivadas quedan documentados en el repositorio, no se pierden al cerrar la sesión.
+
+</td>
+<td valign="top">
+
+### Git ordenado
+Convenciones para commits, ramas, merge, PRs y versiones, con mensajes redactados para personas: qué cambió, por qué y cómo comprobarlo. Protege los remotos: nunca contraseñas en su dirección ni subidas sin confirmar el destino. [Ver convenciones](#convenciones-de-git).
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+### Estructura de código recomendada
+Opcional. Según el tipo de proyecto (API, interfaz, móvil, datos, librería, infraestructura…), propone organizar las carpetas por funcionalidad, con reglas de dependencia que se pueden verificar. Se conserva la estructura propia si se prefiere.
+
+</td>
+<td valign="top">
+
+### Todo cambio es reversible
+Lo que la skill instala queda registrado y puede retirarse sin afectar cambios posteriores.
+
+</td>
+</tr>
+<tr>
+<td valign="top">
+
+### Español neutro y claro
+Toda la documentación generada se entiende sin conocer el código. Sin jerga técnica innecesaria y sin voseo.
+
+</td>
+<td valign="top">
+
+### Complementos opcionales
+Commits sin firmas de IA y herramientas complementarias, cada una con límites de uso claros.
+
+</td>
+</tr>
+</table>
+
+## Convenciones de Git
+
+SFP también ordena cómo se guardan y se publican los cambios. Si el repositorio ya tiene sus propias convenciones, se respetan; si no, se proponen estas:
+
+| Tema | Qué se acuerda |
+|---|---|
+| Commits | Un cambio lógico por commit, con un mensaje que explica qué cambió, por qué y cómo comprobarlo |
+| Ramas | Nombres que dicen el efecto del cambio, con el formato `tipo/efecto-en-pocas-palabras` |
+| Merge | Según el caso: *squash* (se combinan todos los commits en uno) cuando el cambio es una sola unidad, o *merge commit* (se conservan todos) cuando cada commit tiene valor propio |
+| PRs (solicitudes para incorporar cambios) | Una descripción con cinco partes: por qué, qué cambia, qué no cambia, cómo probarlo y riesgos |
+| Versiones | Etiquetas de versión, versionado semántico y un historial de cambios pensado para personas |
+| Remotos (direcciones donde se publica el código) | Nunca contraseñas en la dirección, y se confirma el destino antes de subir |
+
+El asistente propone los commits según lo acordado y no los hace por su cuenta. Subir código, mezclar o borrar ramas y crear etiquetas siempre requieren aprobación.
+
+### Ejemplo: mensaje de commit y nombre de rama
+
+Cada cambio que se guarda en el historial del proyecto (un *commit*) lleva un mensaje que lo describe, y el trabajo se organiza en *ramas*, que son líneas de trabajo separadas con nombre propio. Como cada cambio nace de una especificación, su mensaje y su rama pueden explicar qué se hizo y por qué. Así se comparan:
+
+<table>
+<tr>
+<th width="50%">Sin SFP</th>
+<th width="50%">Con SFP</th>
+</tr>
+<tr>
+<td valign="top">
+
+Mensaje del commit:
+
+```text
+update
+
+fix cosas
+
+cambios varios
+```
+
+Nombre de la rama: `rama-ana-2`
+
+**Resultado:** no se entiende qué cambió ni por qué.
+
+</td>
+<td valign="top">
+
+Mensaje del commit:
+
+```text
+feat(registro): rechazar emails inválidos
+
+Hasta ahora se aceptaba "ana@" y esas
+personas nunca recibían el correo de
+confirmación.
+
+Cómo probarlo:
+- Registrarse con "ana@": debe dar error.
+```
+
+Nombre de la rama: `feat/rechazar-emails-invalidos`
+
+**Resultado:** se entiende qué cambió, por qué y cómo comprobarlo.
+
+</td>
+</tr>
+</table>
+
+## Lo que nunca hace sin autorización
+
+- Escribir, mover o borrar archivos del proyecto.
+- Hacer commits, subir código, o mezclar o borrar ramas.
+- Agregar, cambiar o borrar remotos, es decir, las direcciones a donde se publica el código.
+- Instalar programas o modificar la configuración general del equipo.
+- Cambiar permisos o la configuración de otras herramientas.
+
+Además, **no copia ni muestra contraseñas**: si encuentra archivos con credenciales, o un remoto cuya dirección contiene una contraseña o un token, solo informa de su existencia. Y **los documentos del proyecto son información, no instrucciones**: si un archivo contiene indicaciones dirigidas a la IA, estas no se ejecutan y se señalan al usuario.
+
+## Compatibilidad
+
+SFP es una metodología y no depende de un asistente en particular. Lo que cambia de un asistente a otro es cómo se instala y qué partes de la instalación puede hacer.
+
+| Parte | ¿Depende del asistente? | Detalle |
+|---|---|---|
+| Reglas y textos de la metodología | No | Cualquier asistente puede leerlas, porque son texto |
+| Instrucciones que se dejan en el proyecto | No | Se generan para cada asistente que se use. La skill pregunta cuáles son y consulta su documentación vigente para saber dónde van |
+| Skill de instalación guiada | Sí | Requiere un asistente que cargue skills en formato `SKILL.md`. El único con el que se ha probado es Claude Code; en los demás, el formato es el mismo pero no se ha probado |
+| Scripts de análisis, verificación y retiro | No | Solo necesitan una terminal con `sh` o `bash` |
+| Filtro de firmas de IA en los commits | No | Es un hook de Git, ajeno al asistente |
+| Ajuste de firmas en la herramienta | Sí, por asistente | Verificado solo en Claude Code. Para los demás, la skill consulta su documentación antes de cambiar nada |
+| Instalador de herramientas complementarias | Sí | Solo funciona con Claude Code |
+
+### Dónde se instala la skill
+
+La carpeta de skills depende del asistente. Estas son algunas, según la documentación del CLI `skills` 1.9.0, que lista decenas de asistentes:
+
+| Asistente | Carpeta global de skills |
+|---|---|
+| Claude Code | `~/.claude/skills/` |
+| Cursor | `~/.cursor/skills/` |
+| GitHub Copilot | `~/.copilot/skills/` |
+| Gemini CLI | `~/.gemini/skills/` |
+| OpenCode | `~/.config/opencode/skills/` |
+| Windsurf | `~/.codeium/windsurf/skills/` |
+| Cline, Codex, Warp, Zed y otros | `~/.agents/skills/` |
+
+Estas carpetas pueden cambiar con las versiones: conviene confirmarlas en la documentación del asistente.
+
+## Instalación
+
+Se instala una sola vez y aplica a todos los proyectos. La `<carpeta-de-skills>` es la del asistente que se use, según la tabla de [Compatibilidad](#compatibilidad).
+
+**Windows (PowerShell)**
+
+```powershell
+git clone https://github.com/williamslml/spec-first-protocol.git "<carpeta-de-skills>\spec-first-protocol"
+```
+
+**macOS, Linux o Git Bash**
+
+```bash
+git clone https://github.com/williamslml/spec-first-protocol.git <carpeta-de-skills>/spec-first-protocol
+```
+
+Al reiniciar el asistente, la skill queda disponible como `spec-first-protocol`.
+
+## Cómo usarla
+
+Con el proyecto abierto, basta con solicitarlo directamente. Una vez instalada la metodología, no hace falta pedir nada especial en el día a día: al solicitar un cambio importante, el asistente propone primero la especificación.
+
+| Si se indica… | Qué ocurre |
+|---|---|
+| *"Configura el Spec-First Protocol en este proyecto."* | Se recorren todos los pasos descritos en "Cómo funciona" |
+| *"Analiza este proyecto y dime cómo aplicarías SFP, sin cambiar nada."* | Solo se analiza y se entrega el plan |
+| *"Configura SFP en este proyecto sin mover carpetas."* | Nivel "Solo metodología": se instalan las instrucciones, sin tocar la estructura |
+| *"Actualiza SFP en este proyecto."* | Se proponen únicamente las mejoras nuevas aplicables al caso |
+| *"Retira SFP de este proyecto."* | Se retira lo instalado, sin afectar cambios posteriores |
+
+## Actualizar o retirar
+
+| Objetivo | Cómo hacerlo |
+|---|---|
+| Actualizar la skill | En su carpeta, ejecutar `git pull` y reiniciar el asistente |
+| Actualizar un proyecto | Solicitar: *"Actualiza SFP en este proyecto"* |
+| Retirarla de un proyecto | Solicitar: *"Retira SFP de este proyecto"*. Primero se muestra qué se retiraría |
+
+## Extensiones opcionales
+
+<details>
+<summary><strong>Herramientas complementarias</strong>: pruebas, diagramas, diseño visual y más</summary>
+
+<br>
+
+Se ofrecen únicamente cuando tienen sentido para el proyecto, y nunca se instalan sin aprobación previa:
+
+| Herramienta | En qué ayuda | Cuándo se ofrece |
+|---|---|---|
+| [Superpowers](https://github.com/obra/superpowers) (5 de sus guías) | Escribir pruebas primero, encontrar errores con método, verificar antes de finalizar | Para reforzar la calidad |
+| [Serena](https://github.com/oraios/serena) | Moverse y renombrar con precisión en proyectos grandes | En proyectos grandes |
+| [RTK](https://github.com/rtk-ai/rtk) | Reducir el consumo al leer la salida de los comandos | Para reducir costos |
+| [archify](https://github.com/tt-a1i/archify) | Diagramar la arquitectura del sistema | Opcional |
+| [frontend-design](https://github.com/anthropics/skills) | Diseño visual de pantallas | Solo si el proyecto tiene interfaz |
+
+Cada herramienta tiene prohibido duplicar funciones que ya cubre SFP, para evitar contradicciones. Por ejemplo, Superpowers no planifica: esa función corresponde a SFP.
+
+</details>
+
+<details>
+<summary><strong>Commits sin firmas de IA</strong>, de cualquier asistente</summary>
+
+<br>
+
+Varios asistentes añaden su firma a los commits ("Co-Authored-By: …", "Generated with…"). Si se solicita, la skill lo evita de tres formas:
+
+1. Un ajuste en la herramienta, cuando existe.
+2. Una regla escrita que cualquier asistente puede leer.
+3. Un filtro automático en el repositorio que elimina esas firmas, sin importar el asistente de origen.
+
+Los coautores humanos se conservan. Si la empresa **exige** declarar el uso de IA, la skill lo consulta antes de actuar y no elimina nada.
+
+</details>
+
+## Preguntas frecuentes
+
+<details>
+<summary><strong>¿Funciona con cualquier asistente?</strong></summary>
+<br>
+Las reglas, sí: quedan documentadas en el proyecto y cualquiera puede leerlas. Lo que depende del asistente es la instalación guiada, que requiere cargar skills en formato `SKILL.md`, y el instalador de herramientas complementarias, que solo funciona con Claude Code. El detalle está en [Compatibilidad](#compatibilidad).
+</details>
+
+<details>
+<summary><strong>¿Sirve para un proyecto que ya existe?</strong></summary>
+<br>
+Sí. Tiene tres niveles de intervención: solo metodología (no toca carpetas), integrar (añade sin mover nada) y reestructurar (mueve y renombra, siempre con respaldo y un plan aprobado).
+</details>
+
+<details>
+<summary><strong>¿Se puede usar con varios asistentes a la vez?</strong></summary>
+<br>
+Sí. Sin orquestador, cada sesión es independiente y comparte el estado mediante las especificaciones y la lista de tareas, no mediante el chat. Con orquestador (una herramienta que coordina varios asistentes), la skill se ajusta a sus capacidades, que se verifican y no se suponen.
+</details>
+
+<details>
+<summary><strong>¿Hace falta una herramienta de especificaciones?</strong></summary>
+<br>
+No. Se pueden usar documentos simples con nombres acordados. Si ya se usa una herramienta, la skill la adapta: verifica qué cubre y registra cómo se corresponde con la propuesta, los requisitos, el diseño y las tareas.
+</details>
+
+<details>
+<summary><strong>¿Modifica el código existente?</strong></summary>
+<br>
+No. Agrega documentos de trabajo e instrucciones para el asistente. Solo reorganiza carpetas si se solicita expresamente, y siempre con un plan aprobado.
+</details>
+
+<details>
+<summary><strong>¿Qué pasa si el resultado no es el esperado?</strong></summary>
+<br>
+Antes de aplicar cualquier cambio se guarda un punto de retorno. Además, puede retirarse por completo en cualquier momento.
+</details>
+
+<details>
+<summary><strong>¿Se requieren conocimientos de programación?</strong></summary>
+<br>
+Para instalarla basta con copiar un comando. Para usarla, basta con solicitarlo al asistente en lenguaje natural.
+</details>
+
+---
+
+## Para quien mantiene o contribuye
+
+<details>
+<summary><strong>Requisitos técnicos</strong></summary>
+
+<br>
+
+| Para | Se necesita |
+|---|---|
+| Usar la skill | Un asistente que cargue skills en formato `SKILL.md` (ver [Compatibilidad](#compatibilidad)) |
+| Los scripts de análisis, verificación y retiro | `sh`, `find`, `grep`, `awk` y `sed` (incluidos en Git for Windows, macOS y Linux). `git` recomendado |
+| Validar el registro de cambios y deshacerlos automáticamente | Python 3 (en Windows suele llamarse `python`) o `jq` |
+| El instalador de herramientas complementarias | bash 4 o superior, Python 3.11 o superior, Node.js 18 o superior |
+| Windows | Git for Windows (Git Bash) o WSL. `scripts/run.ps1` los detecta automáticamente |
+
+Probado en Windows 11 (Git Bash), Debian 12 y Alpine 3.20. El instalador de herramientas no se ha probado en macOS: con el bash incluido de fábrica se detiene con un aviso (`brew install bash` lo resuelve).
+
+</details>
+
+<details>
+<summary><strong>Scripts</strong></summary>
+
+<br>
+
+| Script | Qué hace | ¿Escribe? |
+|---|---|---|
+| `scripts/discover.sh <proyecto>` | Analiza el proyecto | No |
+| `scripts/verify.sh <proyecto>` | Verifica lo instalado | No |
+| `scripts/fingerprint.sh --propose / --accept <proyecto>` | Registra huellas de lo instalado para poder deshacerlo con seguridad | Solo en `.sfp/` |
+| `scripts/uninstall.sh <proyecto> [--apply]` | Retira SFP. Sin `--apply` solo muestra qué haría | Solo con `--apply` |
+| `scripts/sfp-section.sh <con\|sin> <sección>` | Muestra una sección del texto completo de la metodología | No |
+| `scripts/integrations.sh [--apply \| --check \| --uninstall] <proyecto>` | Instala, verifica o retira las herramientas complementarias. Sin `--apply` solo muestra el plan | Solo con `--apply` |
+| `scripts/hooks/commit-msg-ai-attribution.sh <archivo>` | Filtro que elimina las firmas de IA de un mensaje de commit | Solo ese archivo |
+| `scripts/run.ps1 <script> …` | Ejecuta cualquiera de los anteriores desde PowerShell | Igual que el script que ejecuta |
+
+Los scripts usan los siguientes códigos de salida:
+
+| Código | Significa |
+|---|---|
+| `0` | Sin incidencias |
+| `1` | Se encontraron problemas |
+| `2` | Llamada incorrecta (opción o ruta inválida) |
+| `3` | No se encontraron problemas, pero no pudo verificarse todo (falta una herramienta). Nunca se presenta como "todo correcto" |
+
+</details>
+
+<details>
+<summary><strong>Estructura del repositorio</strong></summary>
+
+<br>
+
+```text
+spec-first-protocol/
+├── SKILL.md            # Lo que lee el asistente: reglas, pasos y mapa de documentos
+├── README.md           # Este archivo
+├── CHANGELOG.md        # Historial de versiones y mejoras para proyectos ya instalados
+├── LICENSE
+├── assets/             # Logo (versión para tema claro y para tema oscuro)
+├── references/         # Documentos que se consultan solo cuando son necesarios
+│   ├── methodology-digest.md   # Resumen de la metodología
+│   ├── sfp-con-orquestador.md  # Texto completo, para coordinar varios asistentes
+│   ├── sfp-sin-orquestador.md  # Texto completo, para trabajar con uno solo
+│   ├── git-practices.md        # Commits, ramas, merge, PRs y remotes
+│   ├── templates.md            # Plantillas de lo que se instala en el proyecto
+│   ├── vendor/                 # Guías de terceros incluidas tal cual, con su licencia
+│   └── …                       # Entrevista, escenarios, retiro, Windows y más
+└── scripts/            # Herramientas automáticas (análisis, verificación, retiro…)
+```
+
+</details>
+
+## Cómo contribuir
+
+1. Crear una rama desde `master` con un nombre descriptivo: `tipo/efecto-en-pocas-palabras`.
+2. Mantener la skill autocontenida: sin rutas absolutas ni dependencias de documentos externos.
+3. Antes de cada commit, verificar que los scripts siguen siendo válidos:
+   ```bash
+   for f in scripts/*.sh scripts/hooks/*.sh; do bash -n "$f" || echo "FALLA: $f"; done
+   python -I -c "import ast; [ast.parse(open(f, encoding='utf-8').read()) for f in ['scripts/manifest_tool.py', 'scripts/integrations_helpers.py']]"
+   bash scripts/integrations.sh --help >/dev/null
+   ```
+4. Añadir una entrada al [CHANGELOG](CHANGELOG.md) con su apartado "Delta para proyectos ya instalados". Cada línea indica si un proyecto ya instalado debe recibir el cambio (`[accion: si]`, con la condición y la propuesta) o no (`[accion: no]`).
+5. Si cambia una versión fijada de una herramienta complementaria, probar instalación, verificación y retiro en un proyecto de ejemplo.
+6. Redactar en español neutro y en lenguaje claro, también en los commits.
+
+## Licencia
+
+Este repositorio se publica bajo la licencia [MIT](LICENSE).
+
+**Incluido en este repositorio**, sin modificar y con su licencia junto a cada archivo:
+
+| Archivo | Origen | Licencia |
+|---|---|---|
+| `git-workflow-and-versioning.md` | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | MIT |
+| `git-best-practices.md`, `git-examples.md` | [0xbigboss/claude-code](https://github.com/0xbigboss/claude-code) | Apache-2.0 |
+
+**No incluido:** las herramientas complementarias se descargan de sus fuentes oficiales al momento de instalarse, y cada una conserva su licencia:
+
+| Herramienta | Licencia |
+|---|---|
+| archify | Apache-2.0 |
+| Superpowers | MIT |
+| Serena | GPL-3.0 o posterior (su parte SolidLSP es MIT) |
+| RTK | Apache-2.0 |
+| frontend-design | Apache-2.0 |
+| CLI `skills` (npm) y uv | Las de sus respectivos proyectos |
+
+<div align="center">
+<br>
+<sub>Para trabajar con IA de forma ordenada, clara y reversible.</sub>
+</div>
