@@ -1,6 +1,6 @@
 #!/bin/sh
 # verify.sh — comprobaciones para la Fase 7 (y para los modos Actualización y Retiro).
-# Uso: sh verify.sh [--run-verify] [ruta-del-proyecto]
+# Uso: sh verify.sh [--run-verify] [--strict-tooling] [ruta-del-proyecto]
 # Garantías por defecto: SOLO LECTURA, sin red, POSIX sh. No ejecuta nada que venga del
 # manifiesto: los verify_command se muestran, y solo se ejecutan con --run-verify
 # (el manifiesto es dato, no instrucciones; mostrar el comando al usuario antes).
@@ -17,19 +17,25 @@
 #      ejecución de los verify_command (el de cada workspace corre dentro de su carpeta)
 #   4) (si hay git y el respaldo registrado existe) qué cambió fuera de las rutas del manifiesto,
 #      incluidos los archivos nuevos sin commit
+#   5) si el filtro de firmas de IA está en el repositorio, que esté activo en esta copia (los hooks de
+#      git no viajan al clonar: se avisa con el comando para activarlo)
 # Lector de JSON: jq, o Python 3 (python3 o python) si no hay jq. Sin ninguno, las comprobaciones que dependen del
 # manifiesto NO se ejecutan y el resultado final lo dice (no se presenta como "sin fallas").
 # Códigos de salida: 0 = sin fallas y completo · 1 = hay fallas · 2 = uso/ruta inválida ·
 #                    3 = sin fallas pero INCOMPLETO (alguna comprobación no se pudo ejecutar).
+# En CI: tratar 3 como advertencia y fallar solo con 1 o 2. Con --strict-tooling, un 3 sale como 1
+# (para equipos que quieren que una herramienta faltante rompa el build). Ejemplo: examples/ci/.
 # No reemplaza la revisión humana del reporte de Fase 7.
 
 set -u
 RUN_VERIFY=0
+STRICT=0
 PROJECT="."
 for a in "$@"; do
   case "$a" in
     --run-verify) RUN_VERIFY=1 ;;
-    -h|--help) sed -n '2,24p' "$0"; exit 0 ;;
+    --strict-tooling) STRICT=1 ;;
+    -h|--help) sed -n '2,28p' "$0"; exit 0 ;;
     -*) echo "ERROR: opción desconocida: $a" >&2; exit 2 ;;
     *) PROJECT="$a" ;;
   esac
@@ -302,18 +308,83 @@ if have git && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     SKIPPED=1
   fi
 else
-  echo "  sin git en este directorio; no se puede diferenciar automáticamente (NO ejecutado)"
+  BTYPE=""
+  [ -f "$MANIFEST" ] && [ -n "$JSON_TOOL" ] && BTYPE=$(mget backup.type)
+  if [ "$BTYPE" = "copia" ]; then
+    echo "  sin git: el respaldo es una copia ($(mget backup.ref)); comparar a mano contra ella (NO ejecutado)"
+  else
+    echo "  sin git en este directorio; no se puede diferenciar automáticamente (NO ejecutado)"
+  fi
   SKIPPED=1
 fi
 
+section "5. filtro de firmas de IA en los commits (si se instaló)"
+# El filtro se reconoce por la línea que define su lista de agentes. Se excluye la copia fuente del skill.
+grep_files "SFP_AI_NAMES='" | grep -v 'scripts/hooks/commit-msg-ai-attribution\.sh$' > "$TMPDIR_V/filtro.txt"
+if ! have git || ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  if [ -s "$TMPDIR_V/filtro.txt" ]; then
+    echo "  sin git: no se puede comprobar si el filtro está activo (NO ejecutado)"; SKIPPED=1
+  else
+    echo "  sin git: no aplica"
+  fi
+else
+  HOOKS_DIR=$(git rev-parse --git-path hooks 2>/dev/null | tr -d '\r')
+  ACTIVE=0
+  if [ -f "$HOOKS_DIR/commit-msg" ]; then
+    if grep -q 'SFP_KEEP_AI_ATTRIBUTION\|commit-msg-ai-attribution' "$HOOKS_DIR/commit-msg" 2>/dev/null; then
+      ACTIVE=1
+    else
+      case "$HOOKS_DIR" in
+        *.husky/_|*.husky/_/) [ -f .husky/commit-msg ] && grep -q 'SFP_KEEP_AI_ATTRIBUTION' .husky/commit-msg 2>/dev/null && ACTIVE=1 ;;
+      esac
+      grep -qi 'lefthook\|pre-commit' "$HOOKS_DIR/commit-msg" 2>/dev/null && [ -s "$TMPDIR_V/filtro.txt" ] && ACTIVE=2
+    fi
+  fi
+  if [ -s "$TMPDIR_V/filtro.txt" ]; then
+    echo "  el filtro está en el repositorio:"
+    sed 's#^\./#    #' "$TMPDIR_V/filtro.txt"
+    case "$ACTIVE" in
+      1) echo "  ok: activo en esta copia ($HOOKS_DIR/commit-msg)" ;;
+      2) echo "  ok: el hook commit-msg de esta copia lo gestiona un gestor de hooks (lefthook o pre-commit); su configuración llama al filtro" ;;
+      *)
+        echo "  FALLA: el filtro está en el repositorio pero NO está activo en esta copia: los commits pueden salir con firmas de IA"
+        DIRH=$(sed -n 's#^\./\(.*\)/commit-msg$#\1#p' "$TMPDIR_V/filtro.txt" | head -1)
+        if [ -n "$DIRH" ] && [ -d "$DIRH" ]; then
+          echo "    para activarlo en esta copia (una vez por clon): git config core.hooksPath $DIRH"
+        else
+          echo "    para activarlo: instalar el gestor de hooks del proyecto (p. ej. npm install con husky, lefthook install o pre-commit install --hook-type commit-msg)"
+        fi
+        FAIL=1 ;;
+    esac
+  elif [ "$ACTIVE" = 1 ]; then
+    echo "  AVISO: el filtro solo está en $HOOKS_DIR/commit-msg de esta copia: no se versiona y no llega a quien clone el repositorio"
+    echo "    para que viaje con el código: versionarlo en una carpeta de hooks (references/templates.md, sección 17)"
+  else
+    echo "  no se usa el filtro en este proyecto"
+  fi
+fi
+
 section "fin"
+# explicar_codigo <código>: qué significa y cómo tratarlo en un pipeline de CI
+explicar_codigo() {
+  echo "código de salida: $1 (0 = sin fallas y completo · 1 = fallas · 2 = llamada incorrecta · 3 = sin fallas, pero INCOMPLETO)"
+  echo "en CI: tratar 3 como advertencia (falta una herramienta o un respaldo, no hay un error del proyecto) y fallar solo con 1 o 2; --strict-tooling convierte el 3 en 1"
+}
 if [ "$FAIL" -ne 0 ]; then
   echo "verificación: hay al menos una falla arriba — no la ignores en el reporte de Fase 7"
+  explicar_codigo 1
   exit 1
 elif [ "$SKIPPED" -ne 0 ]; then
   echo "verificación: INCOMPLETA — alguna comprobación no se ejecutó (ver AVISO / NO ejecutado arriba). No presentar esto como 'sin fallas'"
+  if [ "$STRICT" -eq 1 ]; then
+    echo "--strict-tooling: lo incompleto se trata como falla"
+    explicar_codigo 1
+    exit 1
+  fi
+  explicar_codigo 3
   exit 3
 else
   echo "verificación: sin fallas detectadas por este script (sigue haciendo falta la revisión humana del reporte)"
+  explicar_codigo 0
   exit 0
 fi

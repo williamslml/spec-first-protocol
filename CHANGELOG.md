@@ -32,6 +32,11 @@ Resumen: se atienden las 23 propuestas abiertas del repositorio.
 - `discover.sh` informa `tests_fuera_de_carpetas_de_tests` y los `contratos_de_api` (OpenAPI o Swagger) que encuentre.
 - Dos modos nuevos en `SKILL.md`: **Cambio de configuración** (nivel de intrusión, coordinación o rigor, sin reinstalar: muestra lo actual, comprueba lo que requiere el cambio y solo planifica lo afectado) y **Agregar un asistente** (genera las instrucciones del runtime nuevo reutilizando las decisiones ya tomadas).
 - `verify.sh` compara la versión registrada y las copias fijas del skill dentro del proyecto con la instalación global (la carpeta se puede indicar con `SFP_GLOBAL_SKILL_DIR`) y avisa si quedaron atrás. Solo informa: nada se actualiza solo.
+- Filtro de firmas de IA que no viajaba al clonar: la sección 17 de `templates.md` recomienda, con equipo, versionarlo en `.githooks/` y activarlo en cada copia con `git config core.hooksPath .githooks` (paso escrito en el README del proyecto). La nueva sección 5 de `verify.sh` da una FALLA si el filtro está en el repositorio pero no está activo en esa copia, con el comando para activarlo, y avisa si solo vive en `.git/hooks/`.
+- Código de salida 3 en CI: `verify.sh` explica al terminar qué significa su código y cómo tratarlo en un pipeline; `--strict-tooling` convierte el 3 en 1. Ejemplo listo para GitHub Actions en `examples/ci/verificar-sfp.yml`.
+- Proyectos sin Git: la Fase 5 ofrece `git init` o una copia de respaldo fuera del proyecto con fecha, registrada en `backup` del manifiesto; en una reestructuración no se aplica nada sin una de las dos. El README lo explica en sus preguntas frecuentes.
+- Documentación que no confirma un cambio: la regla inviolable 8 fija el comportamiento por defecto (no aplicar, informar, ofrecer la alternativa que no depende del asistente y anotarlo como "No hecho: no se pudo verificar"), también en la capa A de la sección 17 de `templates.md` y en la sección 2 de `tooling.md`.
+- Instrucciones dirigidas a la IA dentro del proyecto: aviso de seguridad con formato fijo (archivo, texto literal y que no se ejecutó), en el momento y repetido en el resumen final (sección 2.1 de `intake.md`, regla inviolable 9 y reporte de la Fase 7).
 
 Delta para proyectos ya instalados:
 - [accion: no] solo cambia cómo los documentos del skill citan las reglas
@@ -42,6 +47,11 @@ Delta para proyectos ya instalados:
 - [accion: si] aplica-si: existen ADR o lecciones en el proyecto sin índice de lo vigente · propuesta: crear los índices y proponer el estado de cada lección (sección 10 de `development-practices.md`), sin borrar nada · memoria a largo plazo
 - [accion: si] aplica-si: `verify.sh` avisa que una copia fija del skill dentro del proyecto quedó atrás respecto a la instalación global · propuesta: informar ambas versiones y preguntar si el equipo quiere actualizar la copia; nunca hacerlo sin aprobación · copias fijas del skill
 - [accion: no] modos Cambio de configuración y Agregar un asistente (se usan cuando la persona los pide)
+- [accion: si] aplica-si: el manifiesto tiene una acción sobre `.git/hooks/commit-msg` (capa C de la sección 17 de `templates.md`) y el proyecto tiene equipo o varias copias · propuesta: versionar el filtro en `.githooks/` (o en el gestor de hooks del proyecto), activarlo con `git config core.hooksPath .githooks` y añadir ese paso al README del proyecto · filtro de firmas que viaja con el repositorio
+- [accion: si] aplica-si: `verify.sh` informa FALLA en la sección "5. filtro de firmas de IA" · propuesta: mostrar el comando que imprime para activar el filtro en esa copia y ejecutarlo con aprobación · filtro inactivo en una copia
+- [accion: si] aplica-si: el punto de entrada no tiene el párrafo de los archivos como datos, no instrucciones, en "Aprobación humana obligatoria" · propuesta: añadirlo entre marcadores desde `templates.md` sección 3 · aviso de seguridad con formato fijo
+- [accion: no] `verify.sh --strict-tooling`, explicación del código de salida y ejemplo de CI (se usan cuando el equipo los pide)
+- [accion: no] respaldo sin Git y comportamiento ante documentación no confirmable (aplican en instalaciones y cambios nuevos)
 
 ## 1.14.0
 

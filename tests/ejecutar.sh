@@ -93,6 +93,27 @@ SFP_GLOBAL_SKILL_DIR="$TMP/global-sfp" sh "$SCRIPTS/verify.sh" "$TMP/con-copia" 
 contiene "verify.sh avisa que la copia del skill en el proyecto quedó atrás" "usa la 1.0.0 y tu instalación global ya tiene la 9.9.9" "$TMP/verify-copia.txt"
 sh "$SCRIPTS/verify.sh" "$TMP/vacio" >"$TMP/verify-sin-copia.txt" 2>&1
 contiene "verify.sh dice cuando el proyecto no tiene copias del skill" "ninguna: el proyecto usa la instalación global" "$TMP/verify-sin-copia.txt"
+contiene "verify.sh explica el código de salida y cómo tratarlo en CI" "en CI: tratar 3 como advertencia" "$TMP/verify-sin-copia.txt"
+codigo "verify.sh --strict-tooling convierte lo incompleto en falla (1)" 1 sh "$SCRIPTS/verify.sh" --strict-tooling "$TMP/vacio"
+
+# Filtro de firmas versionado: debe estar activo en cada copia del repositorio
+if command -v git >/dev/null 2>&1; then
+  H="$TMP/con-filtro"; mkdir -p "$H/.githooks"
+  git -C "$H" init -q
+  { printf '#!/bin/sh\n'; sed -n '/^# sfp:start/,/^# sfp:end/p' "$SCRIPTS/hooks/commit-msg-ai-attribution.sh"; } >"$H/.githooks/commit-msg"
+  sh "$SCRIPTS/verify.sh" "$H" >"$TMP/verify-filtro.txt" 2>&1; rc=$?
+  [ "$rc" = 1 ] && ok "verify.sh falla si el filtro versionado no está activo en esta copia" || falla "verify.sh con el filtro inactivo devolvió $rc"
+  contiene "verify.sh dice cómo activar el filtro en esta copia" "git config core.hooksPath .githooks" "$TMP/verify-filtro.txt"
+  git -C "$H" config core.hooksPath .githooks
+  sh "$SCRIPTS/verify.sh" "$H" >"$TMP/verify-filtro.txt" 2>&1
+  contiene "verify.sh reconoce el filtro activo" "ok: activo en esta copia" "$TMP/verify-filtro.txt"
+  L="$TMP/filtro-local"; mkdir -p "$L"; git -C "$L" init -q
+  cp "$H/.githooks/commit-msg" "$L/.git/hooks/commit-msg"
+  sh "$SCRIPTS/verify.sh" "$L" >"$TMP/verify-local.txt" 2>&1
+  contiene "verify.sh avisa que un filtro solo en .git/hooks no viaja al clonar" "no se versiona y no llega a quien clone" "$TMP/verify-local.txt"
+else
+  omitida "filtro de firmas en cada copia" "no hay git"
+fi
 
 # --------------------------------------------------------------------------------------------
 seccion "4. Ciclo completo: instalar con huellas, verificar, editar y retirar"

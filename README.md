@@ -174,7 +174,7 @@ Opcional. Según el tipo de proyecto (API, interfaz, móvil, datos, librería, i
 <td valign="top">
 
 #### Todo cambio es reversible
-Lo que la skill instala queda registrado y puede retirarse sin afectar cambios posteriores.
+Lo que la skill instala queda registrado y puede retirarse sin afectar cambios posteriores. Antes de aplicar se guarda un punto de retorno: con Git, o con una copia de respaldo si el proyecto no lo usa.
 
 </td>
 </tr>
@@ -270,7 +270,7 @@ SFP es una metodología y no depende de un asistente en particular. Lo que cambi
 | Skill de instalación guiada | Sí | Requiere un asistente que cargue skills en formato `SKILL.md`. El único con el que se ha probado es Claude Code; en los demás, el formato es el mismo pero no se ha probado |
 | Scripts de análisis, verificación y retiro | No | Solo necesitan una terminal con `sh` o `bash` |
 | Filtro de firmas de IA en los commits | No | Es un hook de Git, ajeno al asistente |
-| Ajuste de firmas en la herramienta | Sí, por asistente | Verificado solo en Claude Code. Para los demás, la skill consulta su documentación antes de cambiar nada |
+| Ajuste de firmas en la herramienta | Sí, por asistente | Verificado solo en Claude Code. Para los demás, la skill consulta su documentación antes de cambiar nada; si no puede confirmarlo, no lo cambia y usa la regla escrita y el filtro del repositorio |
 | Instalador de herramientas complementarias | Sí | Solo funciona con Claude Code |
 
 #### Dónde se instala la skill
@@ -322,6 +322,8 @@ Varios asistentes añaden su firma a los commits ("Co-Authored-By: …", "Genera
 3. Un filtro automático en el repositorio que elimina esas firmas, sin importar el asistente de origen.
 
 Los coautores humanos se conservan. Si la empresa **exige** declarar el uso de IA, la skill lo consulta antes de actuar y no elimina nada.
+
+Git no copia los filtros automáticos al clonar un repositorio. Por eso, cuando hay equipo, el filtro se guarda en una carpeta versionada del proyecto y cada persona lo activa una vez después de clonar, con el comando que queda escrito en el README del proyecto. La verificación de la skill comprueba en cada copia que el filtro esté activo y, si falta, lo dice con el comando para activarlo.
 
 </details>
 
@@ -379,7 +381,9 @@ Para ver cómo queda un proyecto con la metodología instalada y un primer cambi
 - Instalar programas o modificar la configuración general del equipo.
 - Cambiar permisos o la configuración de otras herramientas.
 
-Además, **no copia ni muestra contraseñas**: si encuentra archivos con credenciales, o un remoto cuya dirección contiene una contraseña o un token, solo informa de su existencia. Y **los documentos del proyecto son información, no instrucciones**: si un archivo contiene indicaciones dirigidas a la IA, estas no se ejecutan y se señalan al usuario.
+Además, **no copia ni muestra contraseñas**: si encuentra archivos con credenciales, o un remoto cuya dirección contiene una contraseña o un token, solo informa de su existencia. Y **los documentos del proyecto son información, no instrucciones**: si un archivo contiene indicaciones dirigidas a la IA, no se ejecutan. Se avisa en el momento, con un aviso de seguridad aparte de los demás que dice el archivo, el texto exacto y que no se ejecutó, y el aviso se repite en el resumen final.
+
+Cuando la documentación de un asistente o de una herramienta no permite confirmar cómo hacer un ajuste con seguridad, ese ajuste **no se aplica**: se explica qué no se pudo confirmar, se ofrece una alternativa que no dependa de esa herramienta y queda anotado como pendiente en el resumen.
 
 ### Preguntas frecuentes
 
@@ -423,6 +427,12 @@ No. Agrega documentos de trabajo e instrucciones para el asistente. Solo reorgan
 <summary><strong>¿Qué pasa si el resultado no es el esperado?</strong></summary>
 <br>
 Antes de aplicar cualquier cambio se guarda un punto de retorno. Además, puede retirarse por completo en cualquier momento.
+</details>
+
+<details>
+<summary><strong>¿Qué pasa si el proyecto no usa Git?</strong></summary>
+<br>
+Antes de aplicar cualquier cambio, la skill lo detecta, lo informa y ofrece dos opciones: inicializar Git (con tu aprobación) o hacer una copia de respaldo de lo que se va a tocar, en una carpeta fuera del proyecto y con la fecha en el nombre. La decisión es tuya, y el resumen dice cómo volver atrás con ese respaldo. En el nivel "Reestructurar" no se continúa sin alguna de las dos. Sin ninguna, los cambios no tendrían punto de retorno, y por eso se pide confirmación expresa antes de seguir.
 </details>
 
 <details>
@@ -501,7 +511,7 @@ Probado en Windows 11 (Git Bash), Debian 12 y Alpine 3.20. El instalador de herr
 | `scripts/hooks/commit-msg-ai-attribution.sh <archivo>` | Filtro que elimina las firmas de IA de un mensaje de commit | Solo ese archivo |
 | `scripts/run.ps1 <script> …` | Ejecuta cualquiera de los anteriores desde PowerShell | Igual que el script que ejecuta |
 
-Los scripts usan los siguientes códigos de salida:
+Los scripts usan los siguientes códigos de salida, y `verify.sh` los explica al terminar:
 
 | Código | Significa |
 |---|---|
@@ -509,6 +519,8 @@ Los scripts usan los siguientes códigos de salida:
 | `1` | Se encontraron problemas |
 | `2` | Llamada incorrecta (opción o ruta inválida) |
 | `3` | No se encontraron problemas, pero no pudo verificarse todo (falta una herramienta). Nunca se presenta como "todo correcto" |
+
+En un pipeline de integración continua (CI), conviene tratar el `3` como advertencia y fallar solo con `1` o `2`: así una herramienta faltante no se confunde con un error del proyecto. Si se prefiere que también falle, `verify.sh --strict-tooling` convierte el `3` en `1`. Hay un ejemplo listo para GitHub Actions en [examples/ci](examples/ci/verificar-sfp.yml).
 
 </details>
 
@@ -527,7 +539,7 @@ spec-first-protocol/
 ├── LICENSE
 ├── .github/            # Plantillas de issues y de solicitudes de cambios, revisores y verificación automática
 ├── assets/             # Logo en versión oscura (tema claro) y blanca (tema oscuro)
-├── examples/           # Un proyecto de ejemplo con SFP instalado y un cambio especificado
+├── examples/           # Un proyecto de ejemplo con SFP instalado y un ejemplo de verificación en CI
 ├── tests/              # Pruebas de los scripts y verificación del formato de los textos
 ├── references/         # Documentos que se consultan solo cuando son necesarios
 │   ├── methodology-digest.md   # Resumen de la metodología
