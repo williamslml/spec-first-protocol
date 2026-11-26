@@ -8,7 +8,7 @@
 **Trabaja con asistentes de IA de forma ordenada: primero se define por escrito qué se va a hacer, y después se implementa.**
 
 <p>
-  <img src="https://img.shields.io/badge/versi%C3%B3n-1.14.0-2563eb?style=for-the-badge" alt="Versión 1.14.0">
+  <img src="https://img.shields.io/badge/versi%C3%B3n-1.15.0-2563eb?style=for-the-badge" alt="Versión 1.15.0">
   <img src="https://img.shields.io/badge/licencia-MIT-22c55e?style=for-the-badge" alt="Licencia MIT">
   <img src="https://img.shields.io/badge/idioma-espa%C3%B1ol-f97316?style=for-the-badge" alt="En español">
   <a href="#compatibilidad"><img src="https://img.shields.io/badge/compatibilidad-cualquier_asistente-0ea5e9?style=for-the-badge" alt="Reglas compatibles con cualquier asistente de IA"></a>

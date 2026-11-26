@@ -67,7 +67,7 @@ fi
 # --------------------------------------------------------------------------- versiones fijadas
 # Verificadas el 2026-11-20 contra las fuentes oficiales. Para actualizar: cambiar aquí, revisar el
 # repositorio en esa versión y repetir el healthcheck.
-readonly SKILL_VERSION="1.14.0"
+readonly SKILL_VERSION="1.15.0"
 readonly SKILLS_CLI_PKG="skills@1.9.0"                                  # npm: CLI oficial de skills.sh
 readonly ARCHIFY_SOURCE="tt-a1i/archify@v3.2.0"
 readonly FRONTEND_SOURCE="anthropics/skills@e4bb5d960d87126ff3b3a8af1a104b7db67560ba"   # sin tags: commit
