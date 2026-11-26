@@ -293,8 +293,8 @@ HOME="$TMP/casa" CLAUDE_CONFIG_DIR="$TMP/casa/.claude" XDG_CONFIG_HOME="$TMP/cas
   bash "$SCRIPTS/integrations.sh" --agent opencode --only archify,modern-web-guidance,serena,rtk "$PO" >"$TMP/plan-opencode.txt" 2>&1
 contiene "OpenCode reconoce una skill ya presente en .claude/skills" "OMITIDO - YA CONFIGURADO" "$TMP/plan-opencode.txt"
 contiene "OpenCode guarda su estado aparte" "integrations-opencode.json" "$TMP/plan-opencode.txt"
-contiene "Serena en OpenCode queda a decisión humana, sin escribir su configuración" "[MANUAL]                       serena" "$TMP/plan-opencode.txt"
-contiene "RTK en OpenCode queda a decisión humana" "[MANUAL]                       rtk" "$TMP/plan-opencode.txt"
+contiene "sin OpenCode instalado, Serena queda a decisión humana, sin escribir su configuración" "[MANUAL]                       serena" "$TMP/plan-opencode.txt"
+contiene "sin OpenCode instalado (o en Windows), RTK queda a decisión humana" "[MANUAL]                       rtk" "$TMP/plan-opencode.txt"
 contiene "modern-web-guidance no se ofrece sin interfaz web" "OMITIDO - SIN FRONTEND" "$TMP/plan-opencode.txt"
 comprobar "el plan para OpenCode no escribió nada" test ! -e "$PO/.sfp"
 
@@ -327,6 +327,39 @@ NPX
   comprobar "OpenCode: la copia de Claude Code se conserva" test -f "$TMP/retiro-con-copia-claude/.claude/skills/archify/SKILL.md"
 else
   omitida "retiro en OpenCode con npx simulado" "hace falta Python 3 y Node.js"
+fi
+
+# Context7 y Serena en opencode.json, con un OpenCode simulado que solo responde su versión
+if [ -n "$PY" ] && command -v node >/dev/null 2>&1 && node -e 'const [a,b]=process.versions.node.split(".").map(Number);process.exit(a>20||(a===20&&b>=18)?0:1)'; then
+  for v in 1.19.6 2.0.3; do
+    OCB="$TMP/opencode-$v"; mkdir -p "$OCB"; printf '#!/bin/sh\necho %s\n' "$v" >"$OCB/opencode"; chmod +x "$OCB/opencode"
+    PC="$TMP/context7-$v"; mkdir -p "$PC"
+    PATH="$OCB:$PATH" HOME="$TMP/casa" CLAUDE_CONFIG_DIR="$TMP/casa/.claude" XDG_CONFIG_HOME="$TMP/casa/.config" \
+      bash "$SCRIPTS/integrations.sh" --apply --agent opencode --only context7 "$PC" >"$TMP/context7-$v.txt" 2>&1
+  done
+  contiene "Context7 en OpenCode 1.x usa mcp.context7 con enabled" '"enabled": true' "$TMP/context7-1.19.6/opencode.json"
+  contiene "Context7 en OpenCode 2.x usa mcp.servers" '"servers"' "$TMP/context7-2.0.3/opencode.json"
+  no_contiene "Context7 en OpenCode 2.x no usa enabled" '"enabled"' "$TMP/context7-2.0.3/opencode.json"
+  contiene "Context7 queda con la versión fijada" "@upstash/context7-mcp@4.9.0" "$TMP/context7-2.0.3/opencode.json"
+  no_contiene "Context7 no escribe ninguna clave" "api-key" "$TMP/context7-2.0.3/opencode.json"
+  PATH="$TMP/opencode-2.0.3:$PATH" HOME="$TMP/casa" CLAUDE_CONFIG_DIR="$TMP/casa/.claude" XDG_CONFIG_HOME="$TMP/casa/.config" \
+    bash "$SCRIPTS/integrations.sh" --uninstall --apply --agent opencode "$TMP/context7-2.0.3" >/dev/null 2>&1
+  comprobar "el retiro quita la entrada y el opencode.json que quedó vacío" test ! -e "$TMP/context7-2.0.3/opencode.json"
+  PS="$TMP/serena-oc"; mkdir -p "$PS"
+  PATH="$TMP/opencode-2.0.3:$PATH" HOME="$TMP/casa" CLAUDE_CONFIG_DIR="$TMP/casa/.claude" XDG_CONFIG_HOME="$TMP/casa/.config" \
+    bash "$SCRIPTS/integrations.sh" --agent opencode --only serena "$PS" >"$TMP/serena-oc.txt" 2>&1
+  contiene "Serena en OpenCode se planifica en opencode.json con el formato 2.x" "formato de OpenCode 2.x" "$TMP/serena-oc.txt"
+  PN="$TMP/sin-opencode"; mkdir -p "$PN"
+  HOME="$TMP/casa" CLAUDE_CONFIG_DIR="$TMP/casa/.claude" XDG_CONFIG_HOME="$TMP/casa/.config" \
+    bash "$SCRIPTS/integrations.sh" --agent opencode --only context7 "$PN" >"$TMP/sin-opencode.txt" 2>&1
+  if command -v opencode >/dev/null 2>&1; then omitida "Context7 sin OpenCode" "OpenCode está instalado en este equipo"
+  else contiene "sin OpenCode instalado, Context7 queda a mano con el comando exacto" "registrarlo a mano" "$TMP/sin-opencode.txt"; fi
+  printf '{\n  // comentario\n}\n' >"$PN/opencode.jsonc"
+  PATH="$TMP/opencode-2.0.3:$PATH" HOME="$TMP/casa" CLAUDE_CONFIG_DIR="$TMP/casa/.claude" XDG_CONFIG_HOME="$TMP/casa/.config" \
+    bash "$SCRIPTS/integrations.sh" --agent opencode --only context7 "$PN" >"$TMP/jsonc.txt" 2>&1
+  contiene "un opencode.jsonc con comentarios no se reescribe" "admite comentarios y el script no lo reescribe" "$TMP/jsonc.txt"
+else
+  omitida "Context7 y Serena en OpenCode" "hace falta Python 3 y Node.js 20.18.1 o superior"
 fi
 if [ -n "$PY" ]; then
   mkdir -p "$TMP/proyecto-integraciones/.sfp"

@@ -35,7 +35,7 @@ SFP describe esta capa por su **función** (un supervisor, workers —agentes ej
 Cuándo: la pregunta 15 de la entrevista da un nombre, o lo mencionan el análisis inicial o los documentos del usuario. Antes de planificar, responder esta lista **para ese orquestador concreto**, sin arrastrar suposiciones de otros.
 
 Fuentes, en este orden:
-1. **Documentación oficial vigente** (repositorio, sitio de documentación, changelog): búsqueda web si hay herramienta; si no, documentación local.
+1. **Documentación oficial vigente** (repositorio, sitio de documentación, changelog): búsqueda web o Context7 si están disponibles (con Context7 se cita la página oficial original, no Context7); si no, documentación local.
 2. **El propio orquestador**, solo con permiso: comando de versión o ayuda. Nunca arrancarlo ni modificarlo "para ver qué pasa".
 3. **El usuario**, para lo que no esté escrito o no se pueda consultar.
 

@@ -38,7 +38,7 @@ Qué se hace con las respuestas:
 | # | Área | Qué averiguar |
 |---|---|---|
 | 1 | Identidad y madurez | Fuente oficial, versión, licencia, mantenimiento |
-| 2 | Función real | Qué hace hoy según su documentación (no según su nombre) y qué función del catálogo cubre |
+| 2 | Función real | Qué hace hoy según su documentación (no según su nombre) y qué función del catálogo cubre. Si la sesión tiene Context7, sirve para llegar a esa documentación; se cita la página oficial original |
 | 3 | Instalación y alcance | Dónde se instala (proyecto, usuario, global), qué archivos crea; ¿requiere red, cuenta o claves? |
 | 4 | Runtimes | En qué runtimes funciona y con qué mecanismo (skill, comando, plugin, servidor de herramientas) |
 | 5 | Permisos y privacidad | Qué herramientas o comandos ejecuta, qué contenido del repo puede salir, telemetría (datos de uso enviados) |

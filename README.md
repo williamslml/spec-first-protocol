@@ -271,7 +271,7 @@ SFP es una metodología y no depende de un asistente en particular. Lo que cambi
 | Scripts de análisis, verificación y retiro | No | Solo necesitan una terminal con `sh` o `bash` |
 | Filtro de firmas de IA en los commits | No | Es un hook de Git, ajeno al asistente |
 | Ajuste de firmas en la herramienta | Sí, por asistente | Verificado solo en Claude Code. Para los demás, la skill consulta su documentación antes de cambiar nada; si no puede confirmarlo, no lo cambia y usa la regla escrita y el filtro del repositorio |
-| Instalador de herramientas complementarias | Sí | Probado con Claude Code. Con OpenCode, en pruebas: instala y retira las skills (comprobado con el instalador; falta comprobarlo con OpenCode en uso), y Serena y RTK se configuran a mano con las instrucciones que muestra. Ejecuta el instalador de skills con npx, pnpm o bun |
+| Instalador de herramientas complementarias | Sí | Probado con Claude Code. Con OpenCode, en pruebas: instala y retira las skills, Serena y Context7 con el formato de configuración de la versión de OpenCode instalada, y RTK como plugin (en Windows, a mano). Falta comprobarlo con OpenCode en uso. Ejecuta el instalador de skills con npx, pnpm o bun |
 
 #### Dónde se instala la skill
 
@@ -306,7 +306,7 @@ Se ofrecen únicamente cuando tienen sentido para el proyecto, y nunca se instal
 | [archify](https://github.com/tt-a1i/archify) | Diagramar la arquitectura del sistema | Opcional |
 | [frontend-design](https://github.com/anthropics/skills) | Diseño visual de pantallas | Solo si el proyecto tiene interfaz |
 | [Modern Web Guidance](https://github.com/GoogleChrome/modern-web-guidance) | Código web moderno y correcto: HTML semántico, CSS actual, accesibilidad, rendimiento y seguridad | Solo si el proyecto tiene interfaz web, también en escritorio con Electron o Tauri. Consulta sus guías ejecutando su propio paquete de npm en la última versión, con conexión a internet |
-| [Context7](https://github.com/upstash/context7) | Consultar la documentación vigente de las librerías del proyecto | Opcional. Se instala a mano, con aprobación: envía las consultas a un servicio externo |
+| [Context7](https://github.com/upstash/context7) | Consultar la documentación vigente de las librerías del proyecto; la skill también la usa para comprobar la documentación de otras herramientas | Cuando el proyecto usa librerías que cambian a menudo. Envía las consultas a un servicio externo; la clave es opcional y nunca se guarda en el repositorio |
 
 Cada herramienta tiene prohibido duplicar funciones que ya cubre SFP, para evitar contradicciones. Por ejemplo, Superpowers no planifica: esa función corresponde a SFP. Y Modern Web Guidance no se ocupa del diseño visual, que es de frontend-design.
 
@@ -580,6 +580,7 @@ Este repositorio se publica bajo la licencia [MIT](LICENSE).
 | RTK | Apache-2.0 |
 | frontend-design | Apache-2.0 |
 | Modern Web Guidance | Apache-2.0 (sus guías, CC-BY-4.0) |
+| Context7 | MIT |
 | CLI `skills` (npm) y uv | Las de sus respectivos proyectos |
 
 <div align="center">
