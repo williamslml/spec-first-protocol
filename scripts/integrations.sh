@@ -115,6 +115,7 @@ SEL_GIVEN=0
 STATE_ARG=""
 PROJECT_ARG=""
 AGENT=claude-code
+AGENT_GIVEN=0
 RUNNER=auto
 RUNNER_GIVEN=0
 STRICT=0
@@ -137,8 +138,8 @@ while [ $# -gt 0 ]; do
     --skip) [ $# -ge 2 ] || die_usage "--skip requiere valor"; SKIP="$2"; SEL_GIVEN=1; shift ;;
     --skip=*) SKIP="${1#*=}"; SEL_GIVEN=1 ;;
     --force-frontend) FORCE_FRONTEND=1; SEL_GIVEN=1 ;;
-    --agent) [ $# -ge 2 ] || die_usage "--agent requiere valor"; AGENT="$2"; shift ;;
-    --agent=*) AGENT="${1#*=}" ;;
+    --agent) [ $# -ge 2 ] || die_usage "--agent requiere valor"; AGENT="$2"; AGENT_GIVEN=1; shift ;;
+    --agent=*) AGENT="${1#*=}"; AGENT_GIVEN=1 ;;
     --runner) [ $# -ge 2 ] || die_usage "--runner requiere valor"; RUNNER="$2"; RUNNER_GIVEN=1; shift ;;
     --runner=*) RUNNER="${1#*=}"; RUNNER_GIVEN=1 ;;
     --strict-tooling) STRICT=1 ;;
@@ -210,6 +211,10 @@ if [ $SEL_GIVEN = 0 ] && [ "$MODE" != apply ] && [ -n "$PY" ] && [ -f "$STATE" ]
       only) ONLY="$_v" ;; skip) SKIP="$_v" ;; scope) SCOPE="$_v" ;; rtk_scope) RTK_SCOPE="$_v" ;;
       force_frontend) FORCE_FRONTEND="$_v" ;;
       runner) [ $RUNNER_GIVEN = 1 ] || RUNNER="$_v" ;;
+      agent)
+        if [ $AGENT_GIVEN = 0 ]; then AGENT="$_v"
+        elif [ -n "$_v" ] && [ "$_v" != "$AGENT" ]; then die_usage "el estado $STATE es del asistente $_v, no de $AGENT"; fi ;;
+      legacy) [ "$_v" = 1 ] && [ -z "$ONLY" ] && SKIP="${SKIP:+$SKIP,}modern-web-guidance" ;;   # estado anterior a 1.15.0
     esac
   done < <(helper state-select "$(native "$STATE")")
   SEL_FROM_STATE=1
@@ -217,6 +222,8 @@ else
   SEL_FROM_STATE=0
 fi
 
+case "$AGENT" in claude-code|opencode) ;; *) die_usage "agente inválido en el estado: $AGENT" ;; esac
+case "$RUNNER" in auto|npx|pnpm|bun) ;; *) die_usage "gestor inválido en el estado: $RUNNER" ;; esac
 case "$SCOPE" in project|global) ;; *) die_usage "--scope debe ser project o global" ;; esac
 case "$RTK_SCOPE" in project|global) ;; *) die_usage "--rtk-scope debe ser project o global" ;; esac
 for list in "$ONLY" "$SKIP"; do
@@ -303,6 +310,8 @@ skill_dir() {
   echo "$first/$2"
 }
 skill_at() { [ -f "$(skill_dir "$1" "$2")/SKILL.md" ]; }
+# skill_at_primary <scope> <nombre>: la skill está en la carpeta donde instala este script (no en otra compatible)
+skill_at_primary() { local r; r=$(skill_roots "$1" | head -n 1); [ -f "$r/$2/SKILL.md" ]; }
 
 # skill_name_ok <dir> <nombre>: el frontmatter declara ese nombre
 skill_name_ok() { grep -Eq "^name:[[:space:]]*\"?$2\"?[[:space:]]*$" "$1/SKILL.md" 2>/dev/null; }
@@ -761,7 +770,7 @@ healthcheck() {
 
   # 5. serena
   if selected serena && [ "$AGENT" != claude-code ]; then
-    incomplete serena "configuración manual en $AGENT: este script no la comprueba"
+    status MANUAL serena "configuración manual en $AGENT: comprobarla a mano (este script no la lee)"
   elif selected serena; then
     if [ -z "$PY" ]; then incomplete serena "sin Python 3 no se lee la configuración MCP"
     elif entry=$(serena_entry); then
@@ -775,7 +784,7 @@ healthcheck() {
 
   # 6. rtk
   if selected rtk && [ "$AGENT" != claude-code ]; then
-    incomplete rtk "configuración manual en $AGENT: este script no la comprueba"
+    status MANUAL rtk "configuración manual en $AGENT: comprobarla a mano (este script no la lee)"
   elif selected rtk; then
     if ! rtk_ok; then status FALLA rtk "binario rtk-ai/rtk no accesible"
     elif [ -z "$PY" ]; then incomplete rtk "sin Python 3 no se comprueban hook ni exclusiones"
@@ -824,7 +833,7 @@ uninstall_all() {
       skill)
         if run "$comp" "retirar la skill $target del proyecto" -- skills_cli remove "$target" --agent "$AGENT" -y; then
           if [ $APPLY = 1 ]; then
-            if skill_at project "$target"; then status FALLA "$comp" "sigue existiendo $(skill_dir project "$target")"
+            if skill_at_primary project "$target"; then status FALLA "$comp" "sigue existiendo $(skill_roots project | head -n 1)/$target"
             else status OK "$comp" "retirada $target"; done_idx+=("$idx"); fi
           fi
         fi ;;

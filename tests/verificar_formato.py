@@ -61,10 +61,10 @@ VOSEO_AMBIGUAS = {"dame", "dale", "pone"}
 
 
 # "regla 7" o "reglas 1–3" sin decir de qué lista son (SKILL.md o el resumen de la metodología)
-REGLA_NUMERADA = re.compile(r"\b[Rr]eglas? (inviolables? )?\d+")
+REGLA_NUMERADA = re.compile(r"\breglas?\s+(inviolables?\s+)?\d+", re.IGNORECASE)
 REGLA_CALIFICADA = re.compile(
-    r"^[\d\s,–\-y]*(\([^)]*\)\s*)?(del resumen|de este resumen|de `methodology-digest|de methodology-digest"
-    r"|de la sección 1 de `methodology-digest)"
+    r"^(?:[\d\s,–\-]|\b[yoa]\b)*(\([^)]*\)\s*)?(del resumen|de este resumen|de `?methodology-digest"
+    r"|de la sección 1 de `?methodology-digest)"
 )
 # El historial de cambios cita reglas de versiones anteriores tal como se escribieron entonces
 SIN_REVISAR_REGLAS = {"CHANGELOG.md"}

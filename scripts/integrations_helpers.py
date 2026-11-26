@@ -319,6 +319,8 @@ def cmd_state_select(path):
             raise SystemExit(f"valor inválido en selection.{k}: {v!r}")
         print(f"{k}={v}")
     print("force_frontend=" + ("1" if sel.get("force_frontend") else "0"))
+    # Un estado sin "agent" es anterior a 1.15.0: los componentes nuevos no estaban en su selección
+    print("legacy=" + ("0" if "agent" in sel else "1"))
     return 0
 
 

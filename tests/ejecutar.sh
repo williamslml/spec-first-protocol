@@ -101,6 +101,7 @@ if command -v git >/dev/null 2>&1; then
   H="$TMP/con-filtro"; mkdir -p "$H/.githooks"
   git -C "$H" init -q
   { printf '#!/bin/sh\n'; sed -n '/^# sfp:start/,/^# sfp:end/p' "$SCRIPTS/hooks/commit-msg-ai-attribution.sh"; } >"$H/.githooks/commit-msg"
+  chmod +x "$H/.githooks/commit-msg"
   sh "$SCRIPTS/verify.sh" "$H" >"$TMP/verify-filtro.txt" 2>&1; rc=$?
   [ "$rc" = 1 ] && ok "verify.sh falla si el filtro versionado no está activo en esta copia" || falla "verify.sh con el filtro inactivo devolvió $rc"
   contiene "verify.sh dice cómo activar el filtro en esta copia" "git config core.hooksPath .githooks" "$TMP/verify-filtro.txt"
@@ -111,9 +112,18 @@ if command -v git >/dev/null 2>&1; then
   cp "$H/.githooks/commit-msg" "$L/.git/hooks/commit-msg"
   sh "$SCRIPTS/verify.sh" "$L" >"$TMP/verify-local.txt" 2>&1
   contiene "verify.sh avisa que un filtro solo en .git/hooks no viaja al clonar" "no se versiona y no llega a quien clone" "$TMP/verify-local.txt"
+  # Una copia del skill dentro del proyecto no se confunde con el filtro (sus scripts lo mencionan)
+  V="$TMP/con-skill-copiado"; mkdir -p "$V/.claude/skills"; git -C "$V" init -q
+  mkdir -p "$V/.claude/skills/spec-first-protocol"
+  cp -R "$RAIZ/scripts" "$RAIZ/SKILL.md" "$RAIZ/CHANGELOG.md" "$V/.claude/skills/spec-first-protocol/"
+  sh "$SCRIPTS/verify.sh" "$V" >"$TMP/verify-copiado.txt" 2>&1
+  contiene "una copia del skill en el proyecto no cuenta como filtro instalado" "no se usa el filtro en este proyecto" "$TMP/verify-copiado.txt"
 else
   omitida "filtro de firmas en cada copia" "no hay git"
 fi
+# Sin la variable HOME (cron, contenedores), verify.sh no debe abortar
+( unset HOME; sh "$SCRIPTS/verify.sh" "$TMP/vacio" >/dev/null 2>&1 ); rc=$?
+[ "$rc" = 3 ] && ok "verify.sh funciona sin la variable HOME" || falla "verify.sh sin HOME devolvió $rc"
 
 # --------------------------------------------------------------------------------------------
 seccion "4. Ciclo completo: instalar con huellas, verificar, editar y retirar"
@@ -229,6 +239,10 @@ else
   ayudante state-select "$S" >"$TMP/seleccion.txt"
   contiene "state-select devuelve el asistente guardado" "agent=opencode" "$TMP/seleccion.txt"
   contiene "state-select devuelve el gestor guardado" "runner=pnpm" "$TMP/seleccion.txt"
+  contiene "un estado nuevo no se marca como anterior a 1.15.0" "legacy=0" "$TMP/seleccion.txt"
+  printf '{"tool": "spec-first-protocol/integrations.sh", "records": [], "selection": {"only": "", "skip": "", "scope": "project", "rtk_scope": "global"}}\n' >"$TMP/estado-viejo.json"
+  ayudante state-select "$(nativo "$TMP/estado-viejo.json")" >"$TMP/seleccion-vieja.txt" 2>&1
+  contiene "un estado anterior a 1.15.0 se reconoce (sus componentes nuevos no se exigen)" "legacy=1" "$TMP/seleccion-vieja.txt"
   codigo "state-drop quita el registro" 0 ayudante state-drop "$S" 0
   comprobar "sin registros, el estado se borra" test ! -f "$TMP/estado.json"
 

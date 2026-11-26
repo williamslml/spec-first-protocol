@@ -83,10 +83,12 @@ PROJ_ABS=$(pwd)
 skill_ver() { sed -n 's/^## \([0-9][0-9.]*\).*/\1/p' "$1/CHANGELOG.md" 2>/dev/null | head -1; }
 GLOBAL_VER=""
 GLOBAL_DIR=""
-for g in "${SFP_GLOBAL_SKILL_DIR:-$SKILL_DIR}" "$SKILL_DIR" "$HOME/.claude/skills/spec-first-protocol" "$HOME/.agents/skills/spec-first-protocol" \
-         "$HOME/.config/opencode/skills/spec-first-protocol" "$HOME/.cursor/skills/spec-first-protocol" \
-         "$HOME/.copilot/skills/spec-first-protocol" "$HOME/.gemini/skills/spec-first-protocol" \
-         "$HOME/.codeium/windsurf/skills/spec-first-protocol"; do
+H=${HOME:-}
+for g in "${SFP_GLOBAL_SKILL_DIR:-$SKILL_DIR}" "$SKILL_DIR" "$H/.claude/skills/spec-first-protocol" "$H/.agents/skills/spec-first-protocol" \
+         "$H/.config/opencode/skills/spec-first-protocol" "$H/.cursor/skills/spec-first-protocol" \
+         "$H/.copilot/skills/spec-first-protocol" "$H/.gemini/skills/spec-first-protocol" \
+         "$H/.codeium/windsurf/skills/spec-first-protocol"; do
+  case "$g" in /.*) [ -z "$H" ] && continue ;; esac   # sin HOME, solo las carpetas indicadas
   [ -f "$g/SKILL.md" ] || continue
   g=$(cd "$g" 2>/dev/null && pwd) || continue
   case "$g/" in "$PROJ_ABS"/*) continue ;; esac
@@ -104,7 +106,9 @@ while IFS= read -r f; do
   NCOP=$((NCOP + 1))
   v=$(skill_ver "$d")
   echo "  copia fija: ${d#./} (versión ${v:-desconocida})"
-  if [ -n "$GLOBAL_VER" ] && [ -n "$v" ] && ver_gt "$GLOBAL_VER" "$v"; then
+  if [ -z "$v" ]; then
+    echo "  AVISO: no se pudo leer la versión de esta copia (falta su CHANGELOG.md): no se comparó con la instalación global"
+  elif [ -n "$GLOBAL_VER" ] && ver_gt "$GLOBAL_VER" "$v"; then
     echo "  AVISO: la copia de este proyecto usa la $v y tu instalación global ya tiene la $GLOBAL_VER ($GLOBAL_DIR). Nada se actualiza solo: actualizar la copia es decisión del equipo; después, pedir 'Actualiza SFP en este proyecto'"
   elif [ -z "$GLOBAL_VER" ]; then
     echo "  no se encontró una instalación global para comparar (se puede indicar con SFP_GLOBAL_SKILL_DIR)"
@@ -319,8 +323,19 @@ else
 fi
 
 section "5. filtro de firmas de IA en los commits (si se instaló)"
-# El filtro se reconoce por la línea que define su lista de agentes. Se excluye la copia fuente del skill.
-grep_files "SFP_AI_NAMES='" | grep -v 'scripts/hooks/commit-msg-ai-attribution\.sh$' > "$TMPDIR_V/filtro.txt"
+# El filtro se reconoce por la línea que define su lista de agentes (al inicio de la línea). Se excluyen la
+# copia fuente del skill y cualquier copia del skill dentro del proyecto (sus scripts la mencionan).
+grep_files "^[[:space:]]*SFP_AI_NAMES='" | grep -v 'scripts/hooks/commit-msg-ai-attribution\.sh$' > "$TMPDIR_V/filtro-todo.txt"
+: > "$TMPDIR_V/filtro.txt"
+while IFS= read -r f; do
+  dentro=0
+  while IFS= read -r c; do
+    case "$c" in */SKILL.md) ;; *) continue ;; esac
+    case "$f" in "$(dirname "$c")"/*) dentro=1 ;; esac
+  done < "$TMPDIR_V/copias.txt"
+  [ "$dentro" -eq 0 ] && echo "$f" >> "$TMPDIR_V/filtro.txt"
+done < "$TMPDIR_V/filtro-todo.txt"
+case "$(uname -s 2>/dev/null)" in MINGW*|MSYS*|CYGWIN*) EXEC_OK=1 ;; *) EXEC_OK=0 ;; esac   # Git for Windows no exige permiso de ejecución
 if ! have git || ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   if [ -s "$TMPDIR_V/filtro.txt" ]; then
     echo "  sin git: no se puede comprobar si el filtro está activo (NO ejecutado)"; SKIPPED=1
@@ -330,14 +345,19 @@ if ! have git || ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
 else
   HOOKS_DIR=$(git rev-parse --git-path hooks 2>/dev/null | tr -d '\r')
   ACTIVE=0
-  if [ -f "$HOOKS_DIR/commit-msg" ]; then
-    if grep -q 'SFP_KEEP_AI_ATTRIBUTION\|commit-msg-ai-attribution' "$HOOKS_DIR/commit-msg" 2>/dev/null; then
+  NOEXEC=0
+  if [ -f "$HOOKS_DIR/commit-msg" ] && [ "$EXEC_OK" -eq 0 ] && [ ! -x "$HOOKS_DIR/commit-msg" ]; then
+    NOEXEC=1   # git ignora un hook sin permiso de ejecución (Linux, macOS)
+  elif [ -f "$HOOKS_DIR/commit-msg" ]; then
+    if grep -q -e 'SFP_KEEP_AI_ATTRIBUTION' -e 'commit-msg-ai-attribution' "$HOOKS_DIR/commit-msg" 2>/dev/null; then
       ACTIVE=1
     else
       case "$HOOKS_DIR" in
-        *.husky/_|*.husky/_/) [ -f .husky/commit-msg ] && grep -q 'SFP_KEEP_AI_ATTRIBUTION' .husky/commit-msg 2>/dev/null && ACTIVE=1 ;;
+        *.husky/_|*.husky/_/)
+          HUSKY_HOOK="${HOOKS_DIR%/}"; HUSKY_HOOK="${HUSKY_HOOK%/_}/commit-msg"
+          [ -f "$HUSKY_HOOK" ] && grep -q 'SFP_KEEP_AI_ATTRIBUTION' "$HUSKY_HOOK" 2>/dev/null && ACTIVE=1 ;;
       esac
-      grep -qi 'lefthook\|pre-commit' "$HOOKS_DIR/commit-msg" 2>/dev/null && [ -s "$TMPDIR_V/filtro.txt" ] && ACTIVE=2
+      grep -qi -e 'lefthook' -e 'pre-commit' "$HOOKS_DIR/commit-msg" 2>/dev/null && [ -s "$TMPDIR_V/filtro.txt" ] && ACTIVE=2
     fi
   fi
   if [ -s "$TMPDIR_V/filtro.txt" ]; then
@@ -349,13 +369,19 @@ else
       *)
         echo "  FALLA: el filtro está en el repositorio pero NO está activo en esta copia: los commits pueden salir con firmas de IA"
         DIRH=$(sed -n 's#^\./\(.*\)/commit-msg$#\1#p' "$TMPDIR_V/filtro.txt" | head -1)
-        if [ -n "$DIRH" ] && [ -d "$DIRH" ]; then
+        if [ "$NOEXEC" -eq 1 ]; then
+          echo "    $HOOKS_DIR/commit-msg no tiene permiso de ejecución y git lo ignora: chmod +x $HOOKS_DIR/commit-msg (y versionarlo así: git update-index --chmod=+x <archivo>)"
+        elif [ "$DIRH" = ".husky" ]; then
+          echo "    husky no está instalado en esta copia: instalar las dependencias del proyecto (p. ej. npm install), que activa husky"
+        elif [ -n "$DIRH" ] && [ -d "$DIRH" ]; then
           echo "    para activarlo en esta copia (una vez por clon): git config core.hooksPath $DIRH"
         else
           echo "    para activarlo: instalar el gestor de hooks del proyecto (p. ej. npm install con husky, lefthook install o pre-commit install --hook-type commit-msg)"
         fi
         FAIL=1 ;;
     esac
+  elif [ "$NOEXEC" -eq 1 ] && grep -q 'SFP_KEEP_AI_ATTRIBUTION' "$HOOKS_DIR/commit-msg" 2>/dev/null; then
+    echo "  AVISO: $HOOKS_DIR/commit-msg tiene el filtro pero no tiene permiso de ejecución: git lo ignora (chmod +x $HOOKS_DIR/commit-msg)"
   elif [ "$ACTIVE" = 1 ]; then
     echo "  AVISO: el filtro solo está en $HOOKS_DIR/commit-msg de esta copia: no se versiona y no llega a quien clone el repositorio"
     echo "    para que viaje con el código: versionarlo en una carpeta de hooks (references/templates.md, sección 17)"
