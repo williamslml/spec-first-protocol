@@ -1,12 +1,12 @@
 {
   "schema": 2,
   "tool": "project-setup",
-  "skill_version": "1.14.0",
+  "skill_version": "1.15.0",
   "installed_at": "2026-11-20",
   "source_methodology": {
     "variant": "sin-orquestador",
     "methodology": "SFP",
-    "version_or_hash": "1.14.0"
+    "version_or_hash": "1.15.0"
   },
   "classification": {
     "project_state": "existente",
@@ -28,7 +28,7 @@
       "risk": "bajo",
       "reversible": true,
       "note": "punto de entrada con el flujo de trabajo",
-      "sha256": "59f27bc42a56c059855d11773a24bb2243ea28b0ff5d1f5fd83175bcdf1715da"
+      "sha256": "7b0b977b996e9c86d1adde234d70e0ad7b5f5b212e6cace94ad94cfa46880ca3"
     },
     {
       "id": 2,
@@ -46,7 +46,25 @@
       "risk": "bajo",
       "reversible": true,
       "note": "primera lección aprendida",
-      "sha256": "3d3eb7b56ad4f278fc0d2d932637c3e5551a670da313ba1d7e2bec54aa78b27e"
+      "sha256": "c08772a4c7e8d9d191218a68e9162e9c6edd97e7ecf7ae3618c1b85f7f262e94"
+    },
+    {
+      "id": 4,
+      "type": "create",
+      "path": "docs/adr/README.md",
+      "risk": "bajo",
+      "reversible": true,
+      "note": "índice de las decisiones vigentes",
+      "sha256": "7e30cd8d45af7db9518320104bc91a6f01f6440cf4678e34c8f1d8b1c6157d05"
+    },
+    {
+      "id": 5,
+      "type": "create",
+      "path": "docs/lecciones/README.md",
+      "risk": "bajo",
+      "reversible": true,
+      "note": "índice de las lecciones vigentes",
+      "sha256": "d03ad08932d137a3cd6f5dd05fa7ab9676057b9d2b88bdc6f5a84c316a5d67e8"
     }
   ]
 }

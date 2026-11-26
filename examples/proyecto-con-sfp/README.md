@@ -37,11 +37,11 @@ Y así se vio la conversación:
 
 | Archivo | Para qué sirve |
 | --- | --- |
-| [INSTRUCCIONES.md](INSTRUCCIONES.md) | Lo primero que lee el asistente: flujo, dónde vive cada cosa y qué requiere aprobación |
+| [INSTRUCCIONES.md](INSTRUCCIONES.md) | Lo primero que lee el asistente: flujo, dónde vive cada cosa, qué requiere aprobación, cómo se ejecuta un plan aprobado, dónde van las pruebas y cómo se revisa |
 | [specs/cambios/validar-correo/](specs/cambios/validar-correo/) | Un cambio terminado: propuesta, requisitos, diseño, tareas y revisión independiente |
 | [specs/cambios/exportar-pedidos/](specs/cambios/exportar-pedidos/propuesta.md) | Un cambio **detenido a propósito**: el asistente hizo la propuesta y espera respuestas antes de programar |
-| [docs/adr/](docs/adr/0001-validacion-en-el-servidor.md) | Decisiones importantes, para que nadie tenga que redescubrirlas |
-| [docs/lecciones/](docs/lecciones/correos-con-signo-mas.md) | Errores reales y cómo evitarlos la próxima vez |
+| [docs/adr/](docs/adr/README.md) | Decisiones importantes, con un índice de las que siguen vigentes, para que nadie tenga que redescubrirlas |
+| [docs/lecciones/](docs/lecciones/README.md) | Errores reales y cómo evitarlos la próxima vez, con su estado y un índice |
 | [src/](src/registro.js) y [tests/](tests/registro.test.js) | El código y una prueba por cada requisito |
 | [.sfp/manifest.json](.sfp/manifest.json) | Registro de lo que instaló la skill, con huellas, para poder retirarlo sin dañar el resto |
 
@@ -49,5 +49,7 @@ Y así se vio la conversación:
 
 - **La especificación va antes que el código.** Los requisitos tienen una prueba cada uno.
 - **El asistente se detiene cuando corresponde.** El segundo cambio muestra una propuesta que no avanza sin aprobación.
-- **Lo aprendido se guarda.** La lección del signo más ya no depende de la memoria de nadie.
+- **Lo aprendido se guarda y se encuentra.** La lección del signo más ya no depende de la memoria de nadie, y los índices muestran qué sigue vigente.
+- **Se sabe qué revisión tuvo cada cambio.** La revisión dice quién revisó y comprueba también dónde quedaron las pruebas.
+- **No se inventan comandos.** Las instrucciones marcan como pendiente el formato, porque el proyecto aún no tiene ese comando.
 - **Todo es reversible.** Desde la carpeta de la skill, `sh scripts/uninstall.sh examples/proyecto-con-sfp` muestra qué se retiraría, sin tocar nada.

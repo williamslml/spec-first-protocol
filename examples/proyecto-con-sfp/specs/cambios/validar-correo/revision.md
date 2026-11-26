@@ -1,6 +1,6 @@
 # Revisión independiente
 
-Quién revisó: una persona (o un asistente) distinta de quien escribió el código.
+Tipo de revisión: sesión nueva del asistente, y además revisó una persona (el cambio es de riesgo medio).
 Qué vio: la especificación, las tareas y el cambio. No vio la conversación de implementación.
 
 ## Resultado: aprobado después de un ajuste
@@ -14,3 +14,10 @@ Qué vio: la especificación, las tareas y el cambio. No vio la conversación de
 ## Cobertura de los requisitos
 
 Los cuatro requisitos tienen una prueba que los comprueba, y todas pasan.
+
+## Otras comprobaciones
+
+- Las pruebas nuevas están en `tests/`, como acuerdan las instrucciones: sí.
+- Documento de OpenAPI al día: no aplica, el proyecto no expone una API.
+- README al día: no aplica, el cambio no altera cómo se instala ni se usa el proyecto.
+- Inviabilidades declaradas: ninguna.

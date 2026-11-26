@@ -5,3 +5,4 @@
 - Solución: aceptar cualquier carácter antes de la arroba salvo espacios, y probar siempre con un correo con signo más.
 - Evidencia: requisito 2 de `specs/cambios/validar-correo/requisitos.md`
 - Recurrencia: una vez; la detectó la revisión independiente.
+- Estado: vigente.
