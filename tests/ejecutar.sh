@@ -224,6 +224,11 @@ else
   codigo "state-save guarda la selección" 0 ayudante state-save "$S" "" "rtk" project global 0 1.0.0
   ayudante state-select "$S" >"$TMP/seleccion.txt"
   contiene "state-select devuelve lo guardado" "skip=rtk" "$TMP/seleccion.txt"
+  contiene "un estado anterior sin asistente se lee como claude-code" "agent=claude-code" "$TMP/seleccion.txt"
+  codigo "state-save guarda el asistente y el gestor de paquetes" 0 ayudante state-save "$S" "" "rtk" project global 0 1.0.0 opencode pnpm
+  ayudante state-select "$S" >"$TMP/seleccion.txt"
+  contiene "state-select devuelve el asistente guardado" "agent=opencode" "$TMP/seleccion.txt"
+  contiene "state-select devuelve el gestor guardado" "runner=pnpm" "$TMP/seleccion.txt"
   codigo "state-drop quita el registro" 0 ayudante state-drop "$S" 0
   comprobar "sin registros, el estado se borra" test ! -f "$TMP/estado.json"
 
@@ -251,6 +256,19 @@ codigo "una opción desconocida devuelve 2" 2 bash "$SCRIPTS/integrations.sh" --
 codigo "un ámbito inválido devuelve 2" 2 bash "$SCRIPTS/integrations.sh" --scope otro
 codigo "un componente desconocido devuelve 2" 2 bash "$SCRIPTS/integrations.sh" --only nada
 codigo "--check y --uninstall no se pueden combinar" 2 bash "$SCRIPTS/integrations.sh" --check --uninstall
+codigo "un asistente desconocido devuelve 2" 2 bash "$SCRIPTS/integrations.sh" --agent otro
+codigo "un gestor de paquetes desconocido devuelve 2 (npmx no ejecuta paquetes)" 2 bash "$SCRIPTS/integrations.sh" --runner npmx
+# Plan para OpenCode, con una carpeta personal vacía para no depender de lo instalado en este equipo
+PO="$TMP/proyecto-opencode"; mkdir -p "$PO/.claude/skills/archify" "$TMP/casa"
+printf -- '---\nname: archify\n---\n' >"$PO/.claude/skills/archify/SKILL.md"
+HOME="$TMP/casa" CLAUDE_CONFIG_DIR="$TMP/casa/.claude" XDG_CONFIG_HOME="$TMP/casa/.config" \
+  bash "$SCRIPTS/integrations.sh" --agent opencode --only archify,modern-web-guidance,serena,rtk "$PO" >"$TMP/plan-opencode.txt" 2>&1
+contiene "OpenCode reconoce una skill ya presente en .claude/skills" "OMITIDO - YA CONFIGURADO" "$TMP/plan-opencode.txt"
+contiene "OpenCode guarda su estado aparte" "integrations-opencode.json" "$TMP/plan-opencode.txt"
+contiene "Serena en OpenCode queda a decisión humana, sin escribir su configuración" "[MANUAL]                       serena" "$TMP/plan-opencode.txt"
+contiene "RTK en OpenCode queda a decisión humana" "[MANUAL]                       rtk" "$TMP/plan-opencode.txt"
+contiene "modern-web-guidance no se ofrece sin interfaz web" "OMITIDO - SIN FRONTEND" "$TMP/plan-opencode.txt"
+comprobar "el plan para OpenCode no escribió nada" test ! -e "$PO/.sfp"
 if [ -n "$PY" ]; then
   mkdir -p "$TMP/proyecto-integraciones/.sfp"
   PI="$TMP/proyecto-integraciones"

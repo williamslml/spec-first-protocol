@@ -167,6 +167,9 @@ Responder y escribir (docs, comentarios, commits, PRs) en <idioma acordado>, en 
 
 ## Contexto
 Cargar solo lo necesario para la tarea. No leer documentos completos de metodología sin motivo.
+
+## Reporte de problemas de SFP
+<activado con gh | desactivado>. Si SFP mismo falla o surge una mejora del skill: armar el borrador sin detenerse, mostrarlo en la siguiente pausa y publicarlo con `gh issue create` solo si la persona aprueba ese reporte. Nunca incluir código, rutas, nombres ni secretos de este proyecto.
 ```
 
 ## 4. Plantilla de agente (rol)

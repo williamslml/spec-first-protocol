@@ -33,7 +33,7 @@ Qué se hace con las respuestas:
 
 ## sección 2 Skills y tools
 
-**Funciones posibles** (catálogo en la sección 6 de `architecture.md`): flujo de trabajo, navegación de código por significado, reducción de ruido en la terminal, visualización de arquitectura, diseño visual de frontend, u otras que proponga el usuario. Se pregunta por la función que quiere cubrir. El producto lo trae el usuario o se elige entre las candidatas conocidas del catálogo (sección 6 de `architecture.md`), que se ofrecen como opciones y pasan por este mismo cuestionario antes de planificarse.
+**Funciones posibles** (catálogo en la sección 6 de `architecture.md`): flujo de trabajo, navegación de código por significado, reducción de ruido en la terminal, visualización de arquitectura, diseño visual de frontend, corrección técnica del código web, documentación vigente de librerías, u otras que proponga el usuario. Se pregunta por la función que quiere cubrir. El producto lo trae el usuario o se elige entre las candidatas conocidas del catálogo (sección 6 de `architecture.md`), que se ofrecen como opciones y pasan por este mismo cuestionario antes de planificarse.
 
 | # | Área | Qué averiguar |
 |---|---|---|

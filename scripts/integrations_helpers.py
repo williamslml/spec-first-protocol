@@ -22,7 +22,7 @@ Subcomandos:
   block-remove <archivo> <marca-inicio> <marca-fin>
                                              quita el bloque entre marcas (incluidas)
   state-select <estado.json>                 imprime la selección guardada como líneas clave=valor
-  state-save <estado.json> <only> <skip> <scope> <rtk_scope> <force_frontend> <versión>
+  state-save <estado.json> <only> <skip> <scope> <rtk_scope> <force_frontend> <versión> [<agente> [<runner>]]
   state-add <estado.json> <componente> <ámbito> <tipo> <auto:0|1> <objetivo> <deshacer>
   state-list <estado.json>                   registros: idx\\tcomp\\támbito\\ttipo\\tauto\\tobjetivo\\tdeshacer
   state-drop <estado.json> <idx...>          quita registros; borra el archivo si no queda ninguno
@@ -312,8 +312,9 @@ def cmd_state_select(path):
     if not os.path.isfile(path):
         return 1
     sel = _load_state(path).get("selection") or {}
-    for k in ("only", "skip", "scope", "rtk_scope"):
-        v = str(sel.get(k, ""))
+    defaults = {"agent": "claude-code", "runner": "auto"}
+    for k in ("only", "skip", "scope", "rtk_scope", "agent", "runner"):
+        v = str(sel.get(k, defaults.get(k, "")))
         if not re.fullmatch(r"[a-z0-9,-]*", v):
             raise SystemExit(f"valor inválido en selection.{k}: {v!r}")
         print(f"{k}={v}")
@@ -321,11 +322,11 @@ def cmd_state_select(path):
     return 0
 
 
-def cmd_state_save(path, only, skip, scope, rtk_scope, force, version):
+def cmd_state_save(path, only, skip, scope, rtk_scope, force, version, agent="claude-code", runner="auto"):
     d = _load_state(path)
     d["skill_version"] = version
     d["selection"] = {"only": only, "skip": skip, "scope": scope, "rtk_scope": rtk_scope,
-                      "force_frontend": force == "1"}
+                      "force_frontend": force == "1", "agent": agent, "runner": runner}
     d["updated"] = datetime.date.today().isoformat()
     write_atomic(path, json.dumps(d, indent=2, ensure_ascii=False) + "\n")
     return 0

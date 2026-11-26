@@ -29,5 +29,5 @@ Incluidos los mantenedores:
 
 ## Otras formas de ayudar
 
-- **Reportar un problema o proponer una idea:** abrir un [issue](../../issues/new/choose).
+- **Reportar un problema o proponer una idea:** abrir un [issue](../../issues/new/choose). Si usas la skill con el CLI `gh` instalado y con sesión iniciada, la skill puede preparar el reporte por ti y publicarlo cuando lo apruebes.
 - **Reportar una vulnerabilidad:** seguir lo que indica [SECURITY.md](SECURITY.md). No abrir un issue público.

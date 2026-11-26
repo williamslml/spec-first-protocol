@@ -36,6 +36,13 @@ Resumen: se atienden las 23 propuestas abiertas del repositorio.
 - Código de salida 3 en CI: `verify.sh` explica al terminar qué significa su código y cómo tratarlo en un pipeline; `--strict-tooling` convierte el 3 en 1. Ejemplo listo para GitHub Actions en `examples/ci/verificar-sfp.yml`.
 - Proyectos sin Git: la Fase 5 ofrece `git init` o una copia de respaldo fuera del proyecto con fecha, registrada en `backup` del manifiesto; en una reestructuración no se aplica nada sin una de las dos. El README lo explica en sus preguntas frecuentes.
 - Documentación que no confirma un cambio: la regla inviolable 8 fija el comportamiento por defecto (no aplicar, informar, ofrecer la alternativa que no depende del asistente y anotarlo como "No hecho: no se pudo verificar"), también en la capa A de la sección 17 de `templates.md` y en la sección 2 de `tooling.md`.
+- Herramientas complementarias:
+  - `integrations.sh --agent opencode` (en pruebas): instala las skills en `.agents/skills` o `~/.config/opencode/skills`, reconoce las que ya estén en `.claude/skills` y guarda su estado en `.sfp/integrations-opencode.json`. Serena y RTK quedan `[MANUAL]`, con instrucciones, porque la configuración de OpenCode no está verificada para todas sus versiones. Claude Code sigue siendo el camino probado.
+  - `integrations.sh --runner auto|npx|pnpm|bun`: el CLI de skills ya no exige npm. npmx no se adoptó porque es un buscador web del registro de npm, no un gestor que ejecute paquetes.
+  - Nueva candidata **modern-web-guidance** (Google Chrome, v1.0.2, Apache-2.0), solo con interfaz web (ahora también Electron y Tauri), con su fila en la matriz de la sección 6.1 de `architecture.md`.
+  - Nueva candidata **Context7** (documentación vigente de librerías), de instalación manual aprobada.
+  - `integrations.sh --strict-tooling`, como en `verify.sh`.
+- Reporte de problemas y mejoras de SFP con `gh` (sección nueva de `SKILL.md`, pregunta 29 de la entrevista): borradores sin interrumpir el trabajo, mostrados en la siguiente pausa, sin datos del proyecto y publicados solo con aprobación de cada uno.
 - Instrucciones dirigidas a la IA dentro del proyecto: aviso de seguridad con formato fijo (archivo, texto literal y que no se ejecutó), en el momento y repetido en el resumen final (sección 2.1 de `intake.md`, regla inviolable 9 y reporte de la Fase 7).
 
 Delta para proyectos ya instalados:
@@ -52,6 +59,10 @@ Delta para proyectos ya instalados:
 - [accion: si] aplica-si: el punto de entrada no tiene el párrafo de los archivos como datos, no instrucciones, en "Aprobación humana obligatoria" · propuesta: añadirlo entre marcadores desde `templates.md` sección 3 · aviso de seguridad con formato fijo
 - [accion: no] `verify.sh --strict-tooling`, explicación del código de salida y ejemplo de CI (se usan cuando el equipo los pide)
 - [accion: no] respaldo sin Git y comportamiento ante documentación no confirmable (aplican en instalaciones y cambios nuevos)
+- [accion: si] aplica-si: `runtimes` del manifiesto incluye OpenCode y el proyecto tiene herramientas complementarias instaladas para Claude Code (existe `.sfp/integrations.json`) · propuesta: `bash scripts/integrations.sh --agent opencode` (plan) con la misma selección, y las instrucciones `[MANUAL]` de Serena y RTK · herramientas complementarias en OpenCode
+- [accion: si] aplica-si: el proyecto tiene interfaz web (`discover.sh` o `has_frontend`) y la persona quiere reforzar la calidad del código web · propuesta: ofrecer modern-web-guidance con su fila de la matriz de la sección 6.1 de `architecture.md` e `integrations.sh --only modern-web-guidance` · Modern Web Guidance
+- [accion: si] aplica-si: el punto de entrada no tiene la sección "Reporte de problemas de SFP" · propuesta: pregunta 29 de la entrevista y añadir la sección entre marcadores con la elección · reporte de problemas con gh
+- [accion: no] `integrations.sh --runner` y candidata Context7 (se usan cuando la persona los pide)
 
 ## 1.14.0
 

@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 # integrations.sh — instala, configura, verifica y retira las candidatas del catálogo de skills/tools
-# (references/architecture.md sección 6, sección 6.1 matriz de enrutamiento, sección 6.2 este script). Solo Claude Code.
+# (references/architecture.md sección 6, sección 6.1 matriz de enrutamiento, sección 6.2 este script).
+# Asistentes: Claude Code (probado) y OpenCode (en pruebas: skills; Serena y RTK quedan [MANUAL]).
 #
-# Componentes: archify · frontend-design · superpowers (solo 5 skills, nunca el plugin) · serena · rtk
-# más el healthcheck de la propia skill sfp (spec-first-protocol). Requiere bash >= 4 (no sh/dash).
+# Componentes: archify · frontend-design · modern-web-guidance · superpowers (solo 5 skills, nunca el
+# plugin) · serena · rtk, más el healthcheck de la propia skill sfp (spec-first-protocol).
+# Requiere bash >= 4 (no sh/dash).
 #
 # Uso:
 #   bash integrations.sh [modo] [opciones] [<ruta-del-proyecto>]       (por defecto: directorio actual)
@@ -22,11 +24,20 @@
 #                            global  = ~/.claude/skills y MCP de usuario.
 #   --rtk-scope global|project  Enganche de RTK (defecto: global, único modo con hook en Claude Code;
 #                            project solo añade un bloque de instrucciones a <proyecto>/CLAUDE.md).
-#   --only a,b,...           Solo estos componentes (archify,frontend-design,superpowers,serena,rtk).
+#   --only a,b,...           Solo estos componentes (archify,frontend-design,modern-web-guidance,
+#                            superpowers,serena,rtk).
 #   --skip a,b,...           Excluir estos componentes.
-#   --force-frontend         Instalar frontend-design aunque no se detecte frontend.
+#   --force-frontend         Instalar frontend-design y modern-web-guidance aunque no se detecte frontend.
 # Otras:
-#   --state <archivo>        Estado (defecto: <proyecto>/.sfp/integrations.json; fuera del repo en el
+#   --agent claude-code|opencode  Asistente de destino (defecto: claude-code). La skill lo pregunta en la
+#                            entrevista; el script no lo adivina. Con opencode, las skills van a
+#                            <proyecto>/.agents/skills o ~/.config/opencode/skills (y se reconocen las de
+#                            .claude/skills, que OpenCode también lee); Serena y RTK quedan [MANUAL].
+#   --runner auto|npx|pnpm|bun    Cómo se ejecuta el CLI de skills (defecto: auto = npx, si no pnpm dlx,
+#                            si no bunx). Probado con npx; pnpm y bun, en pruebas.
+#   --strict-tooling         Un resultado INCOMPLETO (3) sale como falla (1), para CI estrictos.
+#   --state <archivo>        Estado (defecto: <proyecto>/.sfp/integrations.json, o
+#                            .sfp/integrations-opencode.json con --agent opencode; fuera del repo en el
 #                            modo sin rastros).
 #   -h, --help               Esta ayuda.
 #
@@ -39,6 +50,7 @@
 #
 # Códigos de salida: 0 = completo y sin fallas · 1 = fallas o conflictos · 2 = uso/ruta inválida ·
 #                    3 = sin fallas pero INCOMPLETO (falta una dependencia para comprobar algo).
+#                    En CI: tratar 3 como advertencia y fallar solo con 1 o 2 (o usar --strict-tooling).
 #
 # Idempotente: cada acción se decide por detección del estado real; ejecutarlo N veces no duplica
 # entradas de JSON/TOML ni reinstala lo que ya está. Nunca sobrescribe configuración existente:
@@ -60,6 +72,7 @@ readonly SKILLS_CLI_PKG="skills@1.9.0"                                  # npm: C
 readonly ARCHIFY_SOURCE="tt-a1i/archify@v3.2.0"
 readonly FRONTEND_SOURCE="anthropics/skills@e4bb5d960d87126ff3b3a8af1a104b7db67560ba"   # sin tags: commit
 readonly SUPERPOWERS_SOURCE="obra/superpowers@v7.0.2"
+readonly MWG_SOURCE="GoogleChrome/modern-web-guidance@v1.0.2"   # Apache-2.0; guías CC-BY-4.0 (verificado 2026-11-26)
 readonly SERENA_PKG="serena-agent==2.1.0"
 readonly SERENA_PY="3.13"
 readonly RTK_VERSION="1.2.1"
@@ -88,7 +101,7 @@ readonly SERENA_UVX=(uvx -p "$SERENA_PY" --from "$SERENA_PKG" serena "${SERENA_A
 readonly RTK_EXCLUDES=('^(ba)?sh .*spec-first-protocol' '^(powershell|pwsh).*spec-first-protocol'
                        '^python[0-9.]* .*manifest_tool\.py')
 
-readonly ALL_COMPONENTS=(archify frontend-design superpowers serena rtk)
+readonly ALL_COMPONENTS=(archify frontend-design modern-web-guidance superpowers serena rtk)
 
 # --------------------------------------------------------------------------- argumentos
 MODE=plan          # plan | apply | check | uninstall
@@ -101,8 +114,12 @@ FORCE_FRONTEND=0
 SEL_GIVEN=0
 STATE_ARG=""
 PROJECT_ARG=""
+AGENT=claude-code
+RUNNER=auto
+RUNNER_GIVEN=0
+STRICT=0
 
-usage() { sed -n '2,48p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,58p' "$0" | sed 's/^# \{0,1\}//'; }
 die_usage() { echo "ERROR: $1" >&2; echo "Ayuda: bash $0 --help" >&2; exit 2; }
 set_mode() { [ "$MODE" = plan ] || [ "$MODE" = "$1" ] || die_usage "--check y --uninstall son excluyentes"; MODE="$1"; }
 
@@ -120,6 +137,11 @@ while [ $# -gt 0 ]; do
     --skip) [ $# -ge 2 ] || die_usage "--skip requiere valor"; SKIP="$2"; SEL_GIVEN=1; shift ;;
     --skip=*) SKIP="${1#*=}"; SEL_GIVEN=1 ;;
     --force-frontend) FORCE_FRONTEND=1; SEL_GIVEN=1 ;;
+    --agent) [ $# -ge 2 ] || die_usage "--agent requiere valor"; AGENT="$2"; shift ;;
+    --agent=*) AGENT="${1#*=}" ;;
+    --runner) [ $# -ge 2 ] || die_usage "--runner requiere valor"; RUNNER="$2"; RUNNER_GIVEN=1; shift ;;
+    --runner=*) RUNNER="${1#*=}"; RUNNER_GIVEN=1 ;;
+    --strict-tooling) STRICT=1 ;;
     --state) [ $# -ge 2 ] || die_usage "--state requiere valor"; STATE_ARG="$2"; shift ;;
     --state=*) STATE_ARG="${1#*=}" ;;
     -h|--help) usage; exit 0 ;;
@@ -138,7 +160,11 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SFP_DIR="$(dirname "$SCRIPT_DIR")"
 CLAUDE_HOME="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 CLAUDE_JSON="${SFP_CLAUDE_JSON:-$HOME/.claude.json}"
-STATE="${STATE_ARG:-$PROJ/.sfp/integrations.json}"
+OPENCODE_HOME="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
+case "$AGENT" in claude-code|opencode) ;; *) die_usage "--agent debe ser claude-code u opencode" ;; esac
+case "$RUNNER" in auto|npx|pnpm|bun) ;; *) die_usage "--runner debe ser auto, npx, pnpm o bun" ;; esac
+if [ "$AGENT" = opencode ]; then STATE="${STATE_ARG:-$PROJ/.sfp/integrations-opencode.json}"
+else STATE="${STATE_ARG:-$PROJ/.sfp/integrations.json}"; fi
 
 # --------------------------------------------------------------------------- utilidades
 have() { command -v "$1" >/dev/null 2>&1; }
@@ -164,14 +190,14 @@ INCOMPLETE=0
 declare -a SUMMARY=()
 
 status() { # status <ETIQUETA> <componente> <mensaje>
-  printf '  %-30s %-16s %s\n' "[$1]" "$2" "$3"
+  printf '  %-30s %-20s %s\n' "[$1]" "$2" "$3"
   case "$1" in
     FALLA|CONFLICTO) FAILS=$((FAILS + 1)) ;;
   esac
 }
 incomplete() { status AVISO "$1" "NO comprobado: $2"; INCOMPLETE=$((INCOMPLETE + 1)); }
 section() { printf '\n== %s\n' "$1"; }
-record() { SUMMARY+=("$(printf '%-16s %s' "$1" "$2")"); }
+record() { SUMMARY+=("$(printf '%-20s %s' "$1" "$2")"); }
 
 # helper <subcomando> [args...]: lógica JSON/TOML/estado en integrations_helpers.py (biblioteca estándar).
 helper() { PYTHONUTF8=1 "$PY" -I "$(native "$SCRIPT_DIR/integrations_helpers.py")" "$@"; }
@@ -183,6 +209,7 @@ if [ $SEL_GIVEN = 0 ] && [ "$MODE" != apply ] && [ -n "$PY" ] && [ -f "$STATE" ]
     case "$_k" in
       only) ONLY="$_v" ;; skip) SKIP="$_v" ;; scope) SCOPE="$_v" ;; rtk_scope) RTK_SCOPE="$_v" ;;
       force_frontend) FORCE_FRONTEND="$_v" ;;
+      runner) [ $RUNNER_GIVEN = 1 ] || RUNNER="$_v" ;;
     esac
   done < <(helper state-select "$(native "$STATE")")
   SEL_FROM_STATE=1
@@ -256,8 +283,25 @@ refresh_path() {
 refresh_path
 winget_cmd() { command -v winget 2>/dev/null || command -v winget.exe 2>/dev/null; }
 
-# skill_dir <scope:global|project> <nombre> → ruta de la carpeta de la skill
-skill_dir() { if [ "$1" = global ]; then echo "$CLAUDE_HOME/skills/$2"; else echo "$PROJ/.claude/skills/$2"; fi; }
+# skill_roots <scope:global|project> → carpetas de skills que lee el asistente; la primera es donde se instala.
+# OpenCode también lee .claude/skills y .agents/skills (su documentación, verificada el 2026-11-26).
+skill_roots() {
+  if [ "$AGENT" = opencode ]; then
+    if [ "$1" = global ]; then printf '%s\n' "$OPENCODE_HOME/skills" "$HOME/.claude/skills" "$HOME/.agents/skills"
+    else printf '%s\n' "$PROJ/.agents/skills" "$PROJ/.opencode/skills" "$PROJ/.claude/skills"; fi
+  else
+    if [ "$1" = global ]; then echo "$CLAUDE_HOME/skills"; else echo "$PROJ/.claude/skills"; fi
+  fi
+}
+# skill_dir <scope> <nombre> → carpeta donde está la skill (o donde se instalaría si no está)
+skill_dir() {
+  local r first=""
+  while IFS= read -r r; do
+    [ -z "$first" ] && first="$r"
+    if [ -f "$r/$2/SKILL.md" ]; then echo "$r/$2"; return 0; fi
+  done < <(skill_roots "$1")
+  echo "$first/$2"
+}
 skill_at() { [ -f "$(skill_dir "$1" "$2")/SKILL.md" ]; }
 
 # skill_name_ok <dir> <nombre>: el frontmatter declara ese nombre
@@ -266,32 +310,61 @@ skill_name_ok() { grep -Eq "^name:[[:space:]]*\"?$2\"?[[:space:]]*$" "$1/SKILL.m
 # plugin_enabled <nombre>: el plugin está habilitado en settings de usuario o del proyecto,
 # o figura en installed_plugins.json. Imprime dónde.
 plugin_enabled() {
+  [ "$AGENT" = claude-code ] || return 1   # los plugins de Claude Code no aplican a otros asistentes
   [ -n "$PY" ] || return 2
   helper plugin-enabled "$1" "$(native "$CLAUDE_HOME/settings.json")" "$(native "$PROJ/.claude/settings.json")" \
     "$(native "$PROJ/.claude/settings.local.json")" "$(native "$CLAUDE_HOME/plugins/installed_plugins.json")"
 }
 
-# skills CLI (npx), versión fijada. skills_add <scope> <origen> <skill...> · skills_remove <scope> <skill...>
-skills_cli() { ( cd "$PROJ" && DISABLE_TELEMETRY=1 DO_NOT_TRACK=1 npx -y "$SKILLS_CLI_PKG" "$@" ); }
+# CLI de skills, versión fijada, con el gestor de paquetes elegido (--runner).
+# npmx (npmx.dev) no sirve aquí: es un buscador web del registro de npm, no ejecuta paquetes.
+node18() { have node && node -e 'process.exit(+process.versions.node.split(".")[0] >= 18 ? 0 : 1)' >/dev/null 2>&1; }
+resolve_runner() {
+  case "$RUNNER" in
+    npx) node18 && have npx && echo npx ;;
+    pnpm) node18 && have pnpm && echo pnpm ;;
+    bun) { have bunx || have bun; } && echo bun ;;
+    auto)
+      if node18 && have npx; then echo npx
+      elif node18 && have pnpm; then echo pnpm
+      elif have bunx || have bun; then echo bun; fi ;;
+  esac
+  return 0
+}
+RUNNER_RES=""
+runner_ok() { [ -n "$RUNNER_RES" ]; }
+runner_need() { echo "requiere Node.js >= 18 con npx o pnpm, o bun (opción --runner; elegido: $RUNNER)"; }
+runner_text() { # texto del ejecutor, para mostrar y para el estado
+  case "$RUNNER_RES" in pnpm) echo "pnpm dlx" ;; bun) echo "bunx" ;; *) echo "npx -y" ;; esac
+}
+# skills_cli <args...>: el CLI de skills con el ejecutor elegido, desde la carpeta del proyecto
+skills_cli() {
+  case "$RUNNER_RES" in
+    pnpm) ( cd "$PROJ" && DISABLE_TELEMETRY=1 DO_NOT_TRACK=1 pnpm dlx "$SKILLS_CLI_PKG" "$@" ) ;;
+    bun) if have bunx; then ( cd "$PROJ" && DISABLE_TELEMETRY=1 DO_NOT_TRACK=1 bunx "$SKILLS_CLI_PKG" "$@" )
+         else ( cd "$PROJ" && DISABLE_TELEMETRY=1 DO_NOT_TRACK=1 bun x "$SKILLS_CLI_PKG" "$@" ); fi ;;
+    *) ( cd "$PROJ" && DISABLE_TELEMETRY=1 DO_NOT_TRACK=1 npx -y "$SKILLS_CLI_PKG" "$@" ) ;;
+  esac
+}
+# skills_add <scope> <origen> <skill...>
 skills_add() {
   local scope="$1" src="$2"; shift 2
-  local args=(add "$src" --skill "$@" --agent claude-code --copy --yes)
+  local args=(add "$src" --skill "$@" --agent "$AGENT" --copy --yes)
   [ "$scope" = global ] && args+=(--global)
   skills_cli "${args[@]}"
 }
 skills_undo_cmd() { # texto del comando que deshace la instalación (para el estado)
   local scope="$1"; shift
-  printf 'npx -y %s remove%s --agent claude-code -y %s' "$SKILLS_CLI_PKG" "$([ "$scope" = global ] && echo ' --global')" "$*"
+  printf '%s %s remove%s --agent %s -y %s' "$(runner_text)" "$SKILLS_CLI_PKG" "$([ "$scope" = global ] && echo ' --global')" "$AGENT" "$*"
 }
-
-node_ok() { have node && have npx && node -e 'process.exit(+process.versions.node.split(".")[0] >= 18 ? 0 : 1)' >/dev/null 2>&1; }
 
 # --------------------------------------------------------------------------- frontend
 has_frontend() {
   if [ -f "$PROJ/package.json" ] &&
-     grep -Eq '"(react|react-dom|vue|svelte|@angular/core|next|nuxt|solid-js|preact|astro|lit|@remix-run/react|@sveltejs/kit)"[[:space:]]*:' "$PROJ/package.json"; then
+     grep -Eq '"(react|react-dom|vue|svelte|@angular/core|next|nuxt|solid-js|preact|astro|lit|@remix-run/react|@sveltejs/kit|electron|@tauri-apps/api)"[[:space:]]*:' "$PROJ/package.json"; then
     return 0
   fi
+  [ -d "$PROJ/src-tauri" ] && return 0   # aplicación de escritorio con interfaz web (Tauri)
   # Se podan las carpetas generadas (incluidos los diagramas de archify y los informes de cobertura),
   # que contienen HTML/CSS sin ser frontend del proyecto.
   local hit
@@ -319,8 +392,8 @@ ensure_skill() {
     status "OMITIDO - YA CONFIGURADO" "$comp" "$(skill_dir project "$name")"
     record "$comp" "OMITIDO - YA CONFIGURADO"; return 0
   fi
-  if ! node_ok; then
-    status FALLA "$comp" "requiere Node.js >= 18 y npx (no encontrados)"; record "$comp" "FALLA"; return 0
+  if ! runner_ok; then
+    status FALLA "$comp" "$(runner_need)"; record "$comp" "FALLA"; return 0
   fi
   if ! run "$comp" "instalar $name ($src) en ámbito $SCOPE" -- skills_add "$SCOPE" "$src" "$name"; then
     record "$comp" "FALLA"; return 0
@@ -353,6 +426,19 @@ do_frontend() {
   ensure_skill frontend-design "$FRONTEND_SOURCE" frontend-design
 }
 
+do_mwg() {
+  local comp=modern-web-guidance where=""
+  if [ "$FORCE_FRONTEND" = 0 ] && ! has_frontend && ! skill_at project $comp && ! skill_at global $comp; then
+    status "OMITIDO - SIN FRONTEND" $comp "no se detectó interfaz web (usar --force-frontend para instalarla igual)"
+    record $comp "OMITIDO - SIN FRONTEND"; return 0
+  fi
+  if [ -n "$PY" ] && where=$(plugin_enabled modern-web-guidance); then
+    status "GLOBAL DETECTADO" $comp "como plugin: ${where//$'\n'/; }"
+    record $comp "GLOBAL DETECTADO (plugin)"; return 0
+  fi
+  ensure_skill $comp "$MWG_SOURCE" modern-web-guidance
+}
+
 do_superpowers() {
   local comp=superpowers where="" n s missing=() conflict=0
   if [ -z "$PY" ]; then
@@ -378,7 +464,7 @@ do_superpowers() {
   if [ ${#missing[@]} -eq 0 ]; then
     record $comp "$([ $conflict = 1 ] && echo CONFLICTO || echo 'OMITIDO - YA CONFIGURADO')"; return 0
   fi
-  if ! node_ok; then status FALLA $comp "requiere Node.js >= 18 y npx"; record $comp FALLA; return 0; fi
+  if ! runner_ok; then status FALLA $comp "$(runner_need)"; record $comp FALLA; return 0; fi
   if ! run $comp "instalar ${#missing[@]} skills (${missing[*]}) en ámbito $SCOPE; sin plugin ni hooks" -- \
        skills_add "$SCOPE" "$SUPERPOWERS_SOURCE" "${missing[@]}"; then
     record $comp FALLA; return 0
@@ -427,6 +513,12 @@ uv_undo_cmd() {
 
 do_serena() {
   local comp=serena entry
+  if [ "$AGENT" != claude-code ]; then
+    status MANUAL $comp "$AGENT: SFP no escribe su configuración de servidores MCP, porque su formato no está verificado para todas sus versiones (regla inviolable 8)"
+    status MANUAL $comp "registrarlo a mano según su documentación (OpenCode: https://opencode.ai/docs/mcp-servers/) con: ${SERENA_UVX[*]}"
+    status MANUAL $comp "conservar --add-mode no-memories y usar el contexto que la documentación de Serena indique para ese asistente (sección 6.1)"
+    record $comp "MANUAL ($AGENT)"; return 0
+  fi
   if [ -z "$PY" ]; then incomplete $comp "requiere Python 3 para leer/escribir la configuración MCP"; record $comp INCOMPLETO; return 0; fi
   if entry=$(serena_entry); then
     local scope="${entry%%$'\t'*}" cmd="${entry#*$'\t'}"
@@ -517,6 +609,11 @@ rtk_excludes() { helper toml-list "$2" "$(native "$1")" hooks exclude_commands "
 
 do_rtk() {
   local comp=rtk cfg changed=0 installed=0
+  if [ "$AGENT" != claude-code ]; then
+    status MANUAL $comp "$AGENT: el enganche automático de RTK solo está verificado para Claude Code; ver https://github.com/rtk-ai/rtk"
+    status MANUAL $comp "si se instala a mano: excluir los scripts de SFP y usar RTK_DISABLED=1 en los comandos de evidencia (sección 6.1)"
+    record $comp "MANUAL ($AGENT)"; return 0
+  fi
   if [ -z "$PY" ]; then incomplete $comp "requiere Python 3 para leer settings.json y config.toml"; record $comp INCOMPLETO; return 0; fi
   if rtk_ok; then
     status "GLOBAL DETECTADO" $comp "binario $(command -v rtk) ($(rtk --version 2>/dev/null | head -n1 | tr -d '\r'))"
@@ -642,6 +739,14 @@ healthcheck() {
     else status FALLA frontend-design "no instalada"; fi
   fi
 
+  # 3b. modern-web-guidance (como frontend-design)
+  if selected modern-web-guidance; then
+    if [ -n "$PY" ] && entry=$(plugin_enabled modern-web-guidance); then status OK modern-web-guidance "plugin: ${entry//$'\n'/; }"
+    elif d=$(hc_skill modern-web-guidance modern-web-guidance); then status OK modern-web-guidance "$d"
+    elif [ "$FORCE_FRONTEND" = 0 ] && ! has_frontend; then status OK modern-web-guidance "no instalada: el proyecto no tiene interfaz web (correcto según sección 6)"
+    else status FALLA modern-web-guidance "no instalada"; fi
+  fi
+
   # 4. superpowers (subconjunto)
   if selected superpowers; then
     local ok=1
@@ -655,7 +760,9 @@ healthcheck() {
   fi
 
   # 5. serena
-  if selected serena; then
+  if selected serena && [ "$AGENT" != claude-code ]; then
+    incomplete serena "configuración manual en $AGENT: este script no la comprueba"
+  elif selected serena; then
     if [ -z "$PY" ]; then incomplete serena "sin Python 3 no se lee la configuración MCP"
     elif entry=$(serena_entry); then
       local cmdline="${entry#*$'\t'}" first
@@ -667,7 +774,9 @@ healthcheck() {
   fi
 
   # 6. rtk
-  if selected rtk; then
+  if selected rtk && [ "$AGENT" != claude-code ]; then
+    incomplete rtk "configuración manual en $AGENT: este script no la comprueba"
+  elif selected rtk; then
     if ! rtk_ok; then status FALLA rtk "binario rtk-ai/rtk no accesible"
     elif [ -z "$PY" ]; then incomplete rtk "sin Python 3 no se comprueban hook ni exclusiones"
     else
@@ -686,7 +795,7 @@ healthcheck() {
   fi
 
   # 7. colisiones de nombres de skill entre ámbitos (la misma skill dos veces)
-  for n in archify frontend-design "${SP_INCLUDE[@]}"; do
+  for n in archify frontend-design modern-web-guidance "${SP_INCLUDE[@]}"; do
     if skill_at global "$n" && skill_at project "$n"; then status AVISO colisiones "$n existe en global y en proyecto: dos copias que pueden divergir"; fi
   done
   return 0
@@ -713,7 +822,7 @@ uninstall_all() {
     fi
     case "$kind" in
       skill)
-        if run "$comp" "retirar la skill $target del proyecto" -- skills_cli remove "$target" --agent claude-code -y; then
+        if run "$comp" "retirar la skill $target del proyecto" -- skills_cli remove "$target" --agent "$AGENT" -y; then
           if [ $APPLY = 1 ]; then
             if skill_at project "$target"; then status FALLA "$comp" "sigue existiendo $(skill_dir project "$target")"
             else status OK "$comp" "retirada $target"; done_idx+=("$idx"); fi
@@ -741,7 +850,7 @@ uninstall_all() {
       rm -f "$PROJ/skills-lock.json" && status OK retiro "skills-lock.json vacío borrado"
     fi
     local dir
-    for dir in "$PROJ/.claude/skills" "$PROJ/.claude" "$(dirname "$STATE")"; do
+    for dir in "$PROJ/.claude/skills" "$PROJ/.claude" "$PROJ/.agents/skills" "$PROJ/.agents" "$(dirname "$STATE")"; do
       if [ -d "$dir" ] && rmdir "$dir" 2>/dev/null; then status OK retiro "carpeta vacía borrada: $dir"; fi
     done
   fi
@@ -749,8 +858,16 @@ uninstall_all() {
 }
 
 # --------------------------------------------------------------------------- principal
-echo "integrations.sh $SKILL_VERSION — modo: $MODE$([ $APPLY = 1 ] && [ "$MODE" = uninstall ] && echo ' --apply') · proyecto: $PROJ · ámbito: $SCOPE · rtk: $RTK_SCOPE · so: $OS"
-echo "config de Claude Code: $CLAUDE_HOME · estado: $STATE · python: ${PY:-NO} · node: $(node --version 2>/dev/null || echo NO)"
+RUNNER_RES=$(resolve_runner)
+# finish_incomplete: un 3 (INCOMPLETO) sale como 1 con --strict-tooling
+finish_incomplete() {
+  echo "en CI: tratar 3 como advertencia y fallar solo con 1 o 2 (--strict-tooling convierte el 3 en 1)"
+  if [ $STRICT = 1 ]; then echo "--strict-tooling: lo incompleto se trata como falla"; exit 1; fi
+  exit 3
+}
+echo "integrations.sh $SKILL_VERSION — modo: $MODE$([ $APPLY = 1 ] && [ "$MODE" = uninstall ] && echo ' --apply') · proyecto: $PROJ · asistente: $AGENT$([ "$AGENT" = opencode ] && echo ' (en pruebas)') · ámbito: $SCOPE · rtk: $RTK_SCOPE · so: $OS"
+echo "CLI de skills con: ${RUNNER_RES:-NINGUNO} (--runner $RUNNER)$([ -n "$RUNNER_RES" ] && [ "$RUNNER_RES" != npx ] && echo ' (en pruebas)')"
+echo "config de $([ "$AGENT" = opencode ] && echo "OpenCode: $OPENCODE_HOME" || echo "Claude Code: $CLAUDE_HOME") · estado: $STATE · python: ${PY:-NO} · node: $(node --version 2>/dev/null || echo NO)"
 [ -n "$PY" ] || echo "AVISO: sin Python 3, Serena, RTK, el estado y la detección de plugins quedan sin comprobar (resultado INCOMPLETO)"
 
 if [ "$MODE" = uninstall ]; then
@@ -758,7 +875,7 @@ if [ "$MODE" = uninstall ]; then
   echo
   [ $APPLY = 1 ] || echo "PLAN DE RETIRO: no se escribió nada. Repetir con --uninstall --apply tras la aprobación."
   [ $FAILS -eq 0 ] || { echo "resultado: $FAILS falla(s)"; exit 1; }
-  [ $INCOMPLETE -eq 0 ] || exit 3
+  [ $INCOMPLETE -eq 0 ] || finish_incomplete
   exit 0
 fi
 
@@ -771,13 +888,14 @@ if [ "$MODE" != check ]; then
       frontend-design) do_frontend ;;
       superpowers) do_superpowers ;;
       serena) do_serena ;;
+      modern-web-guidance) do_mwg ;;
       rtk) do_rtk ;;
     esac
   done
   section "RESUMEN"
   for l in "${SUMMARY[@]}"; do echo "  $l"; done
   if [ $APPLY = 1 ] && [ -n "$PY" ]; then
-    helper state-save "$(native "$STATE")" "$ONLY" "$SKIP" "$SCOPE" "$RTK_SCOPE" "$FORCE_FRONTEND" "$SKILL_VERSION"
+    helper state-save "$(native "$STATE")" "$ONLY" "$SKIP" "$SCOPE" "$RTK_SCOPE" "$FORCE_FRONTEND" "$SKILL_VERSION" "$AGENT" "$RUNNER"
     echo "  selección y registros guardados en $STATE (--check y --uninstall los reutilizan)"
   fi
 fi
@@ -786,7 +904,7 @@ if [ "$MODE" = plan ]; then
   echo
   echo "PLAN: no se escribió nada. Revisar arriba y repetir con --apply tras la aprobación."
   [ $FAILS -eq 0 ] || { echo "Hay $FAILS falla(s)/conflicto(s) que resolver antes de aplicar."; exit 1; }
-  [ $INCOMPLETE -eq 0 ] || { echo "Plan INCOMPLETO: $INCOMPLETE comprobación(es) no ejecutada(s)."; exit 3; }
+  [ $INCOMPLETE -eq 0 ] || { echo "Plan INCOMPLETO: $INCOMPLETE comprobación(es) no ejecutada(s)."; finish_incomplete; }
   exit 0
 fi
 
@@ -796,7 +914,7 @@ echo
 if [ $FAILS -ne 0 ]; then
   echo "resultado: $FAILS falla(s) o conflicto(s) — ver arriba"; exit 1
 elif [ $INCOMPLETE -ne 0 ]; then
-  echo "resultado: INCOMPLETO — $INCOMPLETE comprobación(es) no ejecutada(s). No presentar como 'sin fallas'"; exit 3
+  echo "resultado: INCOMPLETO — $INCOMPLETE comprobación(es) no ejecutada(s). No presentar como 'sin fallas'"; finish_incomplete
 fi
 echo "resultado: sin fallas (sfp + componentes seleccionados accesibles y sin conflictos)"
 exit 0

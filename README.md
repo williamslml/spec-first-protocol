@@ -271,7 +271,7 @@ SFP es una metodología y no depende de un asistente en particular. Lo que cambi
 | Scripts de análisis, verificación y retiro | No | Solo necesitan una terminal con `sh` o `bash` |
 | Filtro de firmas de IA en los commits | No | Es un hook de Git, ajeno al asistente |
 | Ajuste de firmas en la herramienta | Sí, por asistente | Verificado solo en Claude Code. Para los demás, la skill consulta su documentación antes de cambiar nada; si no puede confirmarlo, no lo cambia y usa la regla escrita y el filtro del repositorio |
-| Instalador de herramientas complementarias | Sí | Solo funciona con Claude Code |
+| Instalador de herramientas complementarias | Sí | Probado con Claude Code. Con OpenCode, en pruebas: instala las skills, y Serena y RTK se configuran a mano con las instrucciones que muestra. Ejecuta el instalador de skills con npx, pnpm o bun |
 
 #### Dónde se instala la skill
 
@@ -305,8 +305,10 @@ Se ofrecen únicamente cuando tienen sentido para el proyecto, y nunca se instal
 | [RTK](https://github.com/rtk-ai/rtk) | Reducir el consumo al leer la salida de los comandos | Para reducir costos |
 | [archify](https://github.com/tt-a1i/archify) | Diagramar la arquitectura del sistema | Opcional |
 | [frontend-design](https://github.com/anthropics/skills) | Diseño visual de pantallas | Solo si el proyecto tiene interfaz |
+| [Modern Web Guidance](https://github.com/GoogleChrome/modern-web-guidance) | Código web moderno y correcto: HTML semántico, CSS actual, accesibilidad, rendimiento y seguridad | Solo si el proyecto tiene interfaz web, también en escritorio con Electron o Tauri |
+| [Context7](https://github.com/upstash/context7) | Consultar la documentación vigente de las librerías del proyecto | Opcional. Se instala a mano, con aprobación: envía las consultas a un servicio externo |
 
-Cada herramienta tiene prohibido duplicar funciones que ya cubre SFP, para evitar contradicciones. Por ejemplo, Superpowers no planifica: esa función corresponde a SFP.
+Cada herramienta tiene prohibido duplicar funciones que ya cubre SFP, para evitar contradicciones. Por ejemplo, Superpowers no planifica: esa función corresponde a SFP. Y Modern Web Guidance no se ocupa del diseño visual, que es de frontend-design.
 
 </details>
 
@@ -390,7 +392,7 @@ Cuando la documentación de un asistente o de una herramienta no permite confirm
 <details>
 <summary><strong>¿Funciona con cualquier asistente?</strong></summary>
 <br>
-Las reglas, sí: quedan documentadas en el proyecto y cualquiera puede leerlas. Lo que depende del asistente es la instalación guiada, que requiere cargar skills en formato `SKILL.md`, y el instalador de herramientas complementarias, que solo funciona con Claude Code. El detalle está en [Compatibilidad](#compatibilidad).
+Las reglas, sí: quedan documentadas en el proyecto y cualquiera puede leerlas. Lo que depende del asistente es la instalación guiada, que requiere cargar skills en formato `SKILL.md`, y el instalador de herramientas complementarias, probado con Claude Code y en pruebas con OpenCode. El detalle está en [Compatibilidad](#compatibilidad).
 </details>
 
 <details>
@@ -458,6 +460,8 @@ Cualquier persona puede proponer cambios. Solo los mantenedores, [williamslml](h
 4. Subir la rama a la copia propia y abrir una solicitud de cambios (PR) hacia `master`, completando la plantilla que aparece. Las mismas comprobaciones se ejecutan solas en GitHub y sirven de aviso para quien revisa.
 5. Un mantenedor revisa la solicitud. Puede pedir ajustes y, con su aprobación, se mezcla.
 
+Para reportar un problema o sugerir una mejora basta con abrir un issue. Si la skill detecta un problema propio mientras trabaja y está instalado el CLI `gh` con sesión iniciada, puede preparar el reporte con los datos de la skill, sin nada de tu proyecto. Lo muestra en la siguiente pausa y solo lo publica si lo apruebas.
+
 Hay una versión corta de estos pasos en [CONTRIBUTING.md](CONTRIBUTING.md). Los problemas de seguridad no se reportan públicamente: seguir [SECURITY.md](SECURITY.md).
 
 ### Reglas del proyecto
@@ -488,7 +492,7 @@ Estas reglas valen para todas las personas, incluidos los mantenedores:
 | Usar la skill | Un asistente que cargue skills en formato `SKILL.md` (ver [Compatibilidad](#compatibilidad)) |
 | Los scripts de análisis, verificación y retiro | `sh`, `find`, `grep`, `awk` y `sed` (incluidos en Git for Windows, macOS y Linux). `git` recomendado |
 | Validar el registro de cambios y deshacerlos automáticamente | Python 3 (en Windows suele llamarse `python`) o `jq` |
-| El instalador de herramientas complementarias | bash 4 o superior, Python 3.11 o superior, Node.js 18 o superior |
+| El instalador de herramientas complementarias | bash 4 o superior, Python 3.11 o superior, y Node.js 18 o superior con npx o pnpm, o bun |
 | Windows | Git for Windows (Git Bash) o WSL. `scripts/run.ps1` los detecta automáticamente |
 
 Probado en Windows 11 (Git Bash), Debian 12 y Alpine 3.20. El instalador de herramientas no se ha probado en macOS: con el bash incluido de fábrica se detiene con un aviso (`brew install bash` lo resuelve).
@@ -503,11 +507,11 @@ Probado en Windows 11 (Git Bash), Debian 12 y Alpine 3.20. El instalador de herr
 | Script | Qué hace | ¿Escribe? |
 |---|---|---|
 | `scripts/discover.sh <proyecto>` | Analiza el proyecto | No |
-| `scripts/verify.sh <proyecto>` | Verifica lo instalado | No |
+| `scripts/verify.sh [--strict-tooling] <proyecto>` | Verifica lo instalado | No |
 | `scripts/fingerprint.sh --propose / --accept <proyecto>` | Registra huellas de lo instalado para poder deshacerlo con seguridad | Solo en `.sfp/` |
 | `scripts/uninstall.sh <proyecto> [--apply]` | Retira SFP. Sin `--apply` solo muestra qué haría | Solo con `--apply` |
 | `scripts/sfp-section.sh <con\|sin> <sección>` | Muestra una sección del texto completo de la metodología | No |
-| `scripts/integrations.sh [--apply \| --check \| --uninstall] <proyecto>` | Instala, verifica o retira las herramientas complementarias. Sin `--apply` solo muestra el plan | Solo con `--apply` |
+| `scripts/integrations.sh [--apply \| --check \| --uninstall] [--agent claude-code\|opencode] [--runner auto\|npx\|pnpm\|bun] <proyecto>` | Instala, verifica o retira las herramientas complementarias. Sin `--apply` solo muestra el plan | Solo con `--apply` |
 | `scripts/hooks/commit-msg-ai-attribution.sh <archivo>` | Filtro que elimina las firmas de IA de un mensaje de commit | Solo ese archivo |
 | `scripts/run.ps1 <script> …` | Ejecuta cualquiera de los anteriores desde PowerShell | Igual que el script que ejecuta |
 
@@ -575,6 +579,7 @@ Este repositorio se publica bajo la licencia [MIT](LICENSE).
 | Serena | GPL-3.0 o posterior (su parte SolidLSP es MIT) |
 | RTK | Apache-2.0 |
 | frontend-design | Apache-2.0 |
+| Modern Web Guidance | Apache-2.0 (sus guías, CC-BY-4.0) |
 | CLI `skills` (npm) y uv | Las de sus respectivos proyectos |
 
 <div align="center">
