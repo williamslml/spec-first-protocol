@@ -35,10 +35,11 @@
 #                            <proyecto>/.agents/skills o ~/.agents/skills; Serena y Context7, a
 #                            <proyecto>/.codex/config.toml (Codex solo lo lee en proyectos de confianza)
 #                            o a ~/.codex/config.toml; RTK, con 'rtk init -g --codex'.
-#   --runner auto|npx|pnpm|bun|yarn  Cómo se ejecuta el CLI de skills. auto (defecto) usa el gestor del
-#                            proyecto (packageManager de package.json o su lockfile) y, si no hay ninguno
-#                            o no está instalado, el primero disponible: npx, pnpm dlx, bunx, yarn dlx.
-#                            Probado con npx y pnpm; bun y yarn (2 o superior), en pruebas.
+#   --runner auto|npx|npm|pnpm|bun|yarn  Cómo se ejecuta el CLI de skills. auto (defecto) usa el gestor
+#                            del proyecto (packageManager de package.json o su lockfile; package-lock.json
+#                            es npm) y, si no hay ninguno o no está instalado, el primero disponible: npx,
+#                            npm exec, pnpm dlx, bunx, yarn dlx. Probado con npx, npm y pnpm; bun y yarn
+#                            (2 o superior), en pruebas.
 #   --strict-tooling         Un resultado INCOMPLETO (3) sale como falla (1), para CI estrictos.
 #   --state <archivo>        Estado (defecto: <proyecto>/.sfp/integrations.json, o
 #                            .sfp/integrations-codex.json con --agent codex; fuera del repo en el
@@ -137,7 +138,7 @@ RUNNER=auto
 RUNNER_GIVEN=0
 STRICT=0
 
-usage() { sed -n '2,63p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,64p' "$0" | sed 's/^# \{0,1\}//'; }
 die_usage() { echo "ERROR: $1" >&2; echo "Ayuda: bash $0 --help" >&2; exit 2; }
 set_mode() { [ "$MODE" = plan ] || [ "$MODE" = "$1" ] || die_usage "--check y --uninstall son excluyentes"; MODE="$1"; }
 
@@ -180,7 +181,7 @@ CLAUDE_HOME="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 CLAUDE_JSON="${SFP_CLAUDE_JSON:-$HOME/.claude.json}"
 CODEX_HOME_DIR="${CODEX_HOME:-$HOME/.codex}"
 case "$AGENT" in claude-code|codex) ;; *) die_usage "--agent debe ser claude-code o codex" ;; esac
-case "$RUNNER" in auto|npx|pnpm|bun|yarn) ;; *) die_usage "--runner debe ser auto, npx, pnpm, bun o yarn" ;; esac
+case "$RUNNER" in auto|npx|npm|pnpm|bun|yarn) ;; *) die_usage "--runner debe ser auto, npx, npm, pnpm, bun o yarn" ;; esac
 if [ "$AGENT" = codex ]; then STATE="${STATE_ARG:-$PROJ/.sfp/integrations-codex.json}"
 else STATE="${STATE_ARG:-$PROJ/.sfp/integrations.json}"; fi
 
@@ -240,7 +241,7 @@ else
 fi
 
 case "$AGENT" in claude-code|codex) ;; *) die_usage "agente inválido en el estado: $AGENT" ;; esac
-case "$RUNNER" in auto|npx|pnpm|bun|yarn) ;; *) die_usage "gestor inválido en el estado: $RUNNER" ;; esac
+case "$RUNNER" in auto|npx|npm|pnpm|bun|yarn) ;; *) die_usage "gestor inválido en el estado: $RUNNER" ;; esac
 case "$SCOPE" in project|global) ;; *) die_usage "--scope debe ser project o global" ;; esac
 case "$RTK_SCOPE" in project|global) ;; *) die_usage "--rtk-scope debe ser project o global" ;; esac
 for list in "$ONLY" "$SKIP"; do
@@ -342,8 +343,8 @@ plugin_enabled() {
     "$(native "$PROJ/.claude/settings.local.json")" "$(native "$CLAUDE_HOME/plugins/installed_plugins.json")"
 }
 
-# CLI de skills, versión fijada, con el gestor de paquetes elegido (--runner).
-# npmx (npmx.dev) no sirve aquí: es un buscador web del registro de npm, no ejecuta paquetes.
+# CLI de skills, versión fijada, con el gestor de paquetes elegido (--runner): npx o npm exec (los dos de npm),
+# pnpm dlx, bunx o yarn dlx.
 node18() { have node && node -e 'process.exit(+process.versions.node.split(".")[0] >= 18 ? 0 : 1)' >/dev/null 2>&1; }
 # project_pm → gestor que declara el proyecto: "packageManager" de package.json, o su lockfile (vacío si ninguno)
 project_pm() {
@@ -360,7 +361,8 @@ project_pm() {
 yarn_dlx_ok() { have yarn && [ "$(yarn --version 2>/dev/null | cut -d. -f1)" -ge 2 ] 2>/dev/null; }   # yarn 1 no tiene dlx
 runner_avail() {
   case "$1" in
-    npx|npm) node18 && have npx ;;
+    npx) node18 && have npx ;;
+    npm) node18 && have npm ;;
     pnpm) node18 && have pnpm ;;
     bun) have bunx || have bun ;;
     yarn) node18 && yarn_dlx_ok ;;
@@ -372,18 +374,17 @@ resolve_runner() {
   case "$RUNNER" in
     auto)
       pm=$(project_pm)
-      [ "$pm" = npm ] && pm=npx
       if [ -n "$pm" ] && runner_avail "$pm"; then echo "$pm"; return 0; fi
-      for c in npx pnpm bun yarn; do runner_avail "$c" && { echo "$c"; return 0; }; done ;;
+      for c in npx npm pnpm bun yarn; do runner_avail "$c" && { echo "$c"; return 0; }; done ;;
     *) runner_avail "$RUNNER" && echo "$RUNNER" ;;
   esac
   return 0
 }
 RUNNER_RES=""
 runner_ok() { [ -n "$RUNNER_RES" ]; }
-runner_need() { echo "requiere Node.js >= 18 con npx, pnpm o yarn 2+, o bun (opción --runner; elegido: $RUNNER)"; }
+runner_need() { echo "requiere Node.js >= 18 con npx, npm, pnpm o yarn 2+, o bun (opción --runner; elegido: $RUNNER)"; }
 runner_text() { # texto del ejecutor, para mostrar y para el estado
-  case "$RUNNER_RES" in pnpm) echo "pnpm dlx" ;; bun) echo "bunx" ;; yarn) echo "yarn dlx" ;; *) echo "npx -y" ;; esac
+  case "$RUNNER_RES" in npm) echo "npm exec --yes --" ;; pnpm) echo "pnpm dlx" ;; bun) echo "bunx" ;; yarn) echo "yarn dlx" ;; *) echo "npx -y" ;; esac
 }
 # skills_cli <args...>: el CLI de skills con el ejecutor elegido, desde la carpeta del proyecto
 skills_cli() {
@@ -391,6 +392,7 @@ skills_cli() {
     pnpm) ( cd "$PROJ" && DISABLE_TELEMETRY=1 DO_NOT_TRACK=1 pnpm dlx "$SKILLS_CLI_PKG" "$@" ) ;;
     bun) if have bunx; then ( cd "$PROJ" && DISABLE_TELEMETRY=1 DO_NOT_TRACK=1 bunx "$SKILLS_CLI_PKG" "$@" )
          else ( cd "$PROJ" && DISABLE_TELEMETRY=1 DO_NOT_TRACK=1 bun x "$SKILLS_CLI_PKG" "$@" ); fi ;;
+    npm) ( cd "$PROJ" && DISABLE_TELEMETRY=1 DO_NOT_TRACK=1 npm exec --yes -- "$SKILLS_CLI_PKG" "$@" ) ;;
     yarn) ( cd "$PROJ" && DISABLE_TELEMETRY=1 DO_NOT_TRACK=1 yarn dlx "$SKILLS_CLI_PKG" "$@" ) ;;
     *) ( cd "$PROJ" && DISABLE_TELEMETRY=1 DO_NOT_TRACK=1 npx -y "$SKILLS_CLI_PKG" "$@" ) ;;
   esac
@@ -1058,7 +1060,7 @@ finish_incomplete() {
 echo "integrations.sh $SKILL_VERSION — modo: $MODE$([ $APPLY = 1 ] && [ "$MODE" = uninstall ] && echo ' --apply') · proyecto: $PROJ · asistente: $AGENT$([ "$AGENT" = codex ] && echo ' (en pruebas)') · ámbito: $SCOPE · rtk: $RTK_SCOPE · so: $OS"
 PM_PROJ=$(project_pm)
 echo "CLI de skills con: ${RUNNER_RES:-NINGUNO} (--runner $RUNNER; gestor del proyecto: ${PM_PROJ:-no declarado})$(case "$RUNNER_RES" in bun|yarn) echo ' (en pruebas)' ;; esac)"
-if [ "$RUNNER" = auto ] && [ -n "$PM_PROJ" ] && [ "$PM_PROJ" != npm ] && [ -n "$RUNNER_RES" ] && [ "$RUNNER_RES" != "$PM_PROJ" ]; then
+if [ "$RUNNER" = auto ] && [ -n "$PM_PROJ" ] && [ -n "$RUNNER_RES" ] && [ "$RUNNER_RES" != "$PM_PROJ" ]; then
   echo "AVISO: el proyecto usa $PM_PROJ, pero no está disponible en este equipo: se usará $RUNNER_RES"
 fi
 echo "config de $([ "$AGENT" = codex ] && echo "Codex: $CODEX_HOME_DIR" || echo "Claude Code: $CLAUDE_HOME") · estado: $STATE · python: ${PY:-NO} · node: $(node --version 2>/dev/null || echo NO)"

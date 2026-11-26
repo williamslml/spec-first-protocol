@@ -89,6 +89,11 @@ contiene "discover.sh informa el gestor de paquetes del proyecto" "gestor_de_paq
 contiene "discover.sh dice cuando no hay interfaz web" "interfaz_web: no detectada" "$TMP/discover.txt"
 bash "$SCRIPTS/integrations.sh" --only archify "$TMP/con-web" >"$TMP/plan-web.txt" 2>&1
 contiene "integrations.sh --runner auto mira el gestor del proyecto" "gestor del proyecto: bun" "$TMP/plan-web.txt"
+mkdir -p "$TMP/con-npm"; printf '{"lockfileVersion": 3}
+' >"$TMP/con-npm/package-lock.json"
+bash "$SCRIPTS/integrations.sh" --only archify "$TMP/con-npm" >"$TMP/plan-npm.txt" 2>&1
+contiene "un proyecto con package-lock.json se ejecuta con npm" "gestor del proyecto: npm" "$TMP/plan-npm.txt"
+if command -v npm >/dev/null 2>&1; then contiene "y el CLI de skills se ejecuta con npm exec" "CLI de skills con: npm" "$TMP/plan-npm.txt"; fi
 
 # Copia fija del skill dentro de un proyecto, más vieja que la instalación global
 mkdir -p "$TMP/global-sfp" "$TMP/con-copia/herramientas/spec-first-protocol"
@@ -285,7 +290,7 @@ codigo "un ámbito inválido devuelve 2" 2 bash "$SCRIPTS/integrations.sh" --sco
 codigo "un componente desconocido devuelve 2" 2 bash "$SCRIPTS/integrations.sh" --only nada
 codigo "--check y --uninstall no se pueden combinar" 2 bash "$SCRIPTS/integrations.sh" --check --uninstall
 codigo "un asistente desconocido devuelve 2" 2 bash "$SCRIPTS/integrations.sh" --agent otro
-codigo "un gestor de paquetes desconocido devuelve 2 (npmx no ejecuta paquetes)" 2 bash "$SCRIPTS/integrations.sh" --runner npmx
+codigo "un gestor de paquetes desconocido devuelve 2" 2 bash "$SCRIPTS/integrations.sh" --runner otro
 # Plan para Codex, con una carpeta personal vacía para no depender de lo instalado en este equipo
 PO="$TMP/proyecto-codex"; mkdir -p "$PO/.claude/skills/archify" "$TMP/casa"
 printf -- '---\nname: archify\n---\n' >"$PO/.claude/skills/archify/SKILL.md"

@@ -271,7 +271,7 @@ SFP es una metodología y no depende de un asistente en particular. Lo que cambi
 | Scripts de análisis, verificación y retiro | No | Solo necesitan una terminal con `sh` o `bash` |
 | Filtro de firmas de IA en los commits | No | Es un hook de Git, ajeno al asistente |
 | Ajuste de firmas en la herramienta | Sí, por asistente | Verificado solo en Claude Code. Para los demás, la skill consulta su documentación antes de cambiar nada; si no puede confirmarlo, no lo cambia y usa la regla escrita y el filtro del repositorio |
-| Instalador de herramientas complementarias | Sí | Probado con Claude Code. Con Codex, en pruebas: instala y retira las skills, Serena y Context7 en su `config.toml`, y RTK con su hook. Falta comprobarlo con Codex en uso. Ejecuta el instalador de skills con el gestor de paquetes del proyecto (npx, pnpm, bun o yarn) |
+| Instalador de herramientas complementarias | Sí | Probado con Claude Code. Con Codex, en pruebas: instala y retira las skills, Serena y Context7 en su `config.toml`, y RTK con su hook. Falta comprobarlo con Codex en uso. Ejecuta el instalador de skills con el gestor de paquetes del proyecto (npx, npm, pnpm, bun o yarn) |
 
 #### Dónde se instala la skill
 
@@ -492,7 +492,7 @@ Estas reglas valen para todas las personas, incluidos los mantenedores:
 | Usar la skill | Un asistente que cargue skills en formato `SKILL.md` (ver [Compatibilidad](#compatibilidad)) |
 | Los scripts de análisis, verificación y retiro | `sh`, `find`, `grep`, `awk` y `sed` (incluidos en Git for Windows, macOS y Linux). `git` recomendado |
 | Validar el registro de cambios y deshacerlos automáticamente | Python 3 (en Windows suele llamarse `python`) o `jq` |
-| El instalador de herramientas complementarias | bash 4 o superior, Python 3.11 o superior, y Node.js 18 o superior con npx o pnpm, o bun |
+| El instalador de herramientas complementarias | bash 4 o superior, Python 3.11 o superior, y Node.js 18 o superior con npx, npm o pnpm, o bun |
 | Windows | Git for Windows (Git Bash) o WSL. `scripts/run.ps1` los detecta automáticamente |
 
 Probado en Windows 11 (Git Bash), Debian 12 y Alpine 3.20. El instalador de herramientas no se ha probado en macOS: con el bash incluido de fábrica se detiene con un aviso (`brew install bash` lo resuelve).
@@ -511,7 +511,7 @@ Probado en Windows 11 (Git Bash), Debian 12 y Alpine 3.20. El instalador de herr
 | `scripts/fingerprint.sh --propose / --accept <proyecto>` | Registra huellas de lo instalado para poder deshacerlo con seguridad | Solo en `.sfp/` |
 | `scripts/uninstall.sh <proyecto> [--apply]` | Retira SFP. Sin `--apply` solo muestra qué haría | Solo con `--apply` |
 | `scripts/sfp-section.sh <con\|sin> <sección>` | Muestra una sección del texto completo de la metodología | No |
-| `scripts/integrations.sh [--apply \| --check \| --uninstall] [--agent claude-code\|codex] [--runner auto\|npx\|pnpm\|bun] <proyecto>` | Instala, verifica o retira las herramientas complementarias. Sin `--apply` solo muestra el plan | Solo con `--apply` |
+| `scripts/integrations.sh [--apply \| --check \| --uninstall] [--agent claude-code\|codex] [--runner auto\|npx\|npm\|pnpm\|bun\|yarn] <proyecto>` | Instala, verifica o retira las herramientas complementarias. Sin `--apply` solo muestra el plan | Solo con `--apply` |
 | `scripts/hooks/commit-msg-ai-attribution.sh <archivo>` | Filtro que elimina las firmas de IA de un mensaje de commit | Solo ese archivo |
 | `scripts/run.ps1 <script> …` | Ejecuta cualquiera de los anteriores desde PowerShell | Igual que el script que ejecuta |
 
