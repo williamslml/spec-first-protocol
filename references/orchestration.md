@@ -54,12 +54,12 @@ Preguntas (omitir, diciéndolo, las que claramente no aplican):
 | 4 | Modelo de agentes | ¿Qué es un supervisor y qué un worker?, dónde y en qué formato se definen roles o perfiles, máximo de workers a la vez, ¿el supervisor es configurable o fijo? |
 | 5 | Coordinación | Patrones que ofrece (síncrono, asíncrono, mensajería, otros) y su nombre propio, paralelismo real, manejo de fallos, tiempos límite y reintentos |
 | 6 | Permisos y aislamiento | Nivel de aislamiento (proceso, contenedor, máquina virtual, ninguno), detalle de las restricciones de herramientas (por rol, herramienta, ruta o comando), **quién las hace cumplir** (orquestador o runtime) y qué pasa si el runtime las ignora, aislamiento de archivos y de red |
-| 7 | Aprobación humana | ¿Puede pausar y esperar aprobación?, ¿dónde se aprueba (terminal, interfaz, otro)?, ¿se pueden bloquear por defecto las acciones de alto impacto (regla 11 de `methodology-digest.md`)? |
+| 7 | Aprobación humana | ¿Puede pausar y esperar aprobación?, ¿dónde se aprueba (terminal, interfaz, otro)?, ¿se pueden bloquear por defecto las acciones de alto impacto (regla 11 del resumen, `methodology-digest.md`)? |
 | 8 | Memoria y lecciones | ¿Guarda memoria o lecciones?, ¿hay que activarla o viene activa?, ¿dónde (dentro o fuera del repo) y en qué formato?, ¿promueve sola?, ¿cómo se revisa antes de aplicarse? |
 | 9 | Estado y specs | ¿Lleva su propio registro de tareas?, ¿cómo convive con `tasks.md` o la capa de specs?, ¿qué manda si no coinciden? |
 | 10 | Git y concurrencia | ¿Aísla workers por worktree o rama?, ¿hace commits o push por su cuenta?, ¿cómo evita que dos workers editen lo mismo? |
 | 11 | Configuración | Dónde vive (repo, usuario, global), formato, ¿se puede versionar?, ¿choca con la configuración de runtimes que ya existe?, ¿cómo maneja secretos? |
-| 12 | Observabilidad | Registros, trazas, coste o tokens, métricas: qué muestra y dónde (para la regla 18 de la sección 1 de `methodology-digest.md` y la sección 11 de `templates.md`) |
+| 12 | Observabilidad | Registros, trazas, coste o tokens, métricas: qué muestra y dónde (para la regla 18 del resumen, `methodology-digest.md` y la sección 11 de `templates.md`) |
 | 13 | Privacidad y red | Telemetría, datos enviados a terceros, conexiones salientes, qué contenido del repo puede salir |
 | 14 | Limitaciones conocidas | Lo que su documentación admite que no hace, incidencias abiertas relevantes, plataformas problemáticas |
 | 15 | Salida | Cómo se desinstala, qué deja dentro y fuera del repo, ¿se puede pasar a "sin orquestador" sin perder specs ni lecciones? |

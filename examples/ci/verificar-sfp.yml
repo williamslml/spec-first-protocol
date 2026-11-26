@@ -3,10 +3,13 @@
 # Copiar a .github/workflows/verificar-sfp.yml del proyecto y ajustar SFP_REF.
 # Trata los cuatro códigos de salida de verify.sh así:
 #   0 = sin fallas y completo  -> pasa
-#   3 = sin fallas, INCOMPLETO -> pasa con una advertencia visible (falta una herramienta o el respaldo)
+#   3 = sin fallas, INCOMPLETO -> pasa con una advertencia visible: algo no se pudo comprobar (una
+#                                 herramienta, el respaldo, o un verify_command que solo corre con
+#                                 --run-verify)
 #   1 = fallas                 -> falla
 #   2 = llamada incorrecta     -> falla
-# Para que el 3 también falle, añadir --strict-tooling a la llamada de verify.sh.
+# Para que el 3 también falle, añadir --strict-tooling a la llamada de verify.sh. Si el manifiesto registra
+# un verify_command y el equipo ya lo aprobó, añadir --run-verify para que se ejecute (si no, sale 3).
 #
 # Si el proyecto ya guarda una copia fija del skill (por ejemplo en tools/spec-first-protocol),
 # quitar el paso "Descargar el skill" y usar esa ruta como SFP_DIR. El skill se descarga fuera de la
@@ -37,6 +40,11 @@ jobs:
           SFP_DIR="$RUNNER_TEMP/spec-first-protocol"   # fuera del proyecto: no cuenta como copia del skill
           git clone --quiet https://github.com/williamslml/spec-first-protocol.git "$SFP_DIR"
           git -C "$SFP_DIR" checkout --quiet "$SFP_REF"
+
+      - name: Activar el filtro de firmas de IA en esta copia
+        # SFP versiona el filtro en .githooks; git no lo activa solo al clonar, y verify.sh lo comprueba.
+        run: |
+          if [ -f .githooks/commit-msg ]; then git config core.hooksPath .githooks; fi
 
       - name: Verificar SFP
         run: |

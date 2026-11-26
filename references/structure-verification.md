@@ -1,6 +1,6 @@
 # Verificación de la regla de dependencia de un perfil
 
-La regla de dependencia (qué carpetas pueden importar de cuáles; secciones 1 y 2 de `project-structure.md`) sin comprobación automática es solo documentación: nada impide importar directo de otra feature (funcionalidad). La comprobación es una **herramienta externa**: le aplican la regla inviolable 8 (no inventar) y la de aprobación humana para instalar herramientas. Se propone en la Fase 4, se instala solo si el usuario aprueba, y es un control de calidad (quality gate) más (regla 10 de `methodology-digest.md`).
+La regla de dependencia (qué carpetas pueden importar de cuáles; secciones 1 y 2 de `project-structure.md`) sin comprobación automática es solo documentación: nada impide importar directo de otra feature (funcionalidad). La comprobación es una **herramienta externa**: le aplican la regla inviolable 8 (no inventar) y la de aprobación humana para instalar herramientas. Se propone en la Fase 4, se instala solo si el usuario aprueba, y es un control de calidad (quality gate) más (regla 10 del resumen, `methodology-digest.md`).
 
 ## 1. Herramienta por stack (tecnología)
 

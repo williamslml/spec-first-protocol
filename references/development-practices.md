@@ -2,7 +2,7 @@
 
 Este documento reúne las reglas de trabajo diario que el skill lleva al proyecto, además de las reglas de la metodología del resumen (`methodology-digest.md`). Se aplican tanto al instalar SFP (Fase 6 de `SKILL.md`) como a cada cambio que se haga después en el proyecto. El punto de entrada de cada proyecto las resume en pocas líneas (sección 3 de `templates.md`); aquí está el detalle.
 
-Ninguna de estas reglas da permiso para saltarse una aprobación: todo lo que exige aprobación humana (publicar, subir código, mezclar o borrar ramas, borrar archivos, instalar programas, tocar producción, cambiar permisos) la sigue exigiendo.
+Ninguna de estas reglas da permiso para saltarse una aprobación: todo lo que exige aprobación humana (publicar, subir código, mezclar o borrar ramas, borrar archivos, instalar programas, tocar producción, cambiar permisos) la sigue exigiendo. Los commits que el plan aprobado incluye quedan cubiertos por esa aprobación solo si la persona permitió que el asistente haga commits; si no, se proponen y los hace ella.
 
 ## 1. Ejecutar un plan aprobado de corrido
 
@@ -92,11 +92,11 @@ Esto convive con TDD (escribir el test antes que el código), si el proyecto lo 
 
 Solo aplica si el proyecto expone una API compatible con OpenAPI (por ejemplo, REST). En una librería, un script o un frontend sin backend propio no se ofrece.
 
-1. **El documento de OpenAPI es la fuente única del contrato de la API.** Se usa la versión vigente del estándar (3.1 o la que el proyecto ya tenga). Si el framework lo genera desde el código (anotaciones, tipos, decoradores), se usa esa vía. Si no, el archivo se mantiene junto al código de los endpoints que describe.
+1. **El documento de OpenAPI es la fuente única del contrato de la API.** Se usa la versión del estándar que el proyecto ya tenga o, si empieza de cero, la más reciente que admitan sus herramientas (3.1 o posterior). Si el framework lo genera desde el código (anotaciones, tipos, decoradores), se usa esa vía. Si no, el archivo se mantiene junto al código de los endpoints que describe.
 2. **Se actualiza en la misma tarea** que crea o modifica un endpoint, no en una tarea aparte ni al final.
 3. **SFP no elige la herramienta que lo muestra** (Swagger UI, Redocly, Scalar u otra): eso lo decide el proyecto. SFP solo exige un documento válido y al día.
 4. **Primero se respeta lo que exista**: un documento o una herramienta ya elegida. Solo si no hay nada se pregunta (pregunta 20.2 de `interview.md`). El análisis inicial lista los archivos `openapi.*` y `swagger.*` que encuentre.
-5. La revisión independiente comprueba que el documento quedó al día con el cambio, no solo que el endpoint funcione. Si el proyecto tiene un validador del documento, se añade a los controles de calidad.
+5. La revisión independiente comprueba que el documento quedó al día con el cambio, no solo que el endpoint funcione. Si el proyecto tiene un validador del documento, se añade a los controles de calidad (campo `contract` de `gates.yml`, sección 14 de `templates.md`).
 
 ## 8. Revisión independiente, también con una sola sesión
 
@@ -129,7 +129,8 @@ El README es lo primero que lee cualquier persona o asistente nuevo. Por eso se 
 - Preguntas frecuentes, si las hay.
 
 **Cómo se mantiene:**
-- Al instalar SFP se ofrece (pregunta 20.3 de `interview.md`), como ítem del plan, una base del README con lo que ya se sabe del proyecto, aunque sea poco. Si ya existe un README, se adapta al formato sin inventar funciones que no existen y sin borrar lo que el equipo escribió. Lo que no se sepa queda marcado `PENDIENTE:`.
+- Al instalar SFP se ofrece (pregunta 20.3 de `interview.md`), como ítem del plan, una base del README con lo que ya se sabe del proyecto, aunque sea poco. Lo que no se sepa queda marcado `PENDIENTE:`.
+- Si ya existe un README, nunca se reemplaza. Las secciones que falten se añaden entre marcadores (acción `merge`, que el retiro puede quitar). Reordenar o reescribir lo que el equipo ya escribió es un ítem aparte del plan, que se aprueba por separado: se registra como `configure` sin marcadores, el retiro lo deja `[MANUAL]` y se deshace con el respaldo. En ningún caso se inventan funciones que no existen.
 - En cada cambio no trivial, la spec incluye una línea "README: qué cambia o no aplica". Si hay que actualizarlo, la propuesta se muestra junto con el resto del plan del cambio y se aprueba como cualquier otra parte.
 - El README nunca se reescribe por sorpresa.
 
@@ -140,12 +141,13 @@ Las decisiones (ADR), los procedimientos (runbooks), las lecciones y las specs a
 **Estado de cada documento.**
 - ADR: `Status` es `propuesto`, `aceptado` o `reemplazado por NNNN`. Un ADR reemplazado no se borra: se conserva, y apunta al que lo reemplaza.
 - Lección: `Estado` es `vigente`, `incorporada` (ya es práctica normal del equipo o pasó a una regla del punto de entrada, que se nombra) o `superada` (ya no aplica, con el motivo).
+- Runbook: `Estado` es `vigente`, `revisar` (el sistema cambió y hay que comprobarlo) u `obsoleto` (con el motivo), y una línea "Última comprobación: YYYY-MM-DD".
 - Spec archivada: se queda en su carpeta de archivo; no se borra.
 
-**Índices de lo vigente.** Un `README.md` en la carpeta de ADR y otro en la de lecciones, con una línea por documento **vigente** y un enlace a cada uno. Lo reemplazado o superado se lista aparte, al final. Así se encuentra la decisión que manda hoy sin leer todo el historial.
+**Índices de lo vigente.** Un `README.md` en la carpeta de ADR, otro en la de lecciones y otro en la de runbooks (plantilla en la sección 18 de `templates.md`), con una línea por documento **vigente** y un enlace a cada uno. Lo reemplazado o superado se lista aparte, al final. Así se encuentra la decisión que manda hoy sin leer todo el historial.
 
 **Cuándo se revisa.**
 - Al archivar un change: si el change reemplaza un ADR o vuelve obsoleta una lección, se actualiza su estado y el índice en el mismo change.
-- En el modo Actualización del skill, y como máximo cada pocos meses si el equipo lo pide: se propone (no se aplica sin aprobación) marcar como incorporadas o superadas las lecciones que lo parezcan, con el motivo.
+- En el modo Actualización del skill y, si el equipo lo pide, también cada cierto tiempo (por ejemplo, cada pocos meses): se propone (no se aplica sin aprobación) marcar como incorporadas o superadas las lecciones que lo parezcan, con el motivo.
 
 Nada se borra por antigüedad: solo cambia su estado y su lugar en el índice.

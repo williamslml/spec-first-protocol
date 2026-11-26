@@ -29,7 +29,7 @@ Objetivo: añadir la metodología sin mover nada.
 
 1. Buscar equivalencias (p. ej. `docs/decisions/` ya cumple el papel de `docs/adr/`). **Reusar lo existente**; no crear duplicados. Si el nombre difiere, anotar la equivalencia en las instrucciones en vez de renombrar.
 2. Añadir solo lo que falte y el usuario aceptó: instrucciones por runtime, `docs/lessons/`, capa de specs, plantillas de los agentes elegidos.
-3. Archivos existentes (README, instrucciones de runtimes): **fusionar con marcadores**, nunca reemplazar.
+3. Archivos existentes (README, instrucciones de runtimes): **fusionar con marcadores**, nunca reemplazar. Reordenar un README existente es un ítem aparte, aprobado por separado (sección 9 de `development-practices.md`).
 4. Ajustar los controles de calidad (quality gates) a los comandos reales del proyecto (leer sus scripts, no inventar).
 5. Primer cambio sugerido: algo pequeño y real de los pendientes, para probar el flujo.
 

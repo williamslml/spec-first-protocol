@@ -33,8 +33,10 @@
 #                            entrevista; el script no lo adivina. Con opencode, las skills van a
 #                            <proyecto>/.agents/skills o ~/.config/opencode/skills (y se reconocen las de
 #                            .claude/skills, que OpenCode también lee); Serena y RTK quedan [MANUAL].
-#   --runner auto|npx|pnpm|bun    Cómo se ejecuta el CLI de skills (defecto: auto = npx, si no pnpm dlx,
-#                            si no bunx). Probado con npx y pnpm; bun, en pruebas.
+#   --runner auto|npx|pnpm|bun|yarn  Cómo se ejecuta el CLI de skills. auto (defecto) usa el gestor del
+#                            proyecto (packageManager de package.json o su lockfile) y, si no hay ninguno
+#                            o no está instalado, el primero disponible: npx, pnpm dlx, bunx, yarn dlx.
+#                            Probado con npx y pnpm; bun y yarn (2 o superior), en pruebas.
 #   --strict-tooling         Un resultado INCOMPLETO (3) sale como falla (1), para CI estrictos.
 #   --state <archivo>        Estado (defecto: <proyecto>/.sfp/integrations.json, o
 #                            .sfp/integrations-opencode.json con --agent opencode; fuera del repo en el
@@ -120,7 +122,7 @@ RUNNER=auto
 RUNNER_GIVEN=0
 STRICT=0
 
-usage() { sed -n '2,58p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,60p' "$0" | sed 's/^# \{0,1\}//'; }
 die_usage() { echo "ERROR: $1" >&2; echo "Ayuda: bash $0 --help" >&2; exit 2; }
 set_mode() { [ "$MODE" = plan ] || [ "$MODE" = "$1" ] || die_usage "--check y --uninstall son excluyentes"; MODE="$1"; }
 
@@ -163,7 +165,7 @@ CLAUDE_HOME="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 CLAUDE_JSON="${SFP_CLAUDE_JSON:-$HOME/.claude.json}"
 OPENCODE_HOME="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
 case "$AGENT" in claude-code|opencode) ;; *) die_usage "--agent debe ser claude-code u opencode" ;; esac
-case "$RUNNER" in auto|npx|pnpm|bun) ;; *) die_usage "--runner debe ser auto, npx, pnpm o bun" ;; esac
+case "$RUNNER" in auto|npx|pnpm|bun|yarn) ;; *) die_usage "--runner debe ser auto, npx, pnpm, bun o yarn" ;; esac
 if [ "$AGENT" = opencode ]; then STATE="${STATE_ARG:-$PROJ/.sfp/integrations-opencode.json}"
 else STATE="${STATE_ARG:-$PROJ/.sfp/integrations.json}"; fi
 
@@ -223,7 +225,7 @@ else
 fi
 
 case "$AGENT" in claude-code|opencode) ;; *) die_usage "agente inválido en el estado: $AGENT" ;; esac
-case "$RUNNER" in auto|npx|pnpm|bun) ;; *) die_usage "gestor inválido en el estado: $RUNNER" ;; esac
+case "$RUNNER" in auto|npx|pnpm|bun|yarn) ;; *) die_usage "gestor inválido en el estado: $RUNNER" ;; esac
 case "$SCOPE" in project|global) ;; *) die_usage "--scope debe ser project o global" ;; esac
 case "$RTK_SCOPE" in project|global) ;; *) die_usage "--rtk-scope debe ser project o global" ;; esac
 for list in "$ONLY" "$SKIP"; do
@@ -328,23 +330,45 @@ plugin_enabled() {
 # CLI de skills, versión fijada, con el gestor de paquetes elegido (--runner).
 # npmx (npmx.dev) no sirve aquí: es un buscador web del registro de npm, no ejecuta paquetes.
 node18() { have node && node -e 'process.exit(+process.versions.node.split(".")[0] >= 18 ? 0 : 1)' >/dev/null 2>&1; }
+# project_pm → gestor que declara el proyecto: "packageManager" de package.json, o su lockfile (vacío si ninguno)
+project_pm() {
+  local pm=""
+  [ -f "$PROJ/package.json" ] && pm=$(sed -n 's/.*"packageManager"[[:space:]]*:[[:space:]]*"\([a-z]*\)@.*/\1/p' "$PROJ/package.json" | head -n 1)
+  if [ -z "$pm" ]; then
+    if [ -f "$PROJ/pnpm-lock.yaml" ]; then pm=pnpm
+    elif [ -f "$PROJ/bun.lock" ] || [ -f "$PROJ/bun.lockb" ]; then pm=bun
+    elif [ -f "$PROJ/yarn.lock" ]; then pm=yarn
+    elif [ -f "$PROJ/package-lock.json" ]; then pm=npm; fi
+  fi
+  echo "$pm"
+}
+yarn_dlx_ok() { have yarn && [ "$(yarn --version 2>/dev/null | cut -d. -f1)" -ge 2 ] 2>/dev/null; }   # yarn 1 no tiene dlx
+runner_avail() {
+  case "$1" in
+    npx|npm) node18 && have npx ;;
+    pnpm) node18 && have pnpm ;;
+    bun) have bunx || have bun ;;
+    yarn) node18 && yarn_dlx_ok ;;
+    *) return 1 ;;
+  esac
+}
 resolve_runner() {
+  local pm c
   case "$RUNNER" in
-    npx) node18 && have npx && echo npx ;;
-    pnpm) node18 && have pnpm && echo pnpm ;;
-    bun) { have bunx || have bun; } && echo bun ;;
     auto)
-      if node18 && have npx; then echo npx
-      elif node18 && have pnpm; then echo pnpm
-      elif have bunx || have bun; then echo bun; fi ;;
+      pm=$(project_pm)
+      [ "$pm" = npm ] && pm=npx
+      if [ -n "$pm" ] && runner_avail "$pm"; then echo "$pm"; return 0; fi
+      for c in npx pnpm bun yarn; do runner_avail "$c" && { echo "$c"; return 0; }; done ;;
+    *) runner_avail "$RUNNER" && echo "$RUNNER" ;;
   esac
   return 0
 }
 RUNNER_RES=""
 runner_ok() { [ -n "$RUNNER_RES" ]; }
-runner_need() { echo "requiere Node.js >= 18 con npx o pnpm, o bun (opción --runner; elegido: $RUNNER)"; }
+runner_need() { echo "requiere Node.js >= 18 con npx, pnpm o yarn 2+, o bun (opción --runner; elegido: $RUNNER)"; }
 runner_text() { # texto del ejecutor, para mostrar y para el estado
-  case "$RUNNER_RES" in pnpm) echo "pnpm dlx" ;; bun) echo "bunx" ;; *) echo "npx -y" ;; esac
+  case "$RUNNER_RES" in pnpm) echo "pnpm dlx" ;; bun) echo "bunx" ;; yarn) echo "yarn dlx" ;; *) echo "npx -y" ;; esac
 }
 # skills_cli <args...>: el CLI de skills con el ejecutor elegido, desde la carpeta del proyecto
 skills_cli() {
@@ -352,6 +376,7 @@ skills_cli() {
     pnpm) ( cd "$PROJ" && DISABLE_TELEMETRY=1 DO_NOT_TRACK=1 pnpm dlx "$SKILLS_CLI_PKG" "$@" ) ;;
     bun) if have bunx; then ( cd "$PROJ" && DISABLE_TELEMETRY=1 DO_NOT_TRACK=1 bunx "$SKILLS_CLI_PKG" "$@" )
          else ( cd "$PROJ" && DISABLE_TELEMETRY=1 DO_NOT_TRACK=1 bun x "$SKILLS_CLI_PKG" "$@" ); fi ;;
+    yarn) ( cd "$PROJ" && DISABLE_TELEMETRY=1 DO_NOT_TRACK=1 yarn dlx "$SKILLS_CLI_PKG" "$@" ) ;;
     *) ( cd "$PROJ" && DISABLE_TELEMETRY=1 DO_NOT_TRACK=1 npx -y "$SKILLS_CLI_PKG" "$@" ) ;;
   esac
 }
@@ -532,7 +557,7 @@ do_serena() {
   local comp=serena entry
   if [ "$AGENT" != claude-code ]; then
     status MANUAL $comp "$AGENT: SFP no escribe su configuración de servidores MCP, porque su formato no está verificado para todas sus versiones (regla inviolable 8)"
-    status MANUAL $comp "registrarlo a mano según su documentación (OpenCode: https://opencode.ai/docs/mcp-servers/) con: ${SERENA_UVX[*]}"
+    status MANUAL $comp "registrarlo a mano según su documentación (OpenCode: https://opencode.ai/docs/mcp-servers/) con: uvx -p $SERENA_PY --from $SERENA_PKG serena start-mcp-server --context <contexto-para-$AGENT> --project-from-cwd --add-mode no-memories"
     status MANUAL $comp "conservar --add-mode no-memories y usar el contexto que la documentación de Serena indique para ese asistente (sección 6.1)"
     record $comp "MANUAL ($AGENT)"; return 0
   fi
@@ -890,7 +915,11 @@ finish_incomplete() {
   exit 3
 }
 echo "integrations.sh $SKILL_VERSION — modo: $MODE$([ $APPLY = 1 ] && [ "$MODE" = uninstall ] && echo ' --apply') · proyecto: $PROJ · asistente: $AGENT$([ "$AGENT" = opencode ] && echo ' (en pruebas)') · ámbito: $SCOPE · rtk: $RTK_SCOPE · so: $OS"
-echo "CLI de skills con: ${RUNNER_RES:-NINGUNO} (--runner $RUNNER)$([ "$RUNNER_RES" = bun ] && echo ' (en pruebas)')"
+PM_PROJ=$(project_pm)
+echo "CLI de skills con: ${RUNNER_RES:-NINGUNO} (--runner $RUNNER; gestor del proyecto: ${PM_PROJ:-no declarado})$(case "$RUNNER_RES" in bun|yarn) echo ' (en pruebas)' ;; esac)"
+if [ "$RUNNER" = auto ] && [ -n "$PM_PROJ" ] && [ "$PM_PROJ" != npm ] && [ -n "$RUNNER_RES" ] && [ "$RUNNER_RES" != "$PM_PROJ" ]; then
+  echo "AVISO: el proyecto usa $PM_PROJ, pero no está disponible en este equipo: se usará $RUNNER_RES"
+fi
 echo "config de $([ "$AGENT" = opencode ] && echo "OpenCode: $OPENCODE_HOME" || echo "Claude Code: $CLAUDE_HOME") · estado: $STATE · python: ${PY:-NO} · node: $(node --version 2>/dev/null || echo NO)"
 [ -n "$PY" ] || echo "AVISO: sin Python 3, Serena, RTK, el estado y la detección de plugins quedan sin comprobar (resultado INCOMPLETO)"
 

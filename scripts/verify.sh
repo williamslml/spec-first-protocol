@@ -24,7 +24,7 @@
 # Códigos de salida: 0 = sin fallas y completo · 1 = hay fallas · 2 = uso/ruta inválida ·
 #                    3 = sin fallas pero INCOMPLETO (alguna comprobación no se pudo ejecutar).
 # En CI: tratar 3 como advertencia y fallar solo con 1 o 2. Con --strict-tooling, un 3 sale como 1
-# (para equipos que quieren que una herramienta faltante rompa el build). Ejemplo: examples/ci/.
+# (para equipos que quieren que lo no comprobado rompa el build). Ejemplo: examples/ci/.
 # No reemplaza la revisión humana del reporte de Fase 7.
 
 set -u
@@ -181,7 +181,7 @@ else
   fi
 
   if [ -n "$GLOBAL_VER" ] && [ -n "$JSON_TOOL" ]; then
-    echo "  instalación global del skill: $GLOBAL_VER ($GLOBAL_DIR)"
+    echo "  versión de referencia del skill: $GLOBAL_VER ($GLOBAL_DIR: la instalación global más reciente o la copia desde la que se ejecuta este script; otra carpeta con SFP_GLOBAL_SKILL_DIR)"
     if [ -n "${REG:-}" ] && ver_gt "$GLOBAL_VER" "$REG"; then
       echo "  AVISO: este proyecto se instaló o actualizó con la $REG y tu instalación global ya tiene la $GLOBAL_VER. Nada se actualiza solo: para traer las mejoras, pedir 'Actualiza SFP en este proyecto'"
     fi
@@ -399,7 +399,8 @@ section "fin"
 # explicar_codigo <código>: qué significa y cómo tratarlo en un pipeline de CI
 explicar_codigo() {
   echo "código de salida: $1 (0 = sin fallas y completo · 1 = fallas · 2 = llamada incorrecta · 3 = sin fallas, pero INCOMPLETO)"
-  echo "en CI: tratar 3 como advertencia (falta una herramienta o un respaldo, no hay un error del proyecto) y fallar solo con 1 o 2; --strict-tooling convierte el 3 en 1"
+  echo "el 3 no es un error del proyecto: algo no se pudo comprobar (falta jq o Python 3, git, el respaldo, o un verify_command que solo se ejecuta con --run-verify; ver los AVISO y NO ejecutado de arriba)"
+  echo "en CI: tratar 3 como advertencia y fallar solo con 1 o 2; --strict-tooling convierte el 3 en 1"
 }
 if [ "$FAIL" -ne 0 ]; then
   echo "verificación: hay al menos una falla arriba — no la ignores en el reporte de Fase 7"

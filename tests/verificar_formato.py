@@ -61,11 +61,12 @@ VOSEO_AMBIGUAS = {"dame", "dale", "pone"}
 
 
 # "regla 7" o "reglas 1–3" sin decir de qué lista son (SKILL.md o el resumen de la metodología)
-REGLA_NUMERADA = re.compile(r"\breglas?\s+(inviolables?\s+)?\d+", re.IGNORECASE)
-REGLA_CALIFICADA = re.compile(
-    r"^(?:[\d\s,–\-]|\b[yoa]\b)*(\([^)]*\)\s*)?(del resumen|de este resumen|de `?methodology-digest"
-    r"|de la sección 1 de `?methodology-digest)"
-)
+REGLA_NUMERADA = re.compile(r"\breglas?\s+(inviolables?\s+)?(?:n\.?º\s*)?\d+", re.IGNORECASE)
+LISTA_DE_NUMEROS = re.compile(r"(?:[\d\s,–\-]|\b[yoa]\b)*")
+REGLA_CALIFICADA = re.compile(r"(\([^)]*\)\s*)?(del resumen|de este resumen)")
+# Cuántas reglas tiene cada lista: un número fuera de rango es una cita rota
+MAX_INVIOLABLE = 11
+MAX_RESUMEN = 18
 # El historial de cambios cita reglas de versiones anteriores tal como se escribieron entonces
 SIN_REVISAR_REGLAS = {"CHANGELOG.md"}
 
@@ -74,12 +75,19 @@ def revisar_reglas(rel, n, linea):
     if rel in SIN_REVISAR_REGLAS:
         return
     for m in REGLA_NUMERADA.finditer(linea):
-        if m.group(1):
-            continue
         resto = linea[m.end():]
-        if REGLA_CALIFICADA.match(resto):
+        cola = LISTA_DE_NUMEROS.match(resto).group(0)
+        numeros = [int(x) for x in re.findall(r"\d+", m.group(0) + cola)]
+        if m.group(1):
+            maximo = MAX_INVIOLABLE
+        elif REGLA_CALIFICADA.match(resto[len(cola):]):
+            maximo = MAX_RESUMEN
+        else:
+            avisar(rel, n, f'"{m.group(0)}" no dice si es una regla inviolable o del resumen')
             continue
-        avisar(rel, n, f'"{m.group(0)}" no dice si es una regla inviolable o del resumen')
+        for x in numeros:
+            if not 1 <= x <= maximo:
+                avisar(rel, n, f'"{m.group(0)}": la regla {x} no existe (esa lista va del 1 al {maximo})')
 
 
 def archivos_de_texto():

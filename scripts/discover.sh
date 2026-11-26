@@ -150,6 +150,26 @@ if [ -f package.json ]; then
   fi
 fi
 
+# Interfaz web y gestor de paquetes (para ofrecer frontend-design y modern-web-guidance, y elegir con qué
+# se ejecuta el CLI de skills): mismos criterios que scripts/integrations.sh. Hechos, no decisiones.
+IW=""
+if [ -f package.json ] && grep -Eq '"(react|react-dom|vue|svelte|@angular/core|next|nuxt|solid-js|preact|astro|lit|@remix-run/react|@sveltejs/kit|electron|@tauri-apps/api)"[[:space:]]*:' package.json; then IW="si (package.json)"
+elif [ -d src-tauri ]; then IW="si (src-tauri)"
+else
+  H1=$(find . -maxdepth 5 \( $PRUNE -o -name .sfp -o -name .archify -o -name coverage -o -name htmlcov -o -name site -o -name _build \) -prune -o -type f \( -name '*.tsx' -o -name '*.jsx' -o -name '*.vue' -o -name '*.svelte' -o -name '*.html' -o -name '*.css' -o -name '*.scss' \) -print 2>/dev/null | head -1)
+  [ -n "$H1" ] && IW="si (${H1#./})"
+fi
+echo "interfaz_web: ${IW:-no detectada}"
+PMG=""
+[ -f package.json ] && PMG=$(sed -n 's/.*"packageManager"[[:space:]]*:[[:space:]]*"\([a-z]*\)@.*/\1/p' package.json | head -1)
+if [ -z "$PMG" ]; then
+  if [ -f pnpm-lock.yaml ]; then PMG=pnpm
+  elif [ -f bun.lock ] || [ -f bun.lockb ]; then PMG=bun
+  elif [ -f yarn.lock ]; then PMG=yarn
+  elif [ -f package-lock.json ]; then PMG=npm; fi
+fi
+echo "gestor_de_paquetes_js: ${PMG:-no declarado}"
+
 section "monorepo"
 MONO=no
 for f in pnpm-workspace.yaml lerna.json nx.json turbo.json go.work rush.json; do [ -f "$f" ] && { echo "indicador: $f"; MONO=posible; }; done

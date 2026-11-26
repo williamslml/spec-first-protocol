@@ -140,7 +140,7 @@ Publicar código, borrar archivos, mezclar ramas o tocar producción siempre req
 <td valign="top">
 
 #### Calidad y revisión según el riesgo
-Controles proporcionales al riesgo, con las pruebas y los revisores automáticos que el proyecto ya tiene. Las pruebas se escriben mientras se construye y en un lugar acordado. Y una revisión independiente: quien revisa no es quien programó, también cuando se trabaja con un solo asistente.
+Controles proporcionales al riesgo, con las pruebas y los revisores automáticos que el proyecto ya tiene. Las pruebas se escriben mientras se construye y en un lugar acordado. Y una revisión independiente: quien revisa no es quien programó, también cuando se trabaja con un solo asistente. Solo los cambios triviales se quedan con una verificación básica, y el resumen lo dice.
 
 </td>
 <td valign="top">
@@ -174,7 +174,7 @@ Opcional. Según el tipo de proyecto (API, interfaz, móvil, datos, librería, i
 <td valign="top">
 
 #### Todo cambio es reversible
-Lo que la skill instala queda registrado y puede retirarse sin afectar cambios posteriores. Antes de aplicar se guarda un punto de retorno: con Git, o con una copia de respaldo si el proyecto no lo usa.
+Lo que la skill instala queda registrado y puede retirarse sin afectar cambios posteriores. Antes de aplicar se guarda un punto de retorno: con Git, o con una copia de respaldo si el proyecto no lo usa. Solo se seguiría sin él si lo decides expresamente, y nunca al reestructurar.
 
 </td>
 </tr>
@@ -428,7 +428,7 @@ No. Agrega documentos de trabajo e instrucciones para el asistente. Solo reorgan
 <details>
 <summary><strong>¿Qué pasa si el resultado no es el esperado?</strong></summary>
 <br>
-Antes de aplicar cualquier cambio se guarda un punto de retorno. Además, puede retirarse por completo en cualquier momento.
+Antes de aplicar cualquier cambio se guarda un punto de retorno (salvo que decidas expresamente seguir sin él). Además, puede retirarse por completo en cualquier momento.
 </details>
 
 <details>
@@ -522,7 +522,7 @@ Los scripts usan los siguientes códigos de salida, y `verify.sh` los explica al
 | `0` | Sin incidencias |
 | `1` | Se encontraron problemas |
 | `2` | Llamada incorrecta (opción o ruta inválida) |
-| `3` | No se encontraron problemas, pero no pudo verificarse todo (falta una herramienta). Nunca se presenta como "todo correcto" |
+| `3` | No se encontraron problemas, pero no pudo verificarse todo: falta una herramienta, Git o el respaldo, o hay un comando registrado que solo se ejecuta con `--run-verify`. Nunca se presenta como "todo correcto". En `uninstall.sh`, el 3 significa que quedan pasos `[MANUAL]` |
 
 En un pipeline de integración continua (CI), conviene tratar el `3` como advertencia y fallar solo con `1` o `2`: así una herramienta faltante no se confunde con un error del proyecto. Si se prefiere que también falle, `verify.sh --strict-tooling` convierte el `3` en `1`. Hay un ejemplo listo para GitHub Actions en [examples/ci](examples/ci/verificar-sfp.yml).
 

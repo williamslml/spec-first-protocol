@@ -82,6 +82,13 @@ contiene "discover.sh cuenta los tests que quedan fuera de las carpetas de tests
 contiene "discover.sh nombra el test que está junto al código" "src/email.test.js" "$TMP/discover-tests.txt"
 no_contiene "discover.sh no cuenta los tests que ya están en su carpeta" "  tests/registro.test.js" "$TMP/discover-tests.txt"
 contiene "discover.sh encuentra el documento de OpenAPI" "api/openapi.yaml" "$TMP/discover-tests.txt"
+mkdir -p "$TMP/con-web"; printf '{"packageManager": "bun@1.1.0", "dependencies": {"electron": "30"}}\n' >"$TMP/con-web/package.json"
+sh "$SCRIPTS/discover.sh" "$TMP/con-web" >"$TMP/discover-web.txt" 2>&1
+contiene "discover.sh detecta una interfaz web de escritorio (Electron)" "interfaz_web: si (package.json)" "$TMP/discover-web.txt"
+contiene "discover.sh informa el gestor de paquetes del proyecto" "gestor_de_paquetes_js: bun" "$TMP/discover-web.txt"
+contiene "discover.sh dice cuando no hay interfaz web" "interfaz_web: no detectada" "$TMP/discover.txt"
+bash "$SCRIPTS/integrations.sh" --only archify "$TMP/con-web" >"$TMP/plan-web.txt" 2>&1
+contiene "integrations.sh --runner auto mira el gestor del proyecto" "gestor del proyecto: bun" "$TMP/plan-web.txt"
 
 # Copia fija del skill dentro de un proyecto, más vieja que la instalación global
 mkdir -p "$TMP/global-sfp" "$TMP/con-copia/herramientas/spec-first-protocol"
