@@ -249,9 +249,9 @@ else
   ayudante state-select "$S" >"$TMP/seleccion.txt"
   contiene "state-select devuelve lo guardado" "skip=rtk" "$TMP/seleccion.txt"
   contiene "un estado anterior sin asistente se lee como claude-code" "agent=claude-code" "$TMP/seleccion.txt"
-  codigo "state-save guarda el asistente y el gestor de paquetes" 0 ayudante state-save "$S" "" "rtk" project global 0 1.0.0 opencode pnpm
+  codigo "state-save guarda el asistente y el gestor de paquetes" 0 ayudante state-save "$S" "" "rtk" project global 0 1.0.0 codex pnpm
   ayudante state-select "$S" >"$TMP/seleccion.txt"
-  contiene "state-select devuelve el asistente guardado" "agent=opencode" "$TMP/seleccion.txt"
+  contiene "state-select devuelve el asistente guardado" "agent=codex" "$TMP/seleccion.txt"
   contiene "state-select devuelve el gestor guardado" "runner=pnpm" "$TMP/seleccion.txt"
   contiene "un estado nuevo no se marca como anterior a 1.15.0" "legacy=0" "$TMP/seleccion.txt"
   printf '{"tool": "spec-first-protocol/integrations.sh", "records": [], "selection": {"only": "", "skip": "", "scope": "project", "rtk_scope": "global"}}\n' >"$TMP/estado-viejo.json"
@@ -286,19 +286,19 @@ codigo "un componente desconocido devuelve 2" 2 bash "$SCRIPTS/integrations.sh" 
 codigo "--check y --uninstall no se pueden combinar" 2 bash "$SCRIPTS/integrations.sh" --check --uninstall
 codigo "un asistente desconocido devuelve 2" 2 bash "$SCRIPTS/integrations.sh" --agent otro
 codigo "un gestor de paquetes desconocido devuelve 2 (npmx no ejecuta paquetes)" 2 bash "$SCRIPTS/integrations.sh" --runner npmx
-# Plan para OpenCode, con una carpeta personal vacía para no depender de lo instalado en este equipo
-PO="$TMP/proyecto-opencode"; mkdir -p "$PO/.claude/skills/archify" "$TMP/casa"
+# Plan para Codex, con una carpeta personal vacía para no depender de lo instalado en este equipo
+PO="$TMP/proyecto-codex"; mkdir -p "$PO/.claude/skills/archify" "$TMP/casa"
 printf -- '---\nname: archify\n---\n' >"$PO/.claude/skills/archify/SKILL.md"
-HOME="$TMP/casa" CLAUDE_CONFIG_DIR="$TMP/casa/.claude" XDG_CONFIG_HOME="$TMP/casa/.config" \
-  bash "$SCRIPTS/integrations.sh" --agent opencode --only archify,modern-web-guidance,serena,rtk "$PO" >"$TMP/plan-opencode.txt" 2>&1
-contiene "OpenCode reconoce una skill ya presente en .claude/skills" "OMITIDO - YA CONFIGURADO" "$TMP/plan-opencode.txt"
-contiene "OpenCode guarda su estado aparte" "integrations-opencode.json" "$TMP/plan-opencode.txt"
-contiene "sin OpenCode instalado, Serena queda a decisión humana, sin escribir su configuración" "[MANUAL]                       serena" "$TMP/plan-opencode.txt"
-contiene "sin OpenCode instalado (o en Windows), RTK queda a decisión humana" "[MANUAL]                       rtk" "$TMP/plan-opencode.txt"
-contiene "modern-web-guidance no se ofrece sin interfaz web" "OMITIDO - SIN FRONTEND" "$TMP/plan-opencode.txt"
-comprobar "el plan para OpenCode no escribió nada" test ! -e "$PO/.sfp"
+HOME="$TMP/casa" CLAUDE_CONFIG_DIR="$TMP/casa/.claude" CODEX_HOME="$TMP/casa/.codex" \
+  bash "$SCRIPTS/integrations.sh" --agent codex --only archify,modern-web-guidance,serena,rtk "$PO" >"$TMP/plan-codex.txt" 2>&1
+contiene "Codex guarda su estado aparte" "integrations-codex.json" "$TMP/plan-codex.txt"
+contiene "Codex no da por instalada una skill que solo está en .claude/skills (Codex no la lee)" "instalar archify" "$TMP/plan-codex.txt"
+contiene "Serena en Codex se planifica en .codex/config.toml" ".codex/config.toml ([mcp_servers.serena])" "$TMP/plan-codex.txt"
+contiene "RTK en Codex se planifica con su hook" "rtk init -g --codex" "$TMP/plan-codex.txt"
+contiene "modern-web-guidance no se ofrece sin interfaz web" "OMITIDO - SIN FRONTEND" "$TMP/plan-codex.txt"
+comprobar "el plan para Codex no escribió nada" test ! -e "$PO/.sfp" -a ! -e "$PO/.codex"
 
-# Retiro en OpenCode con un npx simulado (sin red): el CLI de skills solo borra .agents/skills sin --agent
+# Retiro en Codex con un npx simulado (sin red): .agents/skills es compartida y el CLI solo la borra sin --agent
 if [ -n "$PY" ] && command -v node >/dev/null 2>&1; then
   FALSO="$TMP/npx-simulado"; mkdir -p "$FALSO"
   cat >"$FALSO/npx" <<'NPX'
@@ -308,58 +308,56 @@ case " $* " in *" remove "*) for a in "$@"; do [ -d ".agents/skills/$a" ] && rm 
 exit 0
 NPX
   chmod +x "$FALSO/npx"
-  for caso in solo-opencode con-copia-claude; do
+  for caso in solo-codex con-copia-claude; do
     PR="$TMP/retiro-$caso"; mkdir -p "$PR/.agents/skills/archify" "$PR/.sfp"
     printf -- '---\nname: archify\n---\n' >"$PR/.agents/skills/archify/SKILL.md"
     if [ "$caso" = con-copia-claude ]; then mkdir -p "$PR/.claude/skills"; cp -R "$PR/.agents/skills/archify" "$PR/.claude/skills/"; fi
-    EO="$(nativo "$PR/.sfp/integrations-opencode.json")"
-    ayudante state-save "$EO" "archify" "" project global 0 1.15.0 opencode npx >/dev/null 2>&1
+    EO="$(nativo "$PR/.sfp/integrations-codex.json")"
+    ayudante state-save "$EO" "archify" "" project global 0 1.15.0 codex npx >/dev/null 2>&1
     ayudante state-add "$EO" archify project skill 1 archify "npx -y skills@1.9.0 remove -y archify" >/dev/null 2>&1
     : >"$TMP/registro-npx-$caso.txt"
-    PATH="$FALSO:$PATH" NPX_REGISTRO="$TMP/registro-npx-$caso.txt" HOME="$TMP/casa" CLAUDE_CONFIG_DIR="$TMP/casa/.claude" XDG_CONFIG_HOME="$TMP/casa/.config" \
-      bash "$SCRIPTS/integrations.sh" --uninstall --apply --agent opencode "$PR" >"$TMP/retiro-$caso.txt" 2>&1
+    PATH="$FALSO:$PATH" NPX_REGISTRO="$TMP/registro-npx-$caso.txt" HOME="$TMP/casa" CLAUDE_CONFIG_DIR="$TMP/casa/.claude" CODEX_HOME="$TMP/casa/.codex" \
+      bash "$SCRIPTS/integrations.sh" --uninstall --apply --agent codex "$PR" >"$TMP/retiro-$caso.txt" 2>&1
   done
-  contiene "OpenCode: el retiro llama al CLI sin --agent" "remove archify -y" "$TMP/registro-npx-solo-opencode.txt"
-  no_contiene "OpenCode: el retiro no usa --agent opencode (el CLI no borraría la carpeta compartida)" "--agent" "$TMP/registro-npx-solo-opencode.txt"
-  comprobar "OpenCode: la skill retirada ya no está en .agents/skills" test ! -e "$TMP/retiro-solo-opencode/.agents/skills/archify"
-  contiene "OpenCode: con una copia de Claude Code, el retiro queda a decisión humana" "también está en .claude/skills" "$TMP/retiro-con-copia-claude.txt"
-  comprobar "OpenCode: con una copia de Claude Code no se llama al CLI" test ! -s "$TMP/registro-npx-con-copia-claude.txt"
-  comprobar "OpenCode: la copia de Claude Code se conserva" test -f "$TMP/retiro-con-copia-claude/.claude/skills/archify/SKILL.md"
+  contiene "Codex: el retiro llama al CLI sin --agent" "remove archify -y" "$TMP/registro-npx-solo-codex.txt"
+  no_contiene "Codex: el retiro no usa --agent codex (el CLI no borraría la carpeta compartida)" "--agent" "$TMP/registro-npx-solo-codex.txt"
+  comprobar "Codex: la skill retirada ya no está en .agents/skills" test ! -e "$TMP/retiro-solo-codex/.agents/skills/archify"
+  contiene "Codex: con una copia de Claude Code, el retiro queda a decisión humana" "también está en .claude/skills" "$TMP/retiro-con-copia-claude.txt"
+  comprobar "Codex: con una copia de Claude Code no se llama al CLI" test ! -s "$TMP/registro-npx-con-copia-claude.txt"
+  comprobar "Codex: la copia de Claude Code se conserva" test -f "$TMP/retiro-con-copia-claude/.claude/skills/archify/SKILL.md"
 else
-  omitida "retiro en OpenCode con npx simulado" "hace falta Python 3 y Node.js"
+  omitida "retiro en Codex con npx simulado" "hace falta Python 3 y Node.js"
 fi
 
-# Context7 y Serena en opencode.json, con un OpenCode simulado que solo responde su versión
-if [ -n "$PY" ] && command -v node >/dev/null 2>&1 && node -e 'const [a,b]=process.versions.node.split(".").map(Number);process.exit(a>20||(a===20&&b>=18)?0:1)'; then
-  for v in 1.19.6 2.0.3; do
-    OCB="$TMP/opencode-$v"; mkdir -p "$OCB"; printf '#!/bin/sh\necho %s\n' "$v" >"$OCB/opencode"; chmod +x "$OCB/opencode"
-    PC="$TMP/context7-$v"; mkdir -p "$PC"
-    PATH="$OCB:$PATH" HOME="$TMP/casa" CLAUDE_CONFIG_DIR="$TMP/casa/.claude" XDG_CONFIG_HOME="$TMP/casa/.config" \
-      bash "$SCRIPTS/integrations.sh" --apply --agent opencode --only context7 "$PC" >"$TMP/context7-$v.txt" 2>&1
-  done
-  contiene "Context7 en OpenCode 1.x usa mcp.context7 con enabled" '"enabled": true' "$TMP/context7-1.19.6/opencode.json"
-  contiene "Context7 en OpenCode 2.x usa mcp.servers" '"servers"' "$TMP/context7-2.0.3/opencode.json"
-  no_contiene "Context7 en OpenCode 2.x no usa enabled" '"enabled"' "$TMP/context7-2.0.3/opencode.json"
-  contiene "Context7 queda con la versión fijada" "@upstash/context7-mcp@4.9.0" "$TMP/context7-2.0.3/opencode.json"
-  no_contiene "Context7 no escribe ninguna clave" "api-key" "$TMP/context7-2.0.3/opencode.json"
-  PATH="$TMP/opencode-2.0.3:$PATH" HOME="$TMP/casa" CLAUDE_CONFIG_DIR="$TMP/casa/.claude" XDG_CONFIG_HOME="$TMP/casa/.config" \
-    bash "$SCRIPTS/integrations.sh" --uninstall --apply --agent opencode "$TMP/context7-2.0.3" >/dev/null 2>&1
-  comprobar "el retiro quita la entrada y el opencode.json que quedó vacío" test ! -e "$TMP/context7-2.0.3/opencode.json"
-  PS="$TMP/serena-oc"; mkdir -p "$PS"
-  PATH="$TMP/opencode-2.0.3:$PATH" HOME="$TMP/casa" CLAUDE_CONFIG_DIR="$TMP/casa/.claude" XDG_CONFIG_HOME="$TMP/casa/.config" \
-    bash "$SCRIPTS/integrations.sh" --agent opencode --only serena "$PS" >"$TMP/serena-oc.txt" 2>&1
-  contiene "Serena en OpenCode se planifica en opencode.json con el formato 2.x" "formato de OpenCode 2.x" "$TMP/serena-oc.txt"
-  PN="$TMP/sin-opencode"; mkdir -p "$PN"
-  HOME="$TMP/casa" CLAUDE_CONFIG_DIR="$TMP/casa/.claude" XDG_CONFIG_HOME="$TMP/casa/.config" \
-    bash "$SCRIPTS/integrations.sh" --agent opencode --only context7 "$PN" >"$TMP/sin-opencode.txt" 2>&1
-  if command -v opencode >/dev/null 2>&1; then omitida "Context7 sin OpenCode" "OpenCode está instalado en este equipo"
-  else contiene "sin OpenCode instalado, Context7 queda a mano con el comando exacto" "registrarlo a mano" "$TMP/sin-opencode.txt"; fi
-  printf '{\n  // comentario\n}\n' >"$PN/opencode.jsonc"
-  PATH="$TMP/opencode-2.0.3:$PATH" HOME="$TMP/casa" CLAUDE_CONFIG_DIR="$TMP/casa/.claude" XDG_CONFIG_HOME="$TMP/casa/.config" \
-    bash "$SCRIPTS/integrations.sh" --agent opencode --only context7 "$PN" >"$TMP/jsonc.txt" 2>&1
-  contiene "un opencode.jsonc con comentarios no se reescribe" "admite comentarios y el script no lo reescribe" "$TMP/jsonc.txt"
+# Context7 en el config.toml de Codex (requiere Python 3.11 para TOML y Node.js 20.18.1)
+if [ -n "$PY" ] && "$PY" -c 'import tomllib' >/dev/null 2>&1 && command -v node >/dev/null 2>&1 \
+   && node -e 'const [a,b]=process.versions.node.split(".").map(Number);process.exit(a>20||(a===20&&b>=18)?0:1)'; then
+  PC="$TMP/context7-codex"; mkdir -p "$PC"
+  HOME="$TMP/casa" CLAUDE_CONFIG_DIR="$TMP/casa/.claude" CODEX_HOME="$TMP/casa/.codex" \
+    bash "$SCRIPTS/integrations.sh" --apply --agent codex --only context7 "$PC" >"$TMP/context7-codex.txt" 2>&1
+  contiene "Context7 en Codex va a [mcp_servers.context7]" "[mcp_servers.context7]" "$PC/.codex/config.toml"
+  contiene "Context7 queda con la versión fijada" "@upstash/context7-mcp@4.9.0" "$PC/.codex/config.toml"
+  contiene "Context7 en Codex lleva el tiempo de arranque que recomienda su documentación" "startup_timeout_sec = 20" "$PC/.codex/config.toml"
+  no_contiene "Context7 no escribe ninguna clave" "api-key" "$PC/.codex/config.toml"
+  contiene "se avisa que Codex solo lee la configuración del proyecto si es de confianza" "de confianza" "$TMP/context7-codex.txt"
+  HOME="$TMP/casa" CLAUDE_CONFIG_DIR="$TMP/casa/.claude" CODEX_HOME="$TMP/casa/.codex" \
+    bash "$SCRIPTS/integrations.sh" --uninstall --apply --agent codex "$PC" >/dev/null 2>&1
+  comprobar "el retiro quita la entrada y la carpeta .codex que quedó vacía" test ! -e "$PC/.codex"
+  PT="$TMP/toml-propio"; mkdir -p "$PT/.codex"
+  printf '# configuración propia\nmodel = "x"\n' >"$PT/.codex/config.toml"
+  HOME="$TMP/casa" CLAUDE_CONFIG_DIR="$TMP/casa/.claude" CODEX_HOME="$TMP/casa/.codex" \
+    bash "$SCRIPTS/integrations.sh" --apply --agent codex --only context7 "$PT" >/dev/null 2>&1
+  contiene "se conservan los comentarios propios de config.toml" "# configuración propia" "$PT/.codex/config.toml"
+  HOME="$TMP/casa" CLAUDE_CONFIG_DIR="$TMP/casa/.claude" CODEX_HOME="$TMP/casa/.codex" \
+    bash "$SCRIPTS/integrations.sh" --uninstall --apply --agent codex "$PT" >/dev/null 2>&1
+  contiene "el retiro deja la configuración propia" 'model = "x"' "$PT/.codex/config.toml"
+  no_contiene "el retiro quitó la entrada de Context7" "context7" "$PT/.codex/config.toml"
+  PI="$TMP/toml-invalido"; mkdir -p "$PI/.codex"; printf 'esto no es = = toml\n' >"$PI/.codex/config.toml"
+  HOME="$TMP/casa" CLAUDE_CONFIG_DIR="$TMP/casa/.claude" CODEX_HOME="$TMP/casa/.codex" \
+    bash "$SCRIPTS/integrations.sh" --agent codex --only context7 "$PI" >"$TMP/toml-invalido.txt" 2>&1
+  contiene "un config.toml inválido no se toca" "no es TOML válido" "$TMP/toml-invalido.txt"
 else
-  omitida "Context7 y Serena en OpenCode" "hace falta Python 3 y Node.js 20.18.1 o superior"
+  omitida "Context7 en Codex" "hace falta Python 3.11 y Node.js 20.18.1 o superior"
 fi
 if [ -n "$PY" ]; then
   mkdir -p "$TMP/proyecto-integraciones/.sfp"

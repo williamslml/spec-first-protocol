@@ -271,7 +271,7 @@ SFP es una metodología y no depende de un asistente en particular. Lo que cambi
 | Scripts de análisis, verificación y retiro | No | Solo necesitan una terminal con `sh` o `bash` |
 | Filtro de firmas de IA en los commits | No | Es un hook de Git, ajeno al asistente |
 | Ajuste de firmas en la herramienta | Sí, por asistente | Verificado solo en Claude Code. Para los demás, la skill consulta su documentación antes de cambiar nada; si no puede confirmarlo, no lo cambia y usa la regla escrita y el filtro del repositorio |
-| Instalador de herramientas complementarias | Sí | Probado con Claude Code. Con OpenCode, en pruebas: instala y retira las skills, Serena y Context7 con el formato de configuración de la versión de OpenCode instalada, y RTK como plugin (en Windows, a mano). Falta comprobarlo con OpenCode en uso. Ejecuta el instalador de skills con npx, pnpm o bun |
+| Instalador de herramientas complementarias | Sí | Probado con Claude Code. Con Codex, en pruebas: instala y retira las skills, Serena y Context7 en su `config.toml`, y RTK con su hook. Falta comprobarlo con Codex en uso. Ejecuta el instalador de skills con el gestor de paquetes del proyecto (npx, pnpm, bun o yarn) |
 
 #### Dónde se instala la skill
 
@@ -360,7 +360,7 @@ Con el proyecto abierto, basta con solicitarlo directamente. Una vez instalada l
 | *"Configura SFP en este proyecto sin mover carpetas."* | Nivel "Solo metodología": se instalan las instrucciones, sin tocar la estructura |
 | *"Actualiza SFP en este proyecto."* | Se proponen únicamente las mejoras nuevas aplicables al caso. También avisa si el proyecto quedó en una versión anterior a la que tienes instalada |
 | *"Cambia el modo de coordinación de este proyecto a con orquestador."* | Cambia una decisión de fondo (nivel de intervención, coordinación o rigor de los controles) sin reinstalar: muestra lo actual, lo que cambiaría y lo que no se toca, y aplica solo lo aprobado |
-| *"Agrega soporte para OpenCode a este proyecto."* | Genera las instrucciones para un asistente nuevo, reutilizando las decisiones ya tomadas, sin repetir la entrevista |
+| *"Agrega soporte para Codex a este proyecto."* | Genera las instrucciones para un asistente nuevo, reutilizando las decisiones ya tomadas, sin repetir la entrevista |
 | *"Retira SFP de este proyecto."* | Se retira lo instalado, sin afectar cambios posteriores |
 
 Para ver cómo queda un proyecto con la metodología instalada y un primer cambio ya especificado, revisar el [proyecto de ejemplo](examples/proyecto-con-sfp).
@@ -392,7 +392,7 @@ Cuando la documentación de un asistente o de una herramienta no permite confirm
 <details>
 <summary><strong>¿Funciona con cualquier asistente?</strong></summary>
 <br>
-Las reglas, sí: quedan documentadas en el proyecto y cualquiera puede leerlas. Lo que depende del asistente es la instalación guiada, que requiere cargar skills en formato `SKILL.md`, y el instalador de herramientas complementarias, probado con Claude Code y en pruebas con OpenCode. El detalle está en [Compatibilidad](#compatibilidad).
+Las reglas, sí: quedan documentadas en el proyecto y cualquiera puede leerlas. Lo que depende del asistente es la instalación guiada, que requiere cargar skills en formato `SKILL.md`, y el instalador de herramientas complementarias, probado con Claude Code y en pruebas con Codex. El detalle está en [Compatibilidad](#compatibilidad).
 </details>
 
 <details>
@@ -511,7 +511,7 @@ Probado en Windows 11 (Git Bash), Debian 12 y Alpine 3.20. El instalador de herr
 | `scripts/fingerprint.sh --propose / --accept <proyecto>` | Registra huellas de lo instalado para poder deshacerlo con seguridad | Solo en `.sfp/` |
 | `scripts/uninstall.sh <proyecto> [--apply]` | Retira SFP. Sin `--apply` solo muestra qué haría | Solo con `--apply` |
 | `scripts/sfp-section.sh <con\|sin> <sección>` | Muestra una sección del texto completo de la metodología | No |
-| `scripts/integrations.sh [--apply \| --check \| --uninstall] [--agent claude-code\|opencode] [--runner auto\|npx\|pnpm\|bun] <proyecto>` | Instala, verifica o retira las herramientas complementarias. Sin `--apply` solo muestra el plan | Solo con `--apply` |
+| `scripts/integrations.sh [--apply \| --check \| --uninstall] [--agent claude-code\|codex] [--runner auto\|npx\|pnpm\|bun] <proyecto>` | Instala, verifica o retira las herramientas complementarias. Sin `--apply` solo muestra el plan | Solo con `--apply` |
 | `scripts/hooks/commit-msg-ai-attribution.sh <archivo>` | Filtro que elimina las firmas de IA de un mensaje de commit | Solo ese archivo |
 | `scripts/run.ps1 <script> …` | Ejecuta cualquiera de los anteriores desde PowerShell | Igual que el script que ejecuta |
 

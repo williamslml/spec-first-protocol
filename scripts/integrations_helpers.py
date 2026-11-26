@@ -14,10 +14,10 @@ Subcomandos:
                                              añade la entrada si no existe (idempotente)
   mcp-remove <.mcp.json> <nombre> <comando> [args...]
                                              la quita solo si coincide exactamente (1 si difiere)
-  oc-mcp-entry <opencode.json> <nombre>     imprime el comando de la entrada MCP de OpenCode (1.x o 2.x)
-  oc-mcp-add <opencode.json> <major> <nombre> <comando...>
-                                             la añade con el formato de esa versión de OpenCode
-  oc-mcp-remove <opencode.json> <nombre> <comando...>
+  codex-mcp-entry <config.toml> <nombre>    imprime el comando de [mcp_servers.<nombre>] de Codex
+  codex-mcp-add <config.toml> <nombre> <segundos|-> <comando> [args...]
+                                             añade la tabla al final, sin reescribir el resto
+  codex-mcp-remove <config.toml> <nombre> <comando...>
                                              la quita solo si el comando coincide (1 si cambió)
   hook-has <settings.json> <Evento> <texto>  ¿algún hook de <Evento> ejecuta un comando con <texto>?
   env-has <settings.json> <VARIABLE> <texto> ¿env.<VARIABLE> contiene <texto>?
@@ -163,94 +163,100 @@ def cmd_mcp_remove(project_mcp, name, command, *args):
     return 0
 
 
-# ----------------------------------------------------------------------------- OpenCode (opencode.json)
-# Formato verificado el 2026-11-26 en la documentación de OpenCode y de Context7:
-#   OpenCode 1.x: mcp.<nombre> = {"type": "local", "command": [...], "enabled": true}
-#   OpenCode 2.x: mcp.servers.<nombre> = {"type": "local", "command": [...]}   (sin "enabled")
-# Solo se trabaja con JSON estricto: un opencode.json con comentarios (JSONC) da error y no se toca.
-OC_SCHEMA = "https://opencode.ai/config.json"
+# ----------------------------------------------------------------------------- Codex (config.toml)
+# Formato verificado el 2026-11-26 en la documentación de Codex: [mcp_servers.<nombre>] con command, args y,
+# opcionalmente, startup_timeout_sec. Se añade una tabla al final del archivo, sin reescribir lo demás (se
+# conservan los comentarios), y el resultado se valida con tomllib antes de guardarlo. Requiere Python 3.11.
+def _tomllib():
+    try:
+        import tomllib
+        return tomllib
+    except ImportError:
+        return None
 
 
-def _oc_servers(d, major, create=False):
-    mcp = d.get("mcp")
-    if mcp is None:
-        if not create:
-            return None
-        mcp = d["mcp"] = {}
-    if not isinstance(mcp, dict):
-        raise SystemExit("la clave mcp de opencode.json no es un objeto")
-    if int(major) >= 2:
-        servers = mcp.get("servers")
-        if servers is None and create:
-            servers = mcp["servers"] = {}
-        return servers if isinstance(servers, dict) else None
-    return mcp
-
-
-def cmd_oc_mcp_entry(path, name):
-    """Imprime la línea de comando de la entrada <nombre> (en cualquiera de los dos formatos)."""
+def _read_text(path):
     if not os.path.isfile(path):
-        return 1
-    d = load_json(path)  # JSONC o JSON inválido → error 2: el script lo trata como conflicto
-    mcp = d.get("mcp") if isinstance(d, dict) else None
-    if not isinstance(mcp, dict):
-        return 1
-    for container in (mcp.get("servers"), mcp):
-        if isinstance(container, dict) and isinstance(container.get(name), dict):
-            print(" ".join(str(x) for x in container[name].get("command", [])))
-            return 0
-    return 1
+        return ""
+    with open(path, encoding="utf-8") as fh:
+        return fh.read()
 
 
-def cmd_oc_mcp_add(path, major, name, *command):
-    d = load_json(path)
-    if not isinstance(d, dict):
-        raise SystemExit(f"{path}: la raíz no es un objeto JSON")
-    created = not d
-    if created:
-        d["$schema"] = OC_SCHEMA
-    servers = _oc_servers(d, major, create=True)
-    if servers is None:
-        raise SystemExit(f"{path}: no se reconoce la sección de servidores MCP")
-    if name in servers:
-        print(f"ya existe la entrada {name}: no se modifica")
-        return 0
-    entry = {"type": "local", "command": list(command)}
-    if int(major) < 2:
-        entry["enabled"] = True
-    servers[name] = entry
-    write_atomic(path, dump_like(path, d) if not created else json.dumps(d, indent=2, ensure_ascii=False) + "\n")
-    print(f"añadida la entrada {name} (formato de OpenCode {major}.x)")
+def _codex_cmdline(entry):
+    return " ".join([str(entry.get("command", ""))] + [str(a) for a in entry.get("args", [])])
+
+
+def cmd_codex_mcp_entry(path, name):
+    """Imprime el comando de [mcp_servers.<nombre>]: 1 si no existe, 2 si el TOML no es válido, 3 sin tomllib."""
+    tl = _tomllib()
+    if tl is None:
+        print("Python >= 3.11 requerido (tomllib)")
+        return 3
+    text = _read_text(path)
+    if not text:
+        return 1
+    entry = (tl.loads(text).get("mcp_servers") or {}).get(name)  # TOML inválido → ValueError → 2
+    if not isinstance(entry, dict):
+        return 1
+    print(_codex_cmdline(entry))
     return 0
 
 
-def cmd_oc_mcp_remove(path, name, *command):
-    if not os.path.isfile(path):
-        print("no existe el archivo: nada que quitar")
+def cmd_codex_mcp_add(path, name, timeout, command, *args):
+    tl = _tomllib()
+    if tl is None:
+        print("Python >= 3.11 requerido (tomllib)")
+        return 3
+    if not re.fullmatch(r"[A-Za-z0-9_-]+", name):
+        raise SystemExit(f"nombre de servidor no válido: {name!r}")
+    text = _read_text(path)
+    if text and name in (tl.loads(text).get("mcp_servers") or {}):
+        print(f"ya existe [mcp_servers.{name}]: no se modifica")
         return 0
-    d = load_json(path)
-    mcp = d.get("mcp") if isinstance(d, dict) else None
-    if not isinstance(mcp, dict):
-        print(f"no hay entrada {name}: nada que quitar")
+    block = [f"[mcp_servers.{name}]", f"command = {_toml_str(command)}",
+             "args = [" + ", ".join(_toml_str(a) for a in args) + "]"]
+    if timeout not in ("", "-"):
+        block.append(f"startup_timeout_sec = {int(timeout)}")
+    new = (text.rstrip("\n") + "\n\n" if text.strip() else "") + "\n".join(block) + "\n"
+    entry = (tl.loads(new).get("mcp_servers") or {}).get(name)
+    if not isinstance(entry, dict) or _codex_cmdline(entry) != " ".join((command,) + args):
+        raise SystemExit("la entrada añadida no se lee como se esperaba: no se escribe nada")
+    write_atomic(path, new)
+    print(f"añadido [mcp_servers.{name}]")
+    return 0
+
+
+def cmd_codex_mcp_remove(path, name, *command):
+    tl = _tomllib()
+    if tl is None:
+        print("Python >= 3.11 requerido (tomllib)")
+        return 3
+    text = _read_text(path)
+    entry = (tl.loads(text).get("mcp_servers") or {}).get(name) if text else None
+    if not isinstance(entry, dict):
+        print(f"no hay [mcp_servers.{name}]: nada que quitar")
         return 0
-    for container, parent, key in ((mcp.get("servers"), mcp, "servers"), (mcp, d, "mcp")):
-        if isinstance(container, dict) and isinstance(container.get(name), dict):
-            if [str(x) for x in container[name].get("command", [])] != list(command):
-                print(f"la entrada {name} fue modificada después de instalarla: no se toca")
-                return 1
-            del container[name]
-            if not container:
-                del parent[key]
-            if isinstance(d.get("mcp"), dict) and not d["mcp"]:
-                del d["mcp"]
-            if set(d) <= {"$schema"}:
-                os.remove(path)
-                print(f"quitada la entrada {name}; {path} quedó vacío y se borró")
-                return 0
-            write_atomic(path, dump_like(path, d))
-            print(f"quitada la entrada {name}")
-            return 0
-    print(f"no hay entrada {name}: nada que quitar")
+    if _codex_cmdline(entry) != " ".join(command):
+        print(f"[mcp_servers.{name}] fue modificado después de instalarlo: no se toca")
+        return 1
+    # Se quitan su cabecera y sus subtablas ([mcp_servers.<nombre>.env]…) hasta la siguiente tabla ajena.
+    propia = re.compile(r"^\s*\[\s*mcp_servers\.%s(\.[^\]]+)?\s*\]\s*(#.*)?$" % re.escape(name))
+    cabecera = re.compile(r"^\s*\[")
+    out, dentro = [], False
+    for linea in text.splitlines():
+        if cabecera.match(linea):
+            dentro = bool(propia.match(linea))
+        if not dentro:
+            out.append(linea)
+    nuevo = re.sub(r"\n{3,}", "\n\n", "\n".join(out).strip("\n") + "\n") if any(l.strip() for l in out) else ""
+    if nuevo and name in ((tl.loads(nuevo).get("mcp_servers") or {})):
+        raise SystemExit("no se pudo quitar la entrada sin tocar lo demás: retirarla a mano")
+    if not nuevo:
+        os.remove(path)
+        print(f"quitado [mcp_servers.{name}]; {path} quedó vacío y se borró")
+        return 0
+    write_atomic(path, nuevo)
+    print(f"quitado [mcp_servers.{name}]")
     return 0
 
 
@@ -475,9 +481,9 @@ COMMANDS = {
     "mcp-entry": (cmd_mcp_entry, 4),
     "mcp-add": (cmd_mcp_add, 3),
     "mcp-remove": (cmd_mcp_remove, 3),
-    "oc-mcp-entry": (cmd_oc_mcp_entry, 2),
-    "oc-mcp-add": (cmd_oc_mcp_add, 4),
-    "oc-mcp-remove": (cmd_oc_mcp_remove, 3),
+    "codex-mcp-entry": (cmd_codex_mcp_entry, 2),
+    "codex-mcp-add": (cmd_codex_mcp_add, 4),
+    "codex-mcp-remove": (cmd_codex_mcp_remove, 3),
     "hook-has": (cmd_hook_has, 3),
     "env-has": (cmd_env_has, 3),
     "toml-list": (cmd_toml_list, 5),

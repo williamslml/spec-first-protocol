@@ -454,6 +454,7 @@ Por runtime y **solo si su documentación vigente lo confirma** (regla inviolabl
 | Runtime | Ajuste verificado | Dónde | Fuente (verificada 2026-11-20) |
 |---|---|---|---|
 | Claude Code | `{"attribution": {"commit": "", "pr": "", "sessionUrl": false}}`. No usar `includeCoAuthoredBy`: está obsoleto desde la v2.0.62 y se ignora en cuanto existe `attribution`. `"attribution": false` solo funciona desde la v2.1.281 y en versiones anteriores invalida el archivo entero: preferir la forma objeto | Equipo: `.claude/settings.json` (versionado) · Personal: `.claude/settings.local.json` · Todos tus proyectos: `~/.claude/settings.json` (global: `[MANUAL]`, confirmación aparte) | https://code.claude.com/docs/en/settings-reference |
+| Codex | Ninguno: su documentación no menciona firmas en commits ni un ajuste para quitarlas. Por la regla inviolable 8, la capa A no se aplica; quedan B y C | — | Documentación de Codex (learn.chatgpt.com, configuración y referencia), verificada el 2026-11-26 |
 | Otros runtimes | Averiguar en su documentación vigente si existe un ajuste equivalente; añadir aquí la fila verificada | — | — |
 
 ### B. Regla en el punto de entrada (agnóstica)

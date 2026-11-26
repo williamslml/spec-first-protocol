@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # integrations.sh — instala, configura, verifica y retira las candidatas del catálogo de skills/tools
 # (references/architecture.md sección 6, sección 6.1 matriz de enrutamiento, sección 6.2 este script).
-# Asistentes: Claude Code (probado) y OpenCode (en pruebas: skills, y Serena, Context7 y RTK según la
-# versión de OpenCode instalada, que el script lee con 'opencode --version').
+# Asistentes: Claude Code (probado) y Codex (en pruebas: skills en .agents/skills, Serena y Context7 en
+# su config.toml, y RTK con su hook).
 #
 # Componentes: archify · frontend-design · modern-web-guidance · superpowers (solo 5 skills, nunca el
 # plugin) · serena · context7 · rtk, más el healthcheck de la propia skill sfp (spec-first-protocol).
@@ -30,18 +30,18 @@
 #   --skip a,b,...           Excluir estos componentes.
 #   --force-frontend         Instalar frontend-design y modern-web-guidance aunque no se detecte frontend.
 # Otras:
-#   --agent claude-code|opencode  Asistente de destino (defecto: claude-code). La skill lo pregunta en la
-#                            entrevista; el script no lo adivina. Con opencode, las skills van a
-#                            <proyecto>/.agents/skills o ~/.config/opencode/skills (y se reconocen las de
-#                            .claude/skills, que OpenCode también lee); Serena y Context7 van a
-#                            opencode.json con el formato de su versión (1.x o 2.x), y RTK como plugin.
+#   --agent claude-code|codex  Asistente de destino (defecto: claude-code). La skill lo pregunta en la
+#                            entrevista; el script no lo adivina. Con codex, las skills van a
+#                            <proyecto>/.agents/skills o ~/.agents/skills; Serena y Context7, a
+#                            <proyecto>/.codex/config.toml (Codex solo lo lee en proyectos de confianza)
+#                            o a ~/.codex/config.toml; RTK, con 'rtk init -g --codex'.
 #   --runner auto|npx|pnpm|bun|yarn  Cómo se ejecuta el CLI de skills. auto (defecto) usa el gestor del
 #                            proyecto (packageManager de package.json o su lockfile) y, si no hay ninguno
 #                            o no está instalado, el primero disponible: npx, pnpm dlx, bunx, yarn dlx.
 #                            Probado con npx y pnpm; bun y yarn (2 o superior), en pruebas.
 #   --strict-tooling         Un resultado INCOMPLETO (3) sale como falla (1), para CI estrictos.
 #   --state <archivo>        Estado (defecto: <proyecto>/.sfp/integrations.json, o
-#                            .sfp/integrations-opencode.json con --agent opencode; fuera del repo en el
+#                            .sfp/integrations-codex.json con --agent codex; fuera del repo en el
 #                            modo sin rastros).
 #   -h, --help               Esta ayuda.
 #
@@ -99,9 +99,9 @@ readonly SP_EXCLUDE=(brainstorming writing-plans executing-plans subagent-driven
 # Serena: contexto claude-code (sin herramientas de lectura/búsqueda de texto) y sin memorias.
 readonly SERENA_ARGS=(start-mcp-server --context claude-code --project-from-cwd --add-mode no-memories)
 readonly SERENA_UVX=(uvx -p "$SERENA_PY" --from "$SERENA_PKG" serena "${SERENA_ARGS[@]}")
-# Serena en OpenCode: contexto "ide", el que la documentación de Serena recomienda para asistentes que ya
-# tienen herramientas propias de archivos y terminal (verificado el 2026-11-26).
-readonly SERENA_OC_UVX=(uvx -p "$SERENA_PY" --from "$SERENA_PKG" serena start-mcp-server --context ide --project-from-cwd --add-mode no-memories)
+# Serena en Codex: contexto "codex", el que la documentación de Serena indica para Codex (verificado el
+# 2026-11-26).
+readonly SERENA_CODEX_UVX=(uvx -p "$SERENA_PY" --from "$SERENA_PKG" serena start-mcp-server --context codex --project-from-cwd --add-mode no-memories)
 
 # Context7 (documentación vigente de librerías): servidor MCP local con versión fijada. Licencia MIT;
 # exige Node.js >= 20.18.1 (registro de npm, verificado el 2026-11-26). La clave es opcional y nunca se
@@ -109,9 +109,8 @@ readonly SERENA_OC_UVX=(uvx -p "$SERENA_PY" --from "$SERENA_PKG" serena start-mc
 readonly CONTEXT7_PKG="@upstash/context7-mcp@4.9.0"
 readonly CONTEXT7_CMD=(npx -y "$CONTEXT7_PKG")
 
-# RTK en OpenCode: 'rtk init -g --opencode' crea ~/.config/opencode/plugins/rtk.ts; requiere OpenCode 1.18.29
-# o superior y también instala el hook de Claude Code (documentación de RTK, verificada el 2026-11-26).
-readonly RTK_OC_MIN="1.18.29"
+# RTK en Codex: 'rtk init -g --codex' instala su hook global en $CODEX_HOME (por defecto ~/.codex), también en
+# Windows; se retira con 'rtk init -g --codex --uninstall' (documentación de RTK, verificada el 2026-11-26).
 
 # RTK: comandos que nunca debe reescribir (scripts de SFP). Regex anclado ('^' = regex en RTK).
 # La evidencia que ejecuta el agente (git, grep, find…) se protege con RTK_DISABLED=1 (sección 6.1).
@@ -178,10 +177,10 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SFP_DIR="$(dirname "$SCRIPT_DIR")"
 CLAUDE_HOME="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 CLAUDE_JSON="${SFP_CLAUDE_JSON:-$HOME/.claude.json}"
-OPENCODE_HOME="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
-case "$AGENT" in claude-code|opencode) ;; *) die_usage "--agent debe ser claude-code u opencode" ;; esac
+CODEX_HOME_DIR="${CODEX_HOME:-$HOME/.codex}"
+case "$AGENT" in claude-code|codex) ;; *) die_usage "--agent debe ser claude-code o codex" ;; esac
 case "$RUNNER" in auto|npx|pnpm|bun|yarn) ;; *) die_usage "--runner debe ser auto, npx, pnpm, bun o yarn" ;; esac
-if [ "$AGENT" = opencode ]; then STATE="${STATE_ARG:-$PROJ/.sfp/integrations-opencode.json}"
+if [ "$AGENT" = codex ]; then STATE="${STATE_ARG:-$PROJ/.sfp/integrations-codex.json}"
 else STATE="${STATE_ARG:-$PROJ/.sfp/integrations.json}"; fi
 
 # --------------------------------------------------------------------------- utilidades
@@ -239,7 +238,7 @@ else
   SEL_FROM_STATE=0
 fi
 
-case "$AGENT" in claude-code|opencode) ;; *) die_usage "agente inválido en el estado: $AGENT" ;; esac
+case "$AGENT" in claude-code|codex) ;; *) die_usage "agente inválido en el estado: $AGENT" ;; esac
 case "$RUNNER" in auto|npx|pnpm|bun|yarn) ;; *) die_usage "gestor inválido en el estado: $RUNNER" ;; esac
 case "$SCOPE" in project|global) ;; *) die_usage "--scope debe ser project o global" ;; esac
 case "$RTK_SCOPE" in project|global) ;; *) die_usage "--rtk-scope debe ser project o global" ;; esac
@@ -308,11 +307,11 @@ refresh_path
 winget_cmd() { command -v winget 2>/dev/null || command -v winget.exe 2>/dev/null; }
 
 # skill_roots <scope:global|project> → carpetas de skills que lee el asistente; la primera es donde se instala.
-# OpenCode también lee .claude/skills y .agents/skills (su documentación, verificada el 2026-11-26).
+# Codex lee .agents/skills (proyecto) y ~/.agents/skills (usuario); no lee .claude/skills (documentación de
+# Codex y tabla de agentes del CLI de skills, verificadas el 2026-11-26).
 skill_roots() {
-  if [ "$AGENT" = opencode ]; then
-    if [ "$1" = global ]; then printf '%s\n' "$OPENCODE_HOME/skills" "$HOME/.claude/skills" "$HOME/.agents/skills"
-    else printf '%s\n' "$PROJ/.agents/skills" "$PROJ/.opencode/skills" "$PROJ/.claude/skills"; fi
+  if [ "$AGENT" = codex ]; then
+    if [ "$1" = global ]; then echo "$HOME/.agents/skills"; else echo "$PROJ/.agents/skills"; fi
   else
     if [ "$1" = global ]; then echo "$CLAUDE_HOME/skills"; else echo "$PROJ/.claude/skills"; fi
   fi
@@ -402,16 +401,16 @@ skills_add() {
   [ "$scope" = global ] && args+=(--global)
   skills_cli "${args[@]}"
 }
-# Opción de asistente para "remove": en OpenCode se omite, porque con --agent opencode el CLI no borra la
-# carpeta compartida .agents/skills (comprobado con skills@1.9.0: dice "Done!" y la deja).
-remove_agent_args() { [ "$AGENT" = opencode ] || printf -- '--agent %s ' "$AGENT"; }
+# Opción de asistente para "remove": en Codex se omite, porque .agents/skills es una carpeta compartida con
+# otros asistentes y el CLI de skills no la borra si se le indica uno (comprobado con skills@1.9.0).
+remove_agent_args() { [ "$AGENT" = codex ] || printf -- '--agent %s ' "$AGENT"; }
 skills_undo_cmd() { # texto del comando que deshace la instalación (para el estado)
   local scope="$1"; shift
   printf '%s %s remove%s %s-y %s' "$(runner_text)" "$SKILLS_CLI_PKG" "$([ "$scope" = global ] && echo ' --global')" "$(remove_agent_args)" "$*"
 }
 # skills_remove_project <skill>: la retira del proyecto para el asistente elegido
 skills_remove_project() {
-  if [ "$AGENT" = opencode ]; then skills_cli remove "$1" -y
+  if [ "$AGENT" = codex ]; then skills_cli remove "$1" -y
   else skills_cli remove "$1" --agent "$AGENT" -y; fi
 }
 
@@ -550,35 +549,20 @@ serena_entry() {
 # serena_conforms <línea de comando> → 0 si respeta sección 6.1 (contexto claude-code y sin memorias)
 serena_conforms() { case "$1" in *"--context claude-code"*) ;; *) return 1 ;; esac; case "$1" in *no-memories*) return 0 ;; *) return 1 ;; esac; }
 
-# serena_conforms_oc <línea>: en OpenCode, contexto ide y sin memorias
-serena_conforms_oc() { case "$1" in *"--context ide"*) ;; *) return 1 ;; esac; case "$1" in *no-memories*) return 0 ;; *) return 1 ;; esac; }
+# serena_conforms_codex <línea>: en Codex, contexto codex y sin memorias
+serena_conforms_codex() { case "$1" in *"--context codex"*) ;; *) return 1 ;; esac; case "$1" in *no-memories*) return 0 ;; *) return 1 ;; esac; }
 
-# --------------------------------------------------------------------------- OpenCode: versión y opencode.json
-# oc_version → x.y.z de 'opencode --version' (falla si OpenCode no está o no responde)
-oc_version() { have opencode || return 1; opencode --version 2>/dev/null | tr -d '\r' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n 1; }
-ver_ge() { [ "$1" = "$2" ] || [ "$(printf '%s\n%s\n' "$1" "$2" | sort -t. -k1,1n -k2,2n -k3,3n | tail -n 1)" = "$1" ]; }
-oc_config() { if [ "$1" = global ]; then echo "$OPENCODE_HOME/opencode.json"; else echo "$PROJ/opencode.json"; fi; }
-oc_jsonc() { if [ "$1" = global ]; then echo "$OPENCODE_HOME/opencode.jsonc"; else echo "$PROJ/opencode.jsonc"; fi; }
+# --------------------------------------------------------------------------- Codex: config.toml
+# Servidores MCP en [mcp_servers.<nombre>] con command y args (documentación de Codex, verificada el 2026-11-26).
+# Proyecto: <proyecto>/.codex/config.toml, que Codex solo lee si el proyecto es de confianza. Global: ~/.codex/config.toml.
+codex_config() { if [ "$1" = global ]; then echo "$CODEX_HOME_DIR/config.toml"; else echo "$PROJ/.codex/config.toml"; fi; }
 
-# ensure_mcp_opencode <componente> <nombre> <función que valida la entrada, o "-"> <comando...>
-# Registra un servidor MCP local en opencode.json con el formato de la versión instalada (1.x: mcp.<nombre>;
-# 2.x: mcp.servers.<nombre>). Sin OpenCode instalado no se sabe el formato: queda [MANUAL] (regla inviolable 8).
-ensure_mcp_opencode() {
-  local comp="$1" name="$2" check="$3"; shift 3
-  local v="" major cfg jsonc entry rc=0
-  v=$(oc_version) || v=""
-  if [ -z "$v" ]; then
-    status MANUAL "$comp" "OpenCode no está instalado o no responde a 'opencode --version': sin su versión no se sabe el formato de su configuración (1.x: mcp.$name; 2.x: mcp.servers.$name)"
-    status MANUAL "$comp" "registrarlo a mano según https://opencode.ai/docs/mcp-servers/ con el comando: $*"
-    record "$comp" "MANUAL ($AGENT)"; return 0
-  fi
-  major="${v%%.*}"
-  cfg=$(oc_config "$SCOPE"); jsonc=$(oc_jsonc "$SCOPE")
-  if [ -f "$jsonc" ]; then
-    status MANUAL "$comp" "$jsonc admite comentarios y el script no lo reescribe: añadir a mano la entrada $name (formato de OpenCode $major.x) con: $*"
-    record "$comp" "MANUAL (JSONC)"; return 0
-  fi
-  entry=$(helper oc-mcp-entry "$(native "$cfg")" "$name" 2>/dev/null) || rc=$?
+# ensure_mcp_codex <componente> <nombre> <función que valida la entrada, o "-"> <segundos de arranque> <comando...>
+ensure_mcp_codex() {
+  local comp="$1" name="$2" check="$3" timeout="$4"; shift 4
+  local cfg entry rc=0
+  cfg=$(codex_config "$SCOPE")
+  entry=$(helper codex-mcp-entry "$(native "$cfg")" "$name" 2>/dev/null) || rc=$?
   if [ $rc = 0 ]; then
     if [ "$check" = "-" ] || "$check" "$entry"; then
       status "OMITIDO - YA CONFIGURADO" "$comp" "$cfg: $name ($entry)"; record "$comp" "OMITIDO - YA CONFIGURADO"
@@ -588,18 +572,21 @@ ensure_mcp_opencode() {
       record "$comp" CONFLICTO
     fi
     return 0
+  elif [ $rc = 3 ]; then
+    incomplete "$comp" "Python >= 3.11 necesario para leer y escribir $cfg (TOML)"; record "$comp" INCOMPLETO; return 0
   elif [ $rc = 2 ]; then
-    status CONFLICTO "$comp" "$cfg no es JSON válido (¿tiene comentarios?): no se toca"; record "$comp" CONFLICTO; return 0
+    status CONFLICTO "$comp" "$cfg no es TOML válido: no se toca"; record "$comp" CONFLICTO; return 0
   fi
-  run "$comp" "registrar $name en $cfg (formato de OpenCode $major.x; instalado: $v)" -- \
-    helper oc-mcp-add "$(native "$cfg")" "$major" "$name" "$@" || { record "$comp" FALLA; return 0; }
+  run "$comp" "registrar $name en $cfg ([mcp_servers.$name])" -- \
+    helper codex-mcp-add "$(native "$cfg")" "$name" "$timeout" "$@" || { record "$comp" FALLA; return 0; }
   if [ $APPLY = 1 ]; then
     if [ "$SCOPE" = project ]; then
-      status "INSTALADO EN PROYECTO" "$comp" "$cfg ($name)"; record "$comp" "INSTALADO EN PROYECTO"
-      remember "$comp" project ocmcp 1 "opencode.json#$name" "$*"
+      status "INSTALADO EN PROYECTO" "$comp" "$cfg ($name). Codex solo lo usa si el proyecto está marcado como de confianza"
+      record "$comp" "INSTALADO EN PROYECTO"
+      remember "$comp" project codexmcp 1 ".codex/config.toml#$name" "$*"
     else
       status "INSTALADO GLOBAL" "$comp" "$cfg ($name) (global: retiro [MANUAL])"; record "$comp" "INSTALADO GLOBAL"
-      remember "$comp" global ocmcp 0 "$cfg#$name" "quitar la entrada $name de $cfg"
+      remember "$comp" global codexmcp 0 "$cfg#$name" "quitar [mcp_servers.$name] de $cfg"
     fi
   else record "$comp" PLAN; fi
 }
@@ -635,10 +622,10 @@ uv_undo_cmd() {
 
 do_serena() {
   local comp=serena entry
-  if [ "$AGENT" = opencode ]; then
-    if [ -z "$PY" ]; then incomplete $comp "requiere Python 3 para leer/escribir opencode.json"; record $comp INCOMPLETO; return 0; fi
+  if [ "$AGENT" = codex ]; then
+    if [ -z "$PY" ]; then incomplete $comp "requiere Python 3 para leer/escribir config.toml"; record $comp INCOMPLETO; return 0; fi
     serena_ensure_uv || { record $comp FALLA; return 0; }
-    ensure_mcp_opencode $comp serena serena_conforms_oc "${SERENA_OC_UVX[@]}"
+    ensure_mcp_codex $comp serena serena_conforms_codex 15 "${SERENA_CODEX_UVX[@]}"
     return 0
   fi
   if [ -z "$PY" ]; then incomplete $comp "requiere Python 3 para leer/escribir la configuración MCP"; record $comp INCOMPLETO; return 0; fi
@@ -709,7 +696,7 @@ do_context7() {
     status FALLA $comp "requiere Node.js >= 20.18.1 con npx (lo exige $CONTEXT7_PKG)"; record $comp FALLA; return 0
   fi
   status AVISO $comp "envía las consultas a un servicio externo (context7.com). La clave es opcional y no se escribe en el repositorio: si la tienes, ponla en la variable de entorno CONTEXT7_API_KEY"
-  if [ "$AGENT" = opencode ]; then ensure_mcp_opencode $comp context7 - "${CONTEXT7_CMD[@]}"; return 0; fi
+  if [ "$AGENT" = codex ]; then ensure_mcp_codex $comp context7 - 20 "${CONTEXT7_CMD[@]}"; return 0; fi
   if where=$(plugin_enabled context7); then
     status "GLOBAL DETECTADO" $comp "como plugin: ${where//$'\n'/; }"; record $comp "GLOBAL DETECTADO (plugin)"; return 0
   fi
@@ -735,27 +722,19 @@ do_context7() {
 
 # --------------------------------------------------------------------------- rtk
 rtk_ok() { have rtk && rtk --version >/dev/null 2>&1 && rtk gain >/dev/null 2>&1; }
-rtk_oc_plugin() { echo "$OPENCODE_HOME/plugins/rtk.ts"; }
-# rtk_hook_opencode: plugin global de RTK para OpenCode (usa installed y changed de do_rtk)
-rtk_hook_opencode() {
-  local v=""
-  if [ -f "$(rtk_oc_plugin)" ]; then status "OMITIDO - YA CONFIGURADO" rtk "plugin $(rtk_oc_plugin)"; return 0; fi
-  v=$(oc_version) || v=""
-  if [ -z "$v" ]; then
-    status MANUAL rtk "OpenCode no está instalado o no responde a 'opencode --version': no se puede comprobar que sea $RTK_OC_MIN o superior"; return 0
+# rtk_codex_hook_ok: el hook de RTK está en la configuración global de Codex
+rtk_codex_hook_ok() { grep -qi 'rtk' "$CODEX_HOME_DIR/hooks.json" 2>/dev/null; }
+# rtk_hook_codex: hook global de RTK para Codex (usa installed y changed de do_rtk)
+rtk_hook_codex() {
+  if rtk_codex_hook_ok; then status "OMITIDO - YA CONFIGURADO" rtk "hook en $CODEX_HOME_DIR/hooks.json"; return 0; fi
+  if [ "$installed" = 1 ] && ! rtk init --help 2>&1 | grep -q -e '--codex'; then
+    status MANUAL rtk "esta versión de rtk no admite --codex: actualizar rtk es decisión humana"; return 0
   fi
-  if ! ver_ge "$v" "$RTK_OC_MIN"; then
-    status MANUAL rtk "OpenCode $v: el plugin de RTK requiere $RTK_OC_MIN o superior (actualizar OpenCode es decisión humana)"; return 0
-  fi
-  if [ "$installed" = 1 ] && ! rtk init --help 2>&1 | grep -q -e '--opencode'; then
-    status MANUAL rtk "esta versión de rtk no admite --opencode: actualizar rtk es decisión humana"; return 0
-  fi
-  status AVISO rtk "'rtk init -g --opencode' también instala el hook de RTK para Claude Code (documentación de RTK)"
-  run rtk "(global) instalar el plugin de RTK para OpenCode (rtk init -g --opencode; OpenCode $v)" -- \
-    sh -c 'rtk init -g --opencode </dev/null' || return 1
+  run rtk "(global) instalar el hook de RTK para Codex (rtk init -g --codex)" -- \
+    sh -c 'rtk init -g --codex </dev/null' || return 1
   if [ $APPLY = 1 ]; then
-    status "INSTALADO GLOBAL" rtk "$(rtk_oc_plugin) (global: retiro [MANUAL])"
-    remember rtk global hook 0 "opencode/plugins/rtk.ts" "rtk init -g --uninstall y borrar $(rtk_oc_plugin)"
+    status "INSTALADO GLOBAL" rtk "hook de Codex en $CODEX_HOME_DIR (global: retiro [MANUAL])"
+    remember rtk global hook 0 "codex/hooks.json:rtk" "rtk init -g --codex --uninstall"
     changed=1
   fi
   return 0
@@ -790,10 +769,6 @@ rtk_excludes() { helper toml-list "$2" "$(native "$1")" hooks exclude_commands "
 
 do_rtk() {
   local comp=rtk cfg changed=0 installed=0
-  if [ "$AGENT" = opencode ] && [ "$OS" = windows ]; then
-    status MANUAL $comp "OpenCode en Windows: la documentación de RTK no lo incluye entre los asistentes con hook nativo en Windows (regla inviolable 8); ver https://www.rtk-ai.app/docs/getting-started/supported-agents/"
-    record $comp "MANUAL ($AGENT)"; return 0
-  fi
   if [ -z "$PY" ]; then incomplete $comp "requiere Python 3 para leer settings.json y config.toml"; record $comp INCOMPLETO; return 0; fi
   if rtk_ok; then
     status "GLOBAL DETECTADO" $comp "binario $(command -v rtk) ($(rtk --version 2>/dev/null | head -n1 | tr -d '\r'))"
@@ -813,8 +788,8 @@ do_rtk() {
   fi
 
   # Enganche al runtime
-  if [ "$AGENT" = opencode ]; then
-    rtk_hook_opencode || { record $comp FALLA; return 0; }
+  if [ "$AGENT" = codex ]; then
+    rtk_hook_codex || { record $comp FALLA; return 0; }
   elif [ "$RTK_SCOPE" = global ]; then
     if rtk_hook_global; then
       status "OMITIDO - YA CONFIGURADO" $comp "hook PreToolUse en $CLAUDE_HOME/settings.json"
@@ -942,16 +917,14 @@ healthcheck() {
   fi
 
   # 5. serena
-  if selected serena && [ "$AGENT" = opencode ]; then
-    local occ; occ=$(oc_config "$SCOPE")
-    if [ -z "$PY" ]; then incomplete serena "sin Python 3 no se lee opencode.json"
-    elif ! oc_version >/dev/null; then status MANUAL serena "OpenCode no está instalado o no responde: comprobar a mano la entrada serena"
-    elif [ -f "$(oc_jsonc "$SCOPE")" ]; then status MANUAL serena "$(oc_jsonc "$SCOPE") tiene comentarios: comprobar a mano la entrada serena"
-    elif entry=$(helper oc-mcp-entry "$(native "$occ")" serena 2>/dev/null); then
-      if ! serena_conforms_oc "$entry"; then status CONFLICTO serena "la entrada de $occ no usa --context ide y --add-mode no-memories (sección 6.1): $entry"
+  if selected serena && [ "$AGENT" = codex ]; then
+    local ccf; ccf=$(codex_config "$SCOPE")
+    if [ -z "$PY" ]; then incomplete serena "sin Python 3 no se lee config.toml"
+    elif entry=$(helper codex-mcp-entry "$(native "$ccf")" serena 2>/dev/null); then
+      if ! serena_conforms_codex "$entry"; then status CONFLICTO serena "la entrada de $ccf no usa --context codex y --add-mode no-memories (sección 6.1): $entry"
       elif ! have "${entry%% *}"; then status FALLA serena "el comando '${entry%% *}' de la entrada no está en PATH"
-      else status OK serena "$occ: $entry"; fi
-    else status FALLA serena "no hay entrada 'serena' en $occ"; fi
+      else status OK serena "$ccf: $entry"; fi
+    else status FALLA serena "no hay entrada [mcp_servers.serena] en $ccf (o falta Python 3.11 para leerlo)"; fi
   elif selected serena; then
     if [ -z "$PY" ]; then incomplete serena "sin Python 3 no se lee la configuración MCP"
     elif entry=$(serena_entry); then
@@ -967,26 +940,22 @@ healthcheck() {
   if selected context7; then
     if [ -z "$PY" ]; then incomplete context7 "sin Python 3 no se lee la configuración MCP"
     elif ! node_context7_ok; then status FALLA context7 "requiere Node.js >= 20.18.1 con npx"
-    elif [ "$AGENT" = opencode ]; then
-      local occ7; occ7=$(oc_config "$SCOPE")
-      if ! oc_version >/dev/null; then status MANUAL context7 "OpenCode no está instalado o no responde: comprobar a mano la entrada context7"
-      elif [ -f "$(oc_jsonc "$SCOPE")" ]; then status MANUAL context7 "$(oc_jsonc "$SCOPE") tiene comentarios: comprobar a mano la entrada context7"
-      elif entry=$(helper oc-mcp-entry "$(native "$occ7")" context7 2>/dev/null); then status OK context7 "$occ7: $entry"
-      else status FALLA context7 "no hay entrada 'context7' en $occ7"; fi
+    elif [ "$AGENT" = codex ]; then
+      local ccf7; ccf7=$(codex_config "$SCOPE")
+      if entry=$(helper codex-mcp-entry "$(native "$ccf7")" context7 2>/dev/null); then status OK context7 "$ccf7: $entry"
+      else status FALLA context7 "no hay entrada [mcp_servers.context7] en $ccf7 (o falta Python 3.11 para leerlo)"; fi
     elif entry=$(plugin_enabled context7); then status OK context7 "plugin: ${entry//$'\n'/; }"
     elif entry=$(helper mcp-entry "$(native "$PROJ/.mcp.json")" "$(native "$CLAUDE_JSON")" "$(native "$PROJ")" context7); then status OK context7 "MCP ${entry%%$'\t'*}: ${entry#*$'\t'}"
     else status FALLA context7 "no hay entrada MCP 'context7' (proyecto, local ni usuario)"; fi
   fi
 
   # 6. rtk
-  if selected rtk && [ "$AGENT" = opencode ] && [ "$OS" = windows ]; then
-    status MANUAL rtk "OpenCode en Windows: comprobarlo a mano (sin hook documentado por RTK)"
-  elif selected rtk; then
+  if selected rtk; then
     if ! rtk_ok; then status FALLA rtk "binario rtk-ai/rtk no accesible"
     elif [ -z "$PY" ]; then incomplete rtk "sin Python 3 no se comprueban hook ni exclusiones"
     else
       local ok=1 rc=0
-      if [ "$AGENT" = opencode ]; then [ -f "$(rtk_oc_plugin)" ] || { status FALLA rtk "falta el plugin $(rtk_oc_plugin)"; ok=0; }
+      if [ "$AGENT" = codex ]; then rtk_codex_hook_ok || { status FALLA rtk "falta el hook de RTK en $CODEX_HOME_DIR/hooks.json"; ok=0; }
       elif [ "$RTK_SCOPE" = global ]; then rtk_hook_global || { status FALLA rtk "falta el hook PreToolUse en $CLAUDE_HOME/settings.json"; ok=0; }
       else rtk_block_project || { status FALLA rtk "falta el bloque $RTK_BLOCK_START en $PROJ/CLAUDE.md"; ok=0; }; fi
       cfg=$(rtk_config_path) || cfg=""
@@ -1028,11 +997,11 @@ uninstall_all() {
     fi
     case "$kind" in
       skill)
-        # En OpenCode la skill vive en .agents/skills, carpeta compartida con otros asistentes: el CLI solo la borra
+        # En Codex la skill vive en .agents/skills, carpeta compartida con otros asistentes: el CLI solo la borra
         # sin --agent, y así también borra la copia de .claude/skills (comprobado con skills@1.9.0). Si existe
         # esa copia de Claude Code, no se toca nada y se deja a decisión humana.
-        if [ "$AGENT" = opencode ] && [ -f "$PROJ/.claude/skills/$target/SKILL.md" ]; then
-          status MANUAL "$comp" "$target también está en .claude/skills (Claude Code); el CLI de skills la quitaría de los dos. Si OpenCode ya no la usa, borrar a mano $(skill_roots project | head -n 1)/$target y su entrada en skills-lock.json"
+        if [ "$AGENT" = codex ] && [ -f "$PROJ/.claude/skills/$target/SKILL.md" ]; then
+          status MANUAL "$comp" "$target también está en .claude/skills (Claude Code); el CLI de skills la quitaría de los dos. Si Codex ya no la usa, borrar a mano $(skill_roots project | head -n 1)/$target y su entrada en skills-lock.json"
           continue
         fi
         if run "$comp" "retirar la skill $target del proyecto" -- skills_remove_project "$target"; then
@@ -1048,10 +1017,10 @@ uninstall_all() {
         else
           [ $APPLY = 1 ] && status MANUAL "$comp" "la entrada cambió después de instalarla: retirarla a mano si procede"
         fi ;;
-      ocmcp)
+      codexmcp)
         # shellcheck disable=SC2086
-        if run "$comp" "quitar ${target#*#} de opencode.json (solo si no se modificó)" -- helper oc-mcp-remove "$(native "$PROJ/opencode.json")" "${target#*#}" $undo; then
-          [ $APPLY = 1 ] && { status OK "$comp" "opencode.json#${target#*#} retirado"; done_idx+=("$idx"); }
+        if run "$comp" "quitar [mcp_servers.${target#*#}] de .codex/config.toml (solo si no se modificó)" -- helper codex-mcp-remove "$(native "$PROJ/.codex/config.toml")" "${target#*#}" $undo; then
+          [ $APPLY = 1 ] && { status OK "$comp" ".codex/config.toml#${target#*#} retirado"; done_idx+=("$idx"); }
         else
           [ $APPLY = 1 ] && status MANUAL "$comp" "la entrada cambió después de instalarla: retirarla a mano si procede"
         fi ;;
@@ -1070,7 +1039,7 @@ uninstall_all() {
       rm -f "$PROJ/skills-lock.json" && status OK retiro "skills-lock.json vacío borrado"
     fi
     local dir
-    for dir in "$PROJ/.claude/skills" "$PROJ/.claude" "$PROJ/.agents/skills" "$PROJ/.agents" "$(dirname "$STATE")"; do
+    for dir in "$PROJ/.claude/skills" "$PROJ/.claude" "$PROJ/.agents/skills" "$PROJ/.agents" "$PROJ/.codex" "$(dirname "$STATE")"; do
       if [ -d "$dir" ] && rmdir "$dir" 2>/dev/null; then status OK retiro "carpeta vacía borrada: $dir"; fi
     done
   fi
@@ -1085,13 +1054,13 @@ finish_incomplete() {
   if [ $STRICT = 1 ]; then echo "--strict-tooling: lo incompleto se trata como falla"; exit 1; fi
   exit 3
 }
-echo "integrations.sh $SKILL_VERSION — modo: $MODE$([ $APPLY = 1 ] && [ "$MODE" = uninstall ] && echo ' --apply') · proyecto: $PROJ · asistente: $AGENT$([ "$AGENT" = opencode ] && echo ' (en pruebas)') · ámbito: $SCOPE · rtk: $RTK_SCOPE · so: $OS"
+echo "integrations.sh $SKILL_VERSION — modo: $MODE$([ $APPLY = 1 ] && [ "$MODE" = uninstall ] && echo ' --apply') · proyecto: $PROJ · asistente: $AGENT$([ "$AGENT" = codex ] && echo ' (en pruebas)') · ámbito: $SCOPE · rtk: $RTK_SCOPE · so: $OS"
 PM_PROJ=$(project_pm)
 echo "CLI de skills con: ${RUNNER_RES:-NINGUNO} (--runner $RUNNER; gestor del proyecto: ${PM_PROJ:-no declarado})$(case "$RUNNER_RES" in bun|yarn) echo ' (en pruebas)' ;; esac)"
 if [ "$RUNNER" = auto ] && [ -n "$PM_PROJ" ] && [ "$PM_PROJ" != npm ] && [ -n "$RUNNER_RES" ] && [ "$RUNNER_RES" != "$PM_PROJ" ]; then
   echo "AVISO: el proyecto usa $PM_PROJ, pero no está disponible en este equipo: se usará $RUNNER_RES"
 fi
-echo "config de $([ "$AGENT" = opencode ] && echo "OpenCode: $OPENCODE_HOME" || echo "Claude Code: $CLAUDE_HOME") · estado: $STATE · python: ${PY:-NO} · node: $(node --version 2>/dev/null || echo NO)"
+echo "config de $([ "$AGENT" = codex ] && echo "Codex: $CODEX_HOME_DIR" || echo "Claude Code: $CLAUDE_HOME") · estado: $STATE · python: ${PY:-NO} · node: $(node --version 2>/dev/null || echo NO)"
 [ -n "$PY" ] || echo "AVISO: sin Python 3, Serena, RTK, el estado y la detección de plugins quedan sin comprobar (resultado INCOMPLETO)"
 
 if [ "$MODE" = uninstall ]; then
