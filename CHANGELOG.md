@@ -30,6 +30,8 @@ Resumen: se atienden las 23 propuestas abiertas del repositorio.
   - Memoria a largo plazo: estado de ADR y lecciones, índices de lo vigente y revisión al archivar y al actualizar. Nada se borra por antigüedad.
 - Entrevista: preguntas 20.1 (pruebas), 20.2 (OpenAPI) y 20.3 (README); la 16 explica la revisión con una sola sesión. Plantillas de lección (campo Estado) y de revisión (tipo de revisión y comprobaciones nuevas). Lista de cobertura ampliada.
 - `discover.sh` informa `tests_fuera_de_carpetas_de_tests` y los `contratos_de_api` (OpenAPI o Swagger) que encuentre.
+- Dos modos nuevos en `SKILL.md`: **Cambio de configuración** (nivel de intrusión, coordinación o rigor, sin reinstalar: muestra lo actual, comprueba lo que requiere el cambio y solo planifica lo afectado) y **Agregar un asistente** (genera las instrucciones del runtime nuevo reutilizando las decisiones ya tomadas).
+- `verify.sh` compara la versión registrada y las copias fijas del skill dentro del proyecto con la instalación global (la carpeta se puede indicar con `SFP_GLOBAL_SKILL_DIR`) y avisa si quedaron atrás. Solo informa: nada se actualiza solo.
 
 Delta para proyectos ya instalados:
 - [accion: no] solo cambia cómo los documentos del skill citan las reglas
@@ -38,6 +40,8 @@ Delta para proyectos ya instalados:
 - [accion: si] aplica-si: el punto de entrada no tiene la sección "Documentación" · propuesta: preguntas 20.2 (solo si el proyecto expone una API) y 20.3, y añadir la sección entre marcadores · OpenAPI, README vivo y memoria a largo plazo
 - [accion: si] aplica-si: el punto de entrada no tiene la sección "Revisión" y el proyecto trabaja sin orquestador · propuesta: añadirla entre marcadores desde `templates.md` sección 3 · revisión independiente con una sola sesión
 - [accion: si] aplica-si: existen ADR o lecciones en el proyecto sin índice de lo vigente · propuesta: crear los índices y proponer el estado de cada lección (sección 10 de `development-practices.md`), sin borrar nada · memoria a largo plazo
+- [accion: si] aplica-si: `verify.sh` avisa que una copia fija del skill dentro del proyecto quedó atrás respecto a la instalación global · propuesta: informar ambas versiones y preguntar si el equipo quiere actualizar la copia; nunca hacerlo sin aprobación · copias fijas del skill
+- [accion: no] modos Cambio de configuración y Agregar un asistente (se usan cuando la persona los pide)
 
 ## 1.14.0
 

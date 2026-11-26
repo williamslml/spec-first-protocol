@@ -7,8 +7,9 @@
 # Comprueba, contra .sfp/manifest.json si existe (schema 1 o 2):
 #   E) que el manifiesto cumple references/manifest.schema.json y las reglas entre campos
 #      (scripts/manifest_tool.py check; necesita Python 3; sin él la verificación es INCOMPLETA)
-#   0) versión del skill registrada vs. vigente, y entradas "[accion: si]" del CHANGELOG
-#      posteriores a la registrada (delta para el modo Actualización)
+#   0) versión del skill registrada vs. vigente y vs. la instalación global, entradas "[accion: si]"
+#      del CHANGELOG posteriores a la registrada (modo Actualización) y copias fijas del skill
+#      dentro del proyecto que quedaron atrás (solo avisa; nada se actualiza solo)
 #   1) que cada acción con ruta dejó algo real en esa ruta (en "move", que el origen ya no esté),
 #      que la ruta no sale del proyecto, y si la huella sha256 cambió desde el setup (informativo)
 #   2) que los marcadores sfp:start/end están balanceados en los archivos fusionados
@@ -70,6 +71,43 @@ run_cmd() {
   fi
 }
 
+# Versión de la instalación global del skill (la más reciente entre las carpetas globales conocidas,
+# sin contar las que están dentro del proyecto). SFP_GLOBAL_SKILL_DIR indica otra carpeta.
+PROJ_ABS=$(pwd)
+skill_ver() { sed -n 's/^## \([0-9][0-9.]*\).*/\1/p' "$1/CHANGELOG.md" 2>/dev/null | head -1; }
+GLOBAL_VER=""
+GLOBAL_DIR=""
+for g in "${SFP_GLOBAL_SKILL_DIR:-$SKILL_DIR}" "$SKILL_DIR" "$HOME/.claude/skills/spec-first-protocol" "$HOME/.agents/skills/spec-first-protocol" \
+         "$HOME/.config/opencode/skills/spec-first-protocol" "$HOME/.cursor/skills/spec-first-protocol" \
+         "$HOME/.copilot/skills/spec-first-protocol" "$HOME/.gemini/skills/spec-first-protocol" \
+         "$HOME/.codeium/windsurf/skills/spec-first-protocol"; do
+  [ -f "$g/SKILL.md" ] || continue
+  g=$(cd "$g" 2>/dev/null && pwd) || continue
+  case "$g/" in "$PROJ_ABS"/*) continue ;; esac
+  v=$(skill_ver "$g")
+  [ -z "$v" ] && continue
+  if [ -z "$GLOBAL_VER" ] || ver_gt "$v" "$GLOBAL_VER"; then GLOBAL_VER="$v"; GLOBAL_DIR="$g"; fi
+done
+
+section "copias del skill dentro del proyecto"
+grep_files '^name: *spec-first-protocol[[:space:]]*$' > "$TMPDIR_V/copias.txt"
+NCOP=0
+while IFS= read -r f; do
+  case "$f" in */SKILL.md) ;; *) continue ;; esac
+  d=$(dirname "$f")
+  NCOP=$((NCOP + 1))
+  v=$(skill_ver "$d")
+  echo "  copia fija: ${d#./} (versión ${v:-desconocida})"
+  if [ -n "$GLOBAL_VER" ] && [ -n "$v" ] && ver_gt "$GLOBAL_VER" "$v"; then
+    echo "  AVISO: la copia de este proyecto usa la $v y tu instalación global ya tiene la $GLOBAL_VER ($GLOBAL_DIR). Nada se actualiza solo: actualizar la copia es decisión del equipo; después, pedir 'Actualiza SFP en este proyecto'"
+  elif [ -z "$GLOBAL_VER" ]; then
+    echo "  no se encontró una instalación global para comparar (se puede indicar con SFP_GLOBAL_SKILL_DIR)"
+  else
+    echo "  al día respecto a la instalación global ($GLOBAL_VER)"
+  fi
+done < "$TMPDIR_V/copias.txt"
+[ "$NCOP" -eq 0 ] && echo "  ninguna: el proyecto usa la instalación global, que está al día por definición"
+
 section "manifiesto"
 if [ ! -f "$MANIFEST" ]; then
   echo "estado: no encontrado ($MANIFEST) — nada que verificar contra manifiesto"
@@ -129,6 +167,13 @@ else
       echo "  la IA evalúa cada 'aplica-si' contra este manifiesto y propone solo lo que aplica"
     elif [ -n "$REG" ] && [ -n "$CUR" ] && [ "$REG" != "$CUR" ]; then
       echo "  nota: el manifiesto registra una versión más nueva que este skill; no proponer cambios"
+    fi
+  fi
+
+  if [ -n "$GLOBAL_VER" ] && [ -n "$JSON_TOOL" ]; then
+    echo "  instalación global del skill: $GLOBAL_VER ($GLOBAL_DIR)"
+    if [ -n "${REG:-}" ] && ver_gt "$GLOBAL_VER" "$REG"; then
+      echo "  AVISO: este proyecto se instaló o actualizó con la $REG y tu instalación global ya tiene la $GLOBAL_VER. Nada se actualiza solo: para traer las mejoras, pedir 'Actualiza SFP en este proyecto'"
     fi
   fi
 

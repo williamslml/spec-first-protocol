@@ -354,7 +354,9 @@ Con el proyecto abierto, basta con solicitarlo directamente. Una vez instalada l
 | *"Configura el Spec-First Protocol en este proyecto."* | Se recorren todos los pasos descritos en "Cómo funciona" |
 | *"Analiza este proyecto y dime cómo aplicarías SFP, sin cambiar nada."* | Solo se analiza y se entrega el plan |
 | *"Configura SFP en este proyecto sin mover carpetas."* | Nivel "Solo metodología": se instalan las instrucciones, sin tocar la estructura |
-| *"Actualiza SFP en este proyecto."* | Se proponen únicamente las mejoras nuevas aplicables al caso |
+| *"Actualiza SFP en este proyecto."* | Se proponen únicamente las mejoras nuevas aplicables al caso. También avisa si el proyecto quedó en una versión anterior a la que tienes instalada |
+| *"Cambia el modo de coordinación de este proyecto a con orquestador."* | Cambia una decisión de fondo (nivel de intervención, coordinación o rigor de los controles) sin reinstalar: muestra lo actual, lo que cambiaría y lo que no se toca, y aplica solo lo aprobado |
+| *"Agrega soporte para OpenCode a este proyecto."* | Genera las instrucciones para un asistente nuevo, reutilizando las decisiones ya tomadas, sin repetir la entrevista |
 | *"Retira SFP de este proyecto."* | Se retira lo instalado, sin afectar cambios posteriores |
 
 Para ver cómo queda un proyecto con la metodología instalada y un primer cambio ya especificado, revisar el [proyecto de ejemplo](examples/proyecto-con-sfp).

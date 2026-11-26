@@ -83,6 +83,17 @@ contiene "discover.sh nombra el test que está junto al código" "src/email.test
 no_contiene "discover.sh no cuenta los tests que ya están en su carpeta" "  tests/registro.test.js" "$TMP/discover-tests.txt"
 contiene "discover.sh encuentra el documento de OpenAPI" "api/openapi.yaml" "$TMP/discover-tests.txt"
 
+# Copia fija del skill dentro de un proyecto, más vieja que la instalación global
+mkdir -p "$TMP/global-sfp" "$TMP/con-copia/herramientas/spec-first-protocol"
+printf -- '---\nname: spec-first-protocol\n---\n' >"$TMP/global-sfp/SKILL.md"
+printf '## 9.9.9\n' >"$TMP/global-sfp/CHANGELOG.md"
+printf -- '---\r\nname: spec-first-protocol\r\n---\r\n' >"$TMP/con-copia/herramientas/spec-first-protocol/SKILL.md"
+printf '## 1.0.0\n' >"$TMP/con-copia/herramientas/spec-first-protocol/CHANGELOG.md"
+SFP_GLOBAL_SKILL_DIR="$TMP/global-sfp" sh "$SCRIPTS/verify.sh" "$TMP/con-copia" >"$TMP/verify-copia.txt" 2>&1
+contiene "verify.sh avisa que la copia del skill en el proyecto quedó atrás" "usa la 1.0.0 y tu instalación global ya tiene la 9.9.9" "$TMP/verify-copia.txt"
+sh "$SCRIPTS/verify.sh" "$TMP/vacio" >"$TMP/verify-sin-copia.txt" 2>&1
+contiene "verify.sh dice cuando el proyecto no tiene copias del skill" "ninguna: el proyecto usa la instalación global" "$TMP/verify-sin-copia.txt"
+
 # --------------------------------------------------------------------------------------------
 seccion "4. Ciclo completo: instalar con huellas, verificar, editar y retirar"
 if [ -z "$PY" ] || ! command -v git >/dev/null 2>&1; then
