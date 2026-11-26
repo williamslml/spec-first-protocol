@@ -34,7 +34,7 @@
 #                            <proyecto>/.agents/skills o ~/.config/opencode/skills (y se reconocen las de
 #                            .claude/skills, que OpenCode también lee); Serena y RTK quedan [MANUAL].
 #   --runner auto|npx|pnpm|bun    Cómo se ejecuta el CLI de skills (defecto: auto = npx, si no pnpm dlx,
-#                            si no bunx). Probado con npx; pnpm y bun, en pruebas.
+#                            si no bunx). Probado con npx y pnpm; bun, en pruebas.
 #   --strict-tooling         Un resultado INCOMPLETO (3) sale como falla (1), para CI estrictos.
 #   --state <archivo>        Estado (defecto: <proyecto>/.sfp/integrations.json, o
 #                            .sfp/integrations-opencode.json con --agent opencode; fuera del repo en el
@@ -362,9 +362,17 @@ skills_add() {
   [ "$scope" = global ] && args+=(--global)
   skills_cli "${args[@]}"
 }
+# Opción de asistente para "remove": en OpenCode se omite, porque con --agent opencode el CLI no borra la
+# carpeta compartida .agents/skills (comprobado con skills@1.9.0: dice "Done!" y la deja).
+remove_agent_args() { [ "$AGENT" = opencode ] || printf -- '--agent %s ' "$AGENT"; }
 skills_undo_cmd() { # texto del comando que deshace la instalación (para el estado)
   local scope="$1"; shift
-  printf '%s %s remove%s --agent %s -y %s' "$(runner_text)" "$SKILLS_CLI_PKG" "$([ "$scope" = global ] && echo ' --global')" "$AGENT" "$*"
+  printf '%s %s remove%s %s-y %s' "$(runner_text)" "$SKILLS_CLI_PKG" "$([ "$scope" = global ] && echo ' --global')" "$(remove_agent_args)" "$*"
+}
+# skills_remove_project <skill>: la retira del proyecto para el asistente elegido
+skills_remove_project() {
+  if [ "$AGENT" = opencode ]; then skills_cli remove "$1" -y
+  else skills_cli remove "$1" --agent "$AGENT" -y; fi
 }
 
 # --------------------------------------------------------------------------- frontend
@@ -831,7 +839,14 @@ uninstall_all() {
     fi
     case "$kind" in
       skill)
-        if run "$comp" "retirar la skill $target del proyecto" -- skills_cli remove "$target" --agent "$AGENT" -y; then
+        # En OpenCode la skill vive en .agents/skills, carpeta compartida con otros asistentes: el CLI solo la borra
+        # sin --agent, y así también borra la copia de .claude/skills (comprobado con skills@1.9.0). Si existe
+        # esa copia de Claude Code, no se toca nada y se deja a decisión humana.
+        if [ "$AGENT" = opencode ] && [ -f "$PROJ/.claude/skills/$target/SKILL.md" ]; then
+          status MANUAL "$comp" "$target también está en .claude/skills (Claude Code); el CLI de skills la quitaría de los dos. Si OpenCode ya no la usa, borrar a mano $(skill_roots project | head -n 1)/$target y su entrada en skills-lock.json"
+          continue
+        fi
+        if run "$comp" "retirar la skill $target del proyecto" -- skills_remove_project "$target"; then
           if [ $APPLY = 1 ]; then
             if skill_at_primary project "$target"; then status FALLA "$comp" "sigue existiendo $(skill_roots project | head -n 1)/$target"
             else status OK "$comp" "retirada $target"; done_idx+=("$idx"); fi
@@ -875,7 +890,7 @@ finish_incomplete() {
   exit 3
 }
 echo "integrations.sh $SKILL_VERSION — modo: $MODE$([ $APPLY = 1 ] && [ "$MODE" = uninstall ] && echo ' --apply') · proyecto: $PROJ · asistente: $AGENT$([ "$AGENT" = opencode ] && echo ' (en pruebas)') · ámbito: $SCOPE · rtk: $RTK_SCOPE · so: $OS"
-echo "CLI de skills con: ${RUNNER_RES:-NINGUNO} (--runner $RUNNER)$([ -n "$RUNNER_RES" ] && [ "$RUNNER_RES" != npx ] && echo ' (en pruebas)')"
+echo "CLI de skills con: ${RUNNER_RES:-NINGUNO} (--runner $RUNNER)$([ "$RUNNER_RES" = bun ] && echo ' (en pruebas)')"
 echo "config de $([ "$AGENT" = opencode ] && echo "OpenCode: $OPENCODE_HOME" || echo "Claude Code: $CLAUDE_HOME") · estado: $STATE · python: ${PY:-NO} · node: $(node --version 2>/dev/null || echo NO)"
 [ -n "$PY" ] || echo "AVISO: sin Python 3, Serena, RTK, el estado y la detección de plugins quedan sin comprobar (resultado INCOMPLETO)"
 

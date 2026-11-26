@@ -271,7 +271,7 @@ SFP es una metodología y no depende de un asistente en particular. Lo que cambi
 | Scripts de análisis, verificación y retiro | No | Solo necesitan una terminal con `sh` o `bash` |
 | Filtro de firmas de IA en los commits | No | Es un hook de Git, ajeno al asistente |
 | Ajuste de firmas en la herramienta | Sí, por asistente | Verificado solo en Claude Code. Para los demás, la skill consulta su documentación antes de cambiar nada; si no puede confirmarlo, no lo cambia y usa la regla escrita y el filtro del repositorio |
-| Instalador de herramientas complementarias | Sí | Probado con Claude Code. Con OpenCode, en pruebas: instala las skills, y Serena y RTK se configuran a mano con las instrucciones que muestra. Ejecuta el instalador de skills con npx, pnpm o bun |
+| Instalador de herramientas complementarias | Sí | Probado con Claude Code. Con OpenCode, en pruebas: instala y retira las skills (comprobado con el instalador; falta comprobarlo con OpenCode en uso), y Serena y RTK se configuran a mano con las instrucciones que muestra. Ejecuta el instalador de skills con npx, pnpm o bun |
 
 #### Dónde se instala la skill
 
@@ -305,7 +305,7 @@ Se ofrecen únicamente cuando tienen sentido para el proyecto, y nunca se instal
 | [RTK](https://github.com/rtk-ai/rtk) | Reducir el consumo al leer la salida de los comandos | Para reducir costos |
 | [archify](https://github.com/tt-a1i/archify) | Diagramar la arquitectura del sistema | Opcional |
 | [frontend-design](https://github.com/anthropics/skills) | Diseño visual de pantallas | Solo si el proyecto tiene interfaz |
-| [Modern Web Guidance](https://github.com/GoogleChrome/modern-web-guidance) | Código web moderno y correcto: HTML semántico, CSS actual, accesibilidad, rendimiento y seguridad | Solo si el proyecto tiene interfaz web, también en escritorio con Electron o Tauri |
+| [Modern Web Guidance](https://github.com/GoogleChrome/modern-web-guidance) | Código web moderno y correcto: HTML semántico, CSS actual, accesibilidad, rendimiento y seguridad | Solo si el proyecto tiene interfaz web, también en escritorio con Electron o Tauri. Consulta sus guías ejecutando su propio paquete de npm en la última versión, con conexión a internet |
 | [Context7](https://github.com/upstash/context7) | Consultar la documentación vigente de las librerías del proyecto | Opcional. Se instala a mano, con aprobación: envía las consultas a un servicio externo |
 
 Cada herramienta tiene prohibido duplicar funciones que ya cubre SFP, para evitar contradicciones. Por ejemplo, Superpowers no planifica: esa función corresponde a SFP. Y Modern Web Guidance no se ocupa del diseño visual, que es de frontend-design.

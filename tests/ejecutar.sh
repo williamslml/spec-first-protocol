@@ -283,6 +283,37 @@ contiene "Serena en OpenCode queda a decisión humana, sin escribir su configura
 contiene "RTK en OpenCode queda a decisión humana" "[MANUAL]                       rtk" "$TMP/plan-opencode.txt"
 contiene "modern-web-guidance no se ofrece sin interfaz web" "OMITIDO - SIN FRONTEND" "$TMP/plan-opencode.txt"
 comprobar "el plan para OpenCode no escribió nada" test ! -e "$PO/.sfp"
+
+# Retiro en OpenCode con un npx simulado (sin red): el CLI de skills solo borra .agents/skills sin --agent
+if [ -n "$PY" ] && command -v node >/dev/null 2>&1; then
+  FALSO="$TMP/npx-simulado"; mkdir -p "$FALSO"
+  cat >"$FALSO/npx" <<'NPX'
+#!/bin/sh
+printf '%s\n' "$*" >>"$NPX_REGISTRO"
+case " $* " in *" remove "*) for a in "$@"; do [ -d ".agents/skills/$a" ] && rm -rf ".agents/skills/$a"; done ;; esac
+exit 0
+NPX
+  chmod +x "$FALSO/npx"
+  for caso in solo-opencode con-copia-claude; do
+    PR="$TMP/retiro-$caso"; mkdir -p "$PR/.agents/skills/archify" "$PR/.sfp"
+    printf -- '---\nname: archify\n---\n' >"$PR/.agents/skills/archify/SKILL.md"
+    if [ "$caso" = con-copia-claude ]; then mkdir -p "$PR/.claude/skills"; cp -R "$PR/.agents/skills/archify" "$PR/.claude/skills/"; fi
+    EO="$(nativo "$PR/.sfp/integrations-opencode.json")"
+    ayudante state-save "$EO" "archify" "" project global 0 1.15.0 opencode npx >/dev/null 2>&1
+    ayudante state-add "$EO" archify project skill 1 archify "npx -y skills@1.9.0 remove -y archify" >/dev/null 2>&1
+    : >"$TMP/registro-npx-$caso.txt"
+    PATH="$FALSO:$PATH" NPX_REGISTRO="$TMP/registro-npx-$caso.txt" HOME="$TMP/casa" CLAUDE_CONFIG_DIR="$TMP/casa/.claude" XDG_CONFIG_HOME="$TMP/casa/.config" \
+      bash "$SCRIPTS/integrations.sh" --uninstall --apply --agent opencode "$PR" >"$TMP/retiro-$caso.txt" 2>&1
+  done
+  contiene "OpenCode: el retiro llama al CLI sin --agent" "remove archify -y" "$TMP/registro-npx-solo-opencode.txt"
+  no_contiene "OpenCode: el retiro no usa --agent opencode (el CLI no borraría la carpeta compartida)" "--agent" "$TMP/registro-npx-solo-opencode.txt"
+  comprobar "OpenCode: la skill retirada ya no está en .agents/skills" test ! -e "$TMP/retiro-solo-opencode/.agents/skills/archify"
+  contiene "OpenCode: con una copia de Claude Code, el retiro queda a decisión humana" "también está en .claude/skills" "$TMP/retiro-con-copia-claude.txt"
+  comprobar "OpenCode: con una copia de Claude Code no se llama al CLI" test ! -s "$TMP/registro-npx-con-copia-claude.txt"
+  comprobar "OpenCode: la copia de Claude Code se conserva" test -f "$TMP/retiro-con-copia-claude/.claude/skills/archify/SKILL.md"
+else
+  omitida "retiro en OpenCode con npx simulado" "hace falta Python 3 y Node.js"
+fi
 if [ -n "$PY" ]; then
   mkdir -p "$TMP/proyecto-integraciones/.sfp"
   PI="$TMP/proyecto-integraciones"
