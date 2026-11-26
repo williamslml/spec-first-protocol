@@ -48,6 +48,7 @@
 # Variables de entorno:
 #   CLAUDE_CONFIG_DIR   Carpeta de configuración de Claude Code (defecto: ~/.claude), igual que Claude Code.
 #   SFP_CLAUDE_JSON     Archivo de estado de Claude Code con los MCP de usuario (defecto: ~/.claude.json).
+#   CODEX_HOME          Carpeta de configuración de Codex (defecto: ~/.codex), igual que Codex.
 #
 # Estados: [GLOBAL DETECTADO] [INSTALADO EN PROYECTO] [INSTALADO GLOBAL] [OMITIDO - YA CONFIGURADO]
 #   [OMITIDO - NO SELECCIONADO] [OMITIDO - SIN FRONTEND] [PLAN] [OK] [AVISO] [CONFLICTO] [FALLA] [MANUAL]
@@ -136,7 +137,7 @@ RUNNER=auto
 RUNNER_GIVEN=0
 STRICT=0
 
-usage() { sed -n '2,62p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,63p' "$0" | sed 's/^# \{0,1\}//'; }
 die_usage() { echo "ERROR: $1" >&2; echo "Ayuda: bash $0 --help" >&2; exit 2; }
 set_mode() { [ "$MODE" = plan ] || [ "$MODE" = "$1" ] || die_usage "--check y --uninstall son excluyentes"; MODE="$1"; }
 
