@@ -19,9 +19,25 @@ Cada versión tiene un resumen en prosa (para quien mantiene el skill) y una sec
 
 Resumen: se atienden las 23 propuestas abiertas del repositorio.
 - Reglas numeradas sin ambigüedad: las de `SKILL.md` se citan como "regla inviolable N" y las del resumen de la metodología como "regla N del resumen". Una prueba de formato rechaza cualquier "regla N" sin aclarar de qué lista es.
+- Nuevo `references/development-practices.md` con las prácticas de trabajo diario, resumidas en el punto de entrada (secciones nuevas "Cómo se ejecuta un plan aprobado", "Pruebas", "Documentación" y "Revisión" de `templates.md` sección 3):
+  - El plan aprobado se ejecuta de corrido, con revisión de cada fase; solo se detiene ante una falla real, algo no previsto o una acción que siempre requiere aprobación.
+  - El asistente ejecuta los comandos permitidos en vez de pedírselos a la persona.
+  - Antes de declarar algo inviable: restricciones externas, dos o tres alternativas probadas en el proyecto real y evidencia de cada intento. No se adelantan ítems del backlog.
+  - Convención de dónde viven las pruebas (las de integración y extremo a extremo, siempre aparte) y pruebas escritas y ejecutadas mientras se construye.
+  - Documento de OpenAPI como contrato de la API, actualizado en la misma tarea, sin imponer la herramienta que lo muestra.
+  - README vivo: base al instalar y revisión en cada cambio no trivial, aprobada con el plan.
+  - Revisión independiente con una sola sesión: sesión nueva según el riesgo, revisión de la persona en riesgo medio o alto, y el resumen dice qué revisión hubo.
+  - Memoria a largo plazo: estado de ADR y lecciones, índices de lo vigente y revisión al archivar y al actualizar. Nada se borra por antigüedad.
+- Entrevista: preguntas 20.1 (pruebas), 20.2 (OpenAPI) y 20.3 (README); la 16 explica la revisión con una sola sesión. Plantillas de lección (campo Estado) y de revisión (tipo de revisión y comprobaciones nuevas). Lista de cobertura ampliada.
+- `discover.sh` informa `tests_fuera_de_carpetas_de_tests` y los `contratos_de_api` (OpenAPI o Swagger) que encuentre.
 
 Delta para proyectos ya instalados:
 - [accion: no] solo cambia cómo los documentos del skill citan las reglas
+- [accion: si] aplica-si: el punto de entrada no tiene la sección "Cómo se ejecuta un plan aprobado" · propuesta: añadirla entre marcadores desde `templates.md` sección 3 · plan de corrido, comandos, inviabilidad con evidencia y orden del backlog
+- [accion: si] aplica-si: el punto de entrada no tiene la sección "Pruebas" · propuesta: repetir `discover.sh`, confirmar la convención (pregunta 20.1) y añadir la sección entre marcadores; si hay `tests_fuera_de_carpetas_de_tests`, ofrecer reordenarlos como tarea aparte · ubicación de las pruebas y pruebas mientras se construye
+- [accion: si] aplica-si: el punto de entrada no tiene la sección "Documentación" · propuesta: preguntas 20.2 (solo si el proyecto expone una API) y 20.3, y añadir la sección entre marcadores · OpenAPI, README vivo y memoria a largo plazo
+- [accion: si] aplica-si: el punto de entrada no tiene la sección "Revisión" y el proyecto trabaja sin orquestador · propuesta: añadirla entre marcadores desde `templates.md` sección 3 · revisión independiente con una sola sesión
+- [accion: si] aplica-si: existen ADR o lecciones en el proyecto sin índice de lo vigente · propuesta: crear los índices y proponer el estado de cada lección (sección 10 de `development-practices.md`), sin borrar nada · memoria a largo plazo
 
 ## 1.14.0
 

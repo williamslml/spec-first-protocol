@@ -105,7 +105,7 @@ flowchart LR
     E --> G["Se verifica<br/><sub>y se entrega un resumen</sub>"]
 ```
 
-> **Importante:** hasta que el plan se aprueba, la skill **no escribe nada** en el proyecto.
+> **Importante:** hasta que el plan se aprueba, la skill **no escribe nada** en el proyecto. Una vez aprobado, lo ejecuta completo sin preguntar entre una fase y otra, y ejecuta ella misma los comandos que puede ejecutar. Solo se detiene ante una falla real, algo que el plan no contemplaba o una acción que siempre requiere aprobación.
 
 #### Adaptación a cada proyecto
 
@@ -140,7 +140,7 @@ Publicar código, borrar archivos, mezclar ramas o tocar producción siempre req
 <td valign="top">
 
 #### Calidad y revisión según el riesgo
-Controles proporcionales al riesgo, con las pruebas y los revisores automáticos que el proyecto ya tiene. Y una revisión independiente: quien revisa no es quien programó.
+Controles proporcionales al riesgo, con las pruebas y los revisores automáticos que el proyecto ya tiene. Las pruebas se escriben mientras se construye y en un lugar acordado. Y una revisión independiente: quien revisa no es quien programó, también cuando se trabaja con un solo asistente.
 
 </td>
 <td valign="top">
@@ -153,8 +153,8 @@ Cada tarea se asigna a un rol (arquitectura, desarrollo, interfaz, pruebas o rev
 <tr>
 <td valign="top">
 
-#### Memoria del proyecto
-Las decisiones importantes (ADR), los procedimientos (runbooks), las lecciones aprendidas y las especificaciones archivadas quedan documentados en el repositorio, no se pierden al cerrar la sesión.
+#### Memoria y documentación al día
+Las decisiones importantes (ADR), los procedimientos (runbooks), las lecciones aprendidas y las especificaciones archivadas quedan en el repositorio, con un índice de lo que sigue vigente. El README y, si hay una API, su documento de OpenAPI se actualizan con cada cambio.
 
 </td>
 <td valign="top">
@@ -400,6 +400,12 @@ Sí. Sin orquestador, cada sesión es independiente y comparte el estado mediant
 </details>
 
 <details>
+<summary><strong>¿Quién hace la revisión independiente si trabajo solo, con un único asistente?</strong></summary>
+<br>
+Depende del riesgo del cambio. Si es medio o alto, la revisa el asistente en una sesión nueva, que solo recibe la especificación, las tareas y los cambios, y además la revisas tú antes de aprobar. Si es bajo, basta la sesión nueva. Si es trivial, basta una verificación básica. El resumen de cada cambio dice qué revisión tuvo. Una revisión hecha en la misma conversación donde se programó no cuenta como independiente, y así se informa.
+</details>
+
+<details>
 <summary><strong>¿Hace falta una herramienta de especificaciones?</strong></summary>
 <br>
 No. Se pueden usar documentos simples con nombres acordados. Si ya se usa una herramienta, la skill la adapta: verifica qué cubre y registra cómo se corresponde con la propuesta, los requisitos, el diseño y las tareas.
@@ -525,6 +531,7 @@ spec-first-protocol/
 │   ├── methodology-digest.md   # Resumen de la metodología
 │   ├── sfp-con-orquestador.md  # Texto completo, para coordinar varios asistentes
 │   ├── sfp-sin-orquestador.md  # Texto completo, para trabajar con uno solo
+│   ├── development-practices.md  # Cómo se ejecuta el trabajo: plan de corrido, pruebas, OpenAPI, README, revisión
 │   ├── git-practices.md        # Commits, ramas, merge, PRs y remotes
 │   ├── templates.md            # Plantillas de lo que se instala en el proyecto
 │   ├── vendor/                 # Guías de terceros incluidas tal cual, con su licencia

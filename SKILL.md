@@ -92,7 +92,7 @@ Luego la entrevista con `references/interview.md`. Reglas:
 - **Si nombra una herramienta de specs o un skill/tool concreto:** mismo tratamiento con `references/tooling.md` (sección 1 capa de specs, sección 2 skills/tools).
 - **Si el producto vive en varios repos** (pregunta 9.1): sección 5 de `references/scenarios.md`.
 - **Los roles de agente los define el usuario contigo**: tú recomiendas y justificas; él decide, edita o crea roles propios (procedimiento en la sección 7 de `references/architecture.md`; los 5 roles base son solo plantillas iniciales).
-- Obligatorio cubrir: estado del proyecto, nivel de intrusión permitido, orquestación, IDE/runtimes, agentes y modelos, herramienta de specs, nivel de rigor (controles de calidad o gates), seguridad/permisos, equipo (una persona o varias), dónde vive la metodología global.
+- Obligatorio cubrir: estado del proyecto, nivel de intrusión permitido, orquestación, IDE/runtimes, agentes y modelos, herramienta de specs, nivel de rigor (controles de calidad o gates), dónde viven las pruebas, documentación de la API (si expone una) y README, seguridad/permisos, equipo (una persona o varias), dónde vive la metodología global.
 
 ### Fase 3 — Clasificación
 La instalación se define por **tres ejes independientes**, no por una lista plana:
@@ -137,6 +137,8 @@ Formato: 5–10 líneas de resumen en lenguaje claro (regla inviolable 11: qué 
 
 ### Fase 6 — Aplicación
 - Ejecutar en el orden del plan, de menor a mayor riesgo. Un commit por bloque lógico si hay Git y el usuario lo permite (no hacer commits sin permiso).
+- **El plan aprobado se ejecuta de corrido** (sección 1 de `references/development-practices.md`): al terminar un bloque y revisar su resultado, seguir con el siguiente sin preguntar "¿sigo?". Un detalle menor dentro de lo aprobado se corrige y se anota. Detenerse solo ante una falla real, algo que el plan no contemplaba o justo antes de una acción que siempre requiere aprobación (pedir solo esa).
+- **Ejecutar los comandos y scripts permitidos** en lugar de pedírselos al usuario (sección 2 de `development-practices.md`); pasarle solo lo que requiere sus credenciales, un acceso externo o una decisión suya.
 - En archivos que ya existen, fusionar entre marcadores con el id de su acción (`<!-- sfp:start v1 id=N -->` … `<!-- sfp:end id=N -->`, sección 2 de `templates.md`). Así se puede actualizar o retirar solo lo añadido. En JSON (sin comentarios; p. ej., la configuración de un runtime) no hay marcadores: registrar la acción como `configure` con `"format": "json"`; sus `changes` clave por clave los calcula `fingerprint.sh --propose` (sección 1 de `templates.md`).
 - Registrar cada acción en `.sfp/manifest.json` (formato en `templates.md`) salvo que el usuario elija el modo sin rastros (entonces, entregar el manifiesto fuera del repositorio).
 - Al terminar el último bloque, `scripts/fingerprint.sh --propose <ruta-del-proyecto>` escribe `.sfp/manifest.proposed.json` con las huellas sha256 (identifican el contenido exacto de un archivo) y los `changes` de los JSON, ya completados y validados contra `references/manifest.schema.json`. Mostrar el resumen y, con aprobación del usuario, `scripts/fingerprint.sh --accept <ruta-del-proyecto>`.
@@ -169,6 +171,7 @@ Nada se instala por defecto sin justificación: cada ítem debe defenderse con u
 4. **Plantillas de agentes**: solo los roles que el usuario aprobó tras definirlos contigo. Pueden ser de los 5 roles base (Architect, Developer, Frontend, Tester, Reviewer), renombrados o propios, cada uno con tier (nivel de modelo), permisos y aprobaciones confirmados.
 5. **Tiers de modelo** (niveles de capacidad) mapeados a los modelos/planes reales del usuario (nunca asumir proveedor).
 6. **Controles de calidad (quality gates)** ajustados al rigor y a las herramientas reales del proyecto: reutilizar sus linters y tests, sin herramientas nuevas no pedidas. Plantilla `gates.yml` en la sección 14 de `templates.md`.
+6.2. **Prácticas de desarrollo** (`references/development-practices.md`), resumidas en el punto de entrada (sección 3 de `templates.md`): ejecutar el plan aprobado de corrido, ejecutar los comandos permitidos, evidencia antes de declarar algo inviable y orden del backlog, convención de dónde viven las pruebas y pruebas mientras se construye, OpenAPI si el proyecto expone una API, README vivo, revisión independiente también con una sola sesión, y estado e índice de la memoria del proyecto. La base del README es un ítem opcional del plan.
 6.5. **Verificación de estructura** (solo si se eligió un perfil de `project-structure.md`): la herramienta real del stack o un script de respaldo, según `references/structure-verification.md`.
 7. **Orquestación** (solo caso 6).
 7.5. **Skills/herramientas del catálogo** (solo las aprobadas): se instalan con `bash scripts/integrations.sh` (solo Claude Code; plan por defecto, `--apply` tras la aprobación, healthcheck o prueba de funcionamiento al final, `--uninstall` para retirarlas). Su fila de la matriz (sección 6.1 de `architecture.md`) se copia al punto de entrada (sección 3 de `templates.md`).
@@ -200,6 +203,7 @@ Detalle en `references/scenarios.md` ("Casos límite"): monorepos (perfil por wo
 | `references/uninstall.md`, `scripts/uninstall.sh` | Modo Retiro (dry-run por defecto) |
 | `CHANGELOG.md` | Modo Actualización: entradas `[accion: si]` posteriores a `skill_version` |
 | `references/methodology-digest.md` | Resumen práctico de SFP: reglas, diferencias con y sin orquestador, lista de cobertura, decisiones abiertas |
+| `references/development-practices.md` | Fase 2 (preguntas 20.1 a 20.3), Fase 6 (cómo se ejecuta el plan aprobado) y el punto de entrada: ejecución de corrido, comandos, inviabilidad con evidencia, orden del backlog, pruebas, OpenAPI, README vivo, revisión con una sola sesión y memoria a largo plazo |
 | `references/sfp-index.md`, `scripts/sfp-section.sh` | Antes de abrir un texto completo de SFP: qué sección responde a la pregunta, y leer solo esa |
 | `references/sfp-con-orquestador.md` | Texto completo de SFP, variante con orquestador (describe orquestación, capa de specs y skills por función, sin atarlas a una herramienta). Nunca entero: por sección, vía `sfp-index.md` |
 | `references/sfp-sin-orquestador.md` | Texto completo de SFP, variante sin orquestador. Nunca entero: por sección, vía `sfp-index.md` |

@@ -10,6 +10,7 @@ Qué implica:
 - Cada sesión es independiente; el **estado compartido** vive en los documentos de especificación (`tasks.md` o equivalente), no en el chat.
 - Agente y modelo se eligen por niveles (tiers; regla 5 del resumen), no por un supervisor.
 - Implementar y revisar, en **sesiones separadas**, mejor con otro modelo o runtime (editor o CLI con agentes). La revisión recibe specs + `tasks.md` + diff (cambios del código), no el historial del chat.
+- Con una sola persona y un solo asistente: la revisión se hace en una sesión nueva y, si el riesgo es medio o alto, también la revisa la persona. Si un cambio no tuvo revisión independiente, el resumen lo dice (sección 8 de `development-practices.md`).
 - Sesiones paralelas: un git worktree (copia de trabajo aparte) o rama por sesión.
 - Lecciones aprendidas: registro **manual** en `docs/lessons/` (o donde se acuerde) con formato "Aplica cuando: …"; pasan a la metodología global solo si se repiten (guía: ~3 veces).
 - Métricas: anotación manual por tarea.

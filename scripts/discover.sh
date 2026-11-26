@@ -167,6 +167,12 @@ for p in .eslintrc .eslintrc.js .eslintrc.cjs .eslintrc.json .eslintrc.yml eslin
 done
 echo "directorios_de_tests (prof<=3):"
 find . -maxdepth 3 \( $PRUNE \) -prune -o -type d \( -name test -o -name tests -o -name __tests__ -o -name spec -o -name e2e -o -name cypress -o -name playwright \) -print 2>/dev/null | sed 's#^\./##' | sort | head -15 | sed 's/^/  /'
+# Tests fuera de las carpetas de tests (junto al código): hecho para references/development-practices.md sección 5.
+TJ=$(find . -maxdepth 6 \( $PRUNE -o -name test -o -name tests -o -name __tests__ -o -name spec -o -name e2e -o -name cypress -o -name playwright \) -prune -o -type f \( -name '*.test.*' -o -name '*.spec.*' -o -name '*_test.go' -o -name '*_test.py' -o -name 'test_*.py' -o -name '*Test.java' -o -name '*Test.kt' -o -name '*Tests.cs' -o -name '*_spec.rb' \) -print 2>/dev/null | sed 's#^\./##' | LC_ALL=C sort)
+NTJ=0
+[ -n "$TJ" ] && NTJ=$(printf '%s\n' "$TJ" | grep -c .)
+echo "tests_fuera_de_carpetas_de_tests: $NTJ"
+[ "$NTJ" -gt 0 ] && printf '%s\n' "$TJ" | head -10 | sed 's/^/  /'
 echo "configs_de_test:"
 for p in jest.config.js jest.config.ts jest.config.cjs jest.config.mjs vitest.config.ts vitest.config.js playwright.config.ts playwright.config.js cypress.config.ts cypress.config.js pytest.ini conftest.py phpunit.xml .mocharc.json karma.conf.js; do
   [ -e "$p" ] && echo "  $p"
@@ -183,6 +189,8 @@ section "documentacion-existente"
 for p in README.md README README.rst CONTRIBUTING.md CHANGELOG.md CODE_OF_CONDUCT.md SECURITY.md LICENSE docs doc documentation wiki; do
   [ -e "$p" ] && echo "  $p"
 done
+echo "contratos_de_api (OpenAPI/Swagger, prof<=4):"
+find . -maxdepth 4 \( $PRUNE \) -prune -o -type f \( -iname 'openapi.json' -o -iname 'openapi.yaml' -o -iname 'openapi.yml' -o -iname 'swagger.json' -o -iname 'swagger.yaml' -o -iname 'swagger.yml' -o -iname '*.openapi.json' -o -iname '*.openapi.yaml' -o -iname '*.openapi.yml' \) -print 2>/dev/null | sed 's#^\./##' | LC_ALL=C sort | head -10 | sed 's/^/  /'
 echo "candidatos_adr_runbooks_lessons (prof<=4):"
 find . -maxdepth 4 \( $PRUNE \) -prune -o -type d \( -iname adr -o -iname adrs -o -iname decisions -o -iname 'architecture-decision*' -o -iname rfc -o -iname rfcs -o -iname runbook -o -iname runbooks -o -iname playbooks -o -iname lessons -o -iname lessons-learned -o -iname postmortems \) -print 2>/dev/null | sed 's#^\./##' | sort | head -20 | sed 's/^/  /'
 

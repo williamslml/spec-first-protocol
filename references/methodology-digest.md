@@ -41,7 +41,7 @@ En el punto de entrada de un proyecto **no** copiar los 22 principios: resumir e
 | Capa de orquestación | Supervisor + workers (agentes ejecutores); patrones de coordinación; el orquestador lo elige el usuario y sus capacidades y límites se averiguan con la sección B.1 de `orchestration.md` (no se suponen) | No existe; se puede añadir después entre METHODOLOGY y AGENTS sin rediseñar el resto |
 | Reparto de trabajo | El supervisor decide agente/modelo y paraleliza, siguiendo las listas fijas (alto riesgo y alto impacto) | Selección por criterios de tiers; cada sesión es independiente |
 | Estado compartido | Lo gestiona el orquestador | `tasks.md` y la spec; no depende de ningún chat |
-| Revisión | Parte del flujo de la capa | Sesión separada, otro modelo/runtime; recibe specs + tasks + diff |
+| Revisión | Parte del flujo de la capa | Sesión separada, otro modelo/runtime; recibe specs + tasks + diff. Con una sola sesión: sesión nueva y, en riesgo medio o alto, también la persona; el resumen dice qué revisión hubo (sección 8 de `development-practices.md`) |
 | Paralelismo | Workers en paralelo | Un git worktree (copia de trabajo aparte) o rama por sesión paralela |
 | Permisos | Restricciones de herramientas del orquestador, con el alcance que confirme su ficha (si aísla menos de lo que exige el riesgo, compensar) | Configurar el mínimo necesario en **cada** runtime antes de usarlo |
 | Lecciones | Autoaprendizaje opcional (opt-in) del orquestador (memoria operativa) + `docs/lessons/` como fuente de verdad | Registro manual en `docs/lessons/` al archivar un change relevante |
@@ -62,6 +62,12 @@ Para **cada** fila, marcar: `Instalado` · `Ya existía (ruta)` · `Omitido por 
 - [ ] Tiers de modelo asignados + señales de alto riesgo + escalamiento
 - [ ] Lista de acciones de alto impacto (aprobación humana) distinta de la de alto riesgo
 - [ ] Controles de calidad ajustados a los comandos reales
+- [ ] Prácticas de desarrollo en el punto de entrada (`development-practices.md`): plan aprobado de corrido, comandos ejecutados por el asistente, evidencia antes de declarar algo inviable, orden del backlog
+- [ ] Convención de dónde viven las pruebas (unitarias, e integración y extremo a extremo aparte) y pruebas mientras se construye
+- [ ] Documentación de la API en OpenAPI (o "N/A: el proyecto no expone una API")
+- [ ] README vivo: base del README y revisión en cada cambio no trivial (o "Omitido por decisión del usuario")
+- [ ] Revisión independiente definida también para una sola sesión
+- [ ] Memoria a largo plazo: estado de ADR y lecciones, e índices de lo vigente
 - [ ] Permisos y mínimo privilegio configurados (por runtime o por orquestador)
 - [ ] Orquestación (solo con orquestador) con su ficha de la sección B.1 de `orchestration.md` completa, o guía de sesiones independientes y worktrees (sin orquestador)
 - [ ] Registro de lecciones (formato "Aplica cuando") y regla de promoción

@@ -61,6 +61,7 @@ Reglas:
 - Runbooks (guías de operación): despliegue, vuelta atrás, recuperación, migraciones, resolución de problemas, respuesta a incidentes, mantenimiento.
 - `docs/lessons/`: con orquestador (coordina agentes), alimenta y complementa su memoria; sin él, es el registro manual principal.
 - Carpetas vacías no aportan: crearlas con un README breve o `.gitkeep` solo si el usuario quiere ver la estructura; si no, al primer uso.
+- Memoria a largo plazo (sección 10 de `development-practices.md`): cada ADR y cada lección llevan su estado, y `docs/adr/README.md` y `docs/lessons/README.md` son índices de lo vigente, con lo reemplazado o superado aparte. Nada se borra por antigüedad.
 
 ## 3. Qué crear según el caso
 

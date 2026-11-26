@@ -75,6 +75,13 @@ codigo "discover.sh termina bien" 0 sh "$SCRIPTS/discover.sh" "$TMP/vacio"
 sh "$SCRIPTS/discover.sh" "$TMP/vacio" >"$TMP/discover.txt" 2>&1
 contiene "discover.sh informa el proyecto analizado" "# Discovery" "$TMP/discover.txt"
 codigo "verify.sh sin manifiesto ni git devuelve 3 (incompleto), no 0" 3 sh "$SCRIPTS/verify.sh" "$TMP/vacio"
+mkdir -p "$TMP/con-tests/src" "$TMP/con-tests/tests" "$TMP/con-tests/api"
+: >"$TMP/con-tests/src/email.test.js"; : >"$TMP/con-tests/tests/registro.test.js"; : >"$TMP/con-tests/api/openapi.yaml"
+sh "$SCRIPTS/discover.sh" "$TMP/con-tests" >"$TMP/discover-tests.txt" 2>&1
+contiene "discover.sh cuenta los tests que quedan fuera de las carpetas de tests" "tests_fuera_de_carpetas_de_tests: 1" "$TMP/discover-tests.txt"
+contiene "discover.sh nombra el test que está junto al código" "src/email.test.js" "$TMP/discover-tests.txt"
+no_contiene "discover.sh no cuenta los tests que ya están en su carpeta" "  tests/registro.test.js" "$TMP/discover-tests.txt"
+contiene "discover.sh encuentra el documento de OpenAPI" "api/openapi.yaml" "$TMP/discover-tests.txt"
 
 # --------------------------------------------------------------------------------------------
 seccion "4. Ciclo completo: instalar con huellas, verificar, editar y retirar"

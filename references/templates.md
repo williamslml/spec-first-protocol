@@ -113,6 +113,26 @@ Variante: <con | sin> orquestador. Fuente: <ruta de la carpeta global o de este 
 ## Aprobación humana obligatoria
 Producción, operaciones destructivas, secretos, pagos, infraestructura crítica, eliminación masiva, cambios globales o de metodología, <adicionales del usuario>.
 
+## Cómo se ejecuta un plan aprobado
+- La aprobación cubre todas las fases y tareas del plan: al terminar una fase y revisarla, seguir con la siguiente sin preguntar.
+- Detenerse solo si algo falla de verdad (informar y ofrecer volver atrás, sin encadenar parches), si aparece algo que el plan no contemplaba (explicar qué cambió) o justo antes de una acción de la lista de aprobación obligatoria (pedir solo esa aprobación y seguir).
+- Ejecutar los comandos y verificaciones permitidos en lugar de pedírselos a la persona; pasarle solo lo que requiere credenciales, acceso externo o una decisión suya.
+- Al terminar: resumen de lo hecho, lo corregido sobre la marcha y lo pendiente.
+- Antes de declarar algo inviable: preguntar por restricciones externas, probar en el proyecto real al menos dos o tres alternativas y registrar la evidencia de cada intento. Si una alternativa logra el objetivo, se adopta. Si funciona pero una política o contrato lo impide, es una restricción, no una inviabilidad.
+- Respetar el orden de las tareas: no adelantar ni descartar un ítem que todavía no toca; las dudas sobre ítems futuros se anotan como riesgo.
+
+## Pruebas
+- Ubicación: <convención del proyecto, p. ej. "tests/ en espejo con src/" | "junto al archivo, con sufijo .test"> para unitarias; integración y extremo a extremo en <carpeta aparte, p. ej. tests/integration/ y e2e/>. Si un caso no encaja, preguntar antes.
+- Escribir el test de cada parte al terminarla y ejecutar los tests relacionados antes de seguir; la suite completa se ejecuta igual en el control de tests.
+
+## Documentación
+- README: mantenerlo al día. En cada cambio no trivial, la spec dice qué cambia del README (o "no aplica") y la propuesta se aprueba con el resto del plan.
+- <Solo si el proyecto expone una API:> Contrato de la API en OpenAPI (<ruta del documento o "generado desde el código con <herramienta>">), actualizado en la misma tarea que cambia un endpoint.
+- Memoria: ADR con estado (propuesto, aceptado, reemplazado por NNNN) y lecciones con estado (vigente, incorporada, superada); índices de lo vigente en <ruta de ADR>/README.md y <ruta de lecciones>/README.md. Nada se borra por antigüedad.
+
+## Revisión
+Quien revisa no es quien programó. <Con una sola sesión:> riesgo medio o alto, revisión en una sesión nueva (solo spec, tareas y cambios) y además revisión de la persona; riesgo bajo, sesión nueva; trivial, verificación básica. El resumen de cada cambio dice qué revisión tuvo; una revisión en la misma conversación es autorrevisión, no independiente.
+
 ## Roles disponibles
 <lista de roles elegidos y cuándo usar cada uno>
 
@@ -190,19 +210,26 @@ No copiar la metodología global dentro del agente.
 - Solución:
 - Evidencia (change/PR/commit):
 - Recurrencia: <n veces / independiente sí-no>
+- Estado: vigente | incorporada (<regla o práctica donde quedó>) | superada (<motivo>)
 ```
-Anotar solo lo no obvio: problemas reales, errores repetidos, decisiones que costaron tiempo.
+Anotar solo lo no obvio: problemas reales, errores repetidos, decisiones que costaron tiempo. El estado y el índice de lo vigente siguen la sección 10 de `development-practices.md`.
 
 ## 7. Revisión cruzada (sin orquestador)
 
 ```markdown
 # Revisión de <change>
 Entradas: specs + tasks + diff (no el chat de implementación).
+Tipo de revisión: otra sesión | otro modelo o runtime | persona | autorrevisión (no independiente: decirlo en el resumen)
 - Cobertura de requisitos:
 - Gaps encontrados:
 - Riesgos de seguridad/regresión:
+- Tests nuevos en la ubicación acordada: sí | no | N/A
+- Documento de OpenAPI al día con el cambio: sí | no | N/A
+- README al día con el cambio: sí | no | N/A
+- Inviabilidades declaradas con evidencia y del ítem en curso: sí | no | N/A
 - Veredicto: aprobar | cambios requeridos
 ```
+Qué revisión corresponde según el riesgo cuando se trabaja con una sola sesión: sección 8 de `development-practices.md`.
 
 ## 8. Reporte final del setup (Fase 7)
 
@@ -211,6 +238,7 @@ Entradas: specs + tasks + diff (no el chat de implementación).
 <En lenguaje claro (regla inviolable 11): qué cambió en el proyecto y qué significa para el trabajo diario, sin referencias internas del skill.>
 - Combinación: <ejes A/B/C, explicados en palabras: p. ej. "proyecto existente, sin mover carpetas, sin orquestador">
 - Hecho: <lista breve; cada ítem dice para qué sirve, con su ruta>
+- Corregido sobre la marcha: <ajustes menores dentro de lo aprobado, o "nada">
 - No hecho (por intrusión elegida / decisión): <lista>
 - Verificación: <resultado de cada comprobación>
 - Pendientes del usuario: <lista>
