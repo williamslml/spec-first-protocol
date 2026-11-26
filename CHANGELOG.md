@@ -15,6 +15,14 @@ Cada versión tiene un resumen en prosa (para quien mantiene el skill) y una sec
 - `aplica-si` usa campos del manifiesto (`templates.md` sección 1) o hechos comprobables; si no se puede evaluar, se pregunta al usuario.
 - Las pruebas de mantenimiento (`project-setup-dev`, fuera del paquete) comprueban que toda entrada siga este formato.
 
+## 1.15.0
+
+Resumen: se atienden las 23 propuestas abiertas del repositorio.
+- Reglas numeradas sin ambigüedad: las de `SKILL.md` se citan como "regla inviolable N" y las del resumen de la metodología como "regla N del resumen". Una prueba de formato rechaza cualquier "regla N" sin aclarar de qué lista es.
+
+Delta para proyectos ya instalados:
+- [accion: no] solo cambia cómo los documentos del skill citan las reglas
+
 ## 1.14.0
 
 Resumen: los documentos del skill se reescribieron en lenguaje claro, para que los entienda cualquier persona.

@@ -110,7 +110,7 @@ Caso: un producto (p. ej. `api`, `web`, `mobile`, `contracts`, `infra`) vive en 
 | **Windows sin `sh`** | `scripts/run.ps1` (Git Bash o WSL); si no hay ninguno, comprobaciones a mano, avisándolo en el plan y el reporte (`windows.md`). |
 | **El usuario no aprueba el plan** | No se aplica nada; ofrecer exportarlo con el formato y la ubicación de la sección 16 de `templates.md` (fuera del repo salvo que pida otra cosa). |
 | **Sin git** | Avisar; ofrecer `git init` o copia de los archivos a tocar. Sin respaldo no hay reestructuración. |
-| **Muchas convenciones propias** | Mandan las del proyecto; la metodología se adapta con un ADR de desviación intencional (regla 2 del digest), no al revés. |
+| **Muchas convenciones propias** | Mandan las del proyecto; la metodología se adapta con un ADR de desviación intencional (regla 2 del resumen), no al revés. |
 | **Instrucciones previas de otros runtimes** | Inventariarlas, no borrarlas. Sin contradicciones: una sola fuente que los demás archivos enlazan. |
 | **Equipo con varios editores** | Una sola fuente de verdad y un adaptador por runtime (enlace simbólico, copia generada o referencia); documentar cómo regenerarlo. |
 | **Entorno sin red** | No instalar herramientas externas; dejar instrucciones de instalación manual y marcar el paso pendiente. |

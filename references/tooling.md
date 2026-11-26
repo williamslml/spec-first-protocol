@@ -45,6 +45,6 @@ Qué se hace con las respuestas:
 | 6 | Contexto | Cuánta información carga y cuándo (¿muestra el detalle solo cuando hace falta?); riesgo de contradecir la metodología |
 
 Qué se hace con las respuestas:
-- Cada skill/tool aprobado se registra como acción del plan (con su fuente y fecha en `note`) y debe justificar su existencia (regla inviolable 6). Sin aprobación no se instala nada (regla 7).
+- Cada skill/tool aprobado se registra como acción del plan (con su fuente y fecha en `note`) y debe justificar su existencia (regla inviolable 6). Sin aprobación no se instala nada (regla inviolable 7).
 - Para las candidatas conocidas, su fila de la matriz de la sección 6.1 de `architecture.md` ya fija cuándo se usan y qué tienen prohibido. Para una herramienta que nombre el usuario, completar una fila nueva con el mismo formato (disparador → herramienta → prohibido) **antes** de planificar, y copiarla al punto de entrada del proyecto (sección 3 de `templates.md`).
 - Si contradice reglas de la metodología (p. ej. un flujo que se salta la spec en cambios no triviales), mostrarlo y decidir con el usuario qué manda. Si se aparta de SFP, va como ADR (registro de decisión de arquitectura) de desviación.

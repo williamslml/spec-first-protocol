@@ -11,6 +11,8 @@ Reglas que comprueba:
   - Sin voseo (español neutro). Una línea que contenga la palabra "voseo" se omite,
     porque explica la regla.
   - Sin firmas de asistentes de IA en los mensajes de commit.
+  - Cada mención de una regla numerada dice de qué lista es: "regla inviolable N" (las de
+    SKILL.md) o "regla N del resumen" / "de este resumen" (las de methodology-digest.md).
   - Los enlaces internos del README (a secciones y a archivos) existen.
   - Las entradas del CHANGELOG tienen la línea "[accion: si/no]" bien formada.
 
@@ -58,6 +60,28 @@ VOSEO = re.compile(
 VOSEO_AMBIGUAS = {"dame", "dale", "pone"}
 
 
+# "regla 7" o "reglas 1–3" sin decir de qué lista son (SKILL.md o el resumen de la metodología)
+REGLA_NUMERADA = re.compile(r"\b[Rr]eglas? (inviolables? )?\d+")
+REGLA_CALIFICADA = re.compile(
+    r"^[\d\s,–\-y]*(\([^)]*\)\s*)?(del resumen|de este resumen|de `methodology-digest|de methodology-digest"
+    r"|de la sección 1 de `methodology-digest)"
+)
+# El historial de cambios cita reglas de versiones anteriores tal como se escribieron entonces
+SIN_REVISAR_REGLAS = {"CHANGELOG.md"}
+
+
+def revisar_reglas(rel, n, linea):
+    if rel in SIN_REVISAR_REGLAS:
+        return
+    for m in REGLA_NUMERADA.finditer(linea):
+        if m.group(1):
+            continue
+        resto = linea[m.end():]
+        if REGLA_CALIFICADA.match(resto):
+            continue
+        avisar(rel, n, f'"{m.group(0)}" no dice si es una regla inviolable o del resumen')
+
+
 def archivos_de_texto():
     for ruta in sorted(RAIZ.rglob("*")):
         if not ruta.is_file() or ruta.suffix.lower() not in EXTENSIONES:
@@ -80,6 +104,7 @@ def revisar_texto(ruta):
             avisar(rel, n, "contiene un emoji")
         if "§" in linea:
             avisar(rel, n, 'contiene "§" (no se usan referencias numeradas a secciones)')
+        revisar_reglas(rel, n, linea)
         if "voseo" in linea.lower():
             continue
         for m in VOSEO.finditer(linea):

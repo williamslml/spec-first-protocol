@@ -16,6 +16,8 @@ Lo que el skill decide para un proyecto (p. ej., el perfil de estructura) no dep
 
 ## Reglas inviolables
 
+Hay dos listas numeradas de reglas y nunca se citan con el número a secas: las de esta sección se citan como "regla inviolable N", y las de `references/methodology-digest.md` (las reglas de la metodología que llegan a cada proyecto) como "regla N del resumen". Una prueba automática del repositorio rechaza cualquier "regla N" sin una de esas dos aclaraciones.
+
 1. **Preguntar antes de actuar.** No se escribe nada antes de completar entrevista, análisis y aprobación explícita del plan.
 2. **Solo lectura hasta la Fase 5.** Las Fases 0–4 no modifican nada del proyecto.
 3. **Agnóstico.** No asumir IDE, runtime (programa que ejecuta al agente), modelo, lenguaje, proveedor, orquestador (coordina varios agentes) ni herramienta de especificación. Todo se detecta o se pregunta. No nombra ni sugiere productos de orquestación ni de especificación: pregunta por la **función**.
@@ -126,7 +128,7 @@ Presentar al usuario, antes de tocar nada:
 6. **Rollback** (cómo deshacer) propuesto.
 7. **Cobertura de la metodología**: recorrer la lista de la sección 4 de `references/methodology-digest.md` y marcar cada área como Instalado / Ya existía / Omitido por decisión / N/A. Nada puede quedar sin marcar: así no se omite en silencio ninguna parte.
 
-Formato: 5–10 líneas de resumen en lenguaje claro (regla 11: qué cambiará en su proyecto y por qué, sin jerga ni referencias internas) y la tabla del plan. En una reestructuración (caso 3), añadir el **mapa antes → después** de las carpetas. El perfil de estructura va con la regla que lo decidió (sección 3 de `project-structure.md`, con las cifras de `discover.sh`; los empates, con la sección 3.1). En monorepos, tabla por workspace (subproyecto; sección 3.2). Con orquestador, la ficha de la sección 15 de `templates.md`.
+Formato: 5–10 líneas de resumen en lenguaje claro (regla inviolable 11: qué cambiará en su proyecto y por qué, sin jerga ni referencias internas) y la tabla del plan. En una reestructuración (caso 3), añadir el **mapa antes → después** de las carpetas. El perfil de estructura va con la regla que lo decidió (sección 3 de `project-structure.md`, con las cifras de `discover.sh`; los empates, con la sección 3.1). En monorepos, tabla por workspace (subproyecto; sección 3.2). Con orquestador, la ficha de la sección 15 de `templates.md`.
 
 ### Fase 5 — Aprobación y respaldo
 - Pedir aprobación explícita del plan completo, o ítem por ítem si el usuario lo prefiere. Aceptar cambios y volver a presentarlo si cambia de forma importante.
@@ -148,7 +150,7 @@ Formato: 5–10 líneas de resumen en lenguaje claro (regla 11: qué cambiará e
 - Códigos de salida: 0 completo y sin fallas · 1 fallas · 3 incompleto (p. ej., sin `jq` ni Python 3, o comando sin aprobar): un 3 nunca se informa como "sin fallas". Si el entorno no permite shell, hacer estas comprobaciones a mano.
 - Verificar además: enlaces/símbolos válidos; que el runtime elegido ve las instrucciones (según su adaptador); que el proyecto sigue compilando y pasando sus pruebas si las había (ejecutar solo comandos que el usuario autorizó); que nada fuera del plan cambió (comparar con el manifiesto o el diff; si hay tag `pre-sfp`, ayuda la sección 4 de `verify.sh`).
 - Repetir la lista de cobertura (sección 4 de `methodology-digest.md`) con el estado final.
-- Entregar reporte corto en lenguaje claro (regla 11): qué se hizo, qué no, cómo revertir, cómo usarlo (primer change de ejemplo) y pendientes del usuario.
+- Entregar reporte corto en lenguaje claro (regla inviolable 11): qué se hizo, qué no, cómo revertir, cómo usarlo (primer change de ejemplo) y pendientes del usuario.
 - Sugerir, sin imponer, el siguiente paso real (p. ej., crear el primer change, es decir, el primer cambio especificado).
 
 ## Modos de operación

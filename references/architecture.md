@@ -106,9 +106,9 @@ Estructura de cada skill (paquete de instrucciones; detalle bajo demanda): `SKIL
 
 | Función | Capacidad | Candidata conocida | Cuándo plantearla en el setup |
 |---|---|---|---|
-| Flujo de trabajo (solo lo que SFP no cubre) | TDD (test primero), depuración sistemática, verificar antes de dar por terminado, recibir hallazgos de revisión, cierre de rama | **Superpowers**, solo el subconjunto de la sección 6.1 | Preguntar si ya usa alguno. SFP ya cubre especificación, planificación, tareas, sub-agentes, worktrees y revisión crítica (digest `methodology-digest.md` reglas 8–9, `orchestration.md`): esas partes de Superpowers **no se instalan** |
+| Flujo de trabajo (solo lo que SFP no cubre) | TDD (test primero), depuración sistemática, verificar antes de dar por terminado, recibir hallazgos de revisión, cierre de rama | **Superpowers**, solo el subconjunto de la sección 6.1 | Preguntar si ya usa alguno. SFP ya cubre especificación, planificación, tareas, sub-agentes, worktrees y revisión crítica (reglas 8 y 9 del resumen, `methodology-digest.md`, y `orchestration.md`): esas partes de Superpowers **no se instalan** |
 | Navegación semántica de código | Buscar símbolos y referencias, refactorizar por símbolo (LSP) | **Serena** | Solo si el discovery (análisis inicial) muestra un repo grande: `archivos` ≥ 1000 en `tamano-y-estructura`, o `monorepo: si` (umbral por defecto de la skill; el usuario puede fijar otro) |
-| Menos ruido en la terminal | Menos tokens (unidades de texto) por salida de comando (optimización, no metodología) | **RTK** | Opcional. Su hook (script automático) vive en la configuración **global** del runtime: cambio de configuración global (regla 7, confirmación aparte) |
+| Menos ruido en la terminal | Menos tokens (unidades de texto) por salida de comando (optimización, no metodología) | **RTK** | Opcional. Su hook (script automático) vive en la configuración **global** del runtime: cambio de configuración global (regla inviolable 7, confirmación aparte) |
 | Visualización de arquitectura | Diagramas de componentes, flujos, secuencia y datos; complementa `ARCHITECTURE.md` | **archify** | Opcional |
 | Diseño visual de frontend | Dirección visual, tipografía, coherencia; no cargarla en backend | **frontend-design** | Solo si hay frontend |
 
@@ -131,7 +131,7 @@ Fuente única de verdad del enrutamiento. Si dos filas parecen aplicar, **gana l
 | Plan, diseño y tareas de un cambio no trivial | Capa de specs de SFP (design → `tasks.md`) | `writing-plans` y `executing-plans` (no se instalan). Ninguna candidata crea ni reescribe specs o tareas |
 | Repartir trabajo entre agentes o sub-agentes, paralelizar | Roles y orquestación de SFP (`orchestration.md`) | `subagent-driven-development` y `dispatching-parallel-agents` (no se instalan) |
 | Aislamiento por sesión: ramas y worktrees | SFP (`orchestration.md` secciones A y B) | `using-git-worktrees` (no se instala) |
-| Pedir una revisión crítica | Rol Reviewer de SFP (`templates.md` sección 7, otra sesión u otro modelo; regla 8 del digest) | `requesting-code-review` (no se instala) |
+| Pedir una revisión crítica | Rol Reviewer de SFP (`templates.md` sección 7, otra sesión u otro modelo; regla 8 del resumen) | `requesting-code-review` (no se instala) |
 | Orden y contenido de los controles de calidad (gates) | SFP (`templates.md` sección 14; sección 6 del digest) | Ninguna candidata añade, salta ni reordena gates |
 | Memoria del proyecto: ADR, lecciones, runbooks | SFP (`docs/adr/`, `docs/lessons/`, `docs/runbooks/`) | Memorias y onboarding de Serena (se arranca con `--add-mode no-memories`) |
 | Instalar, actualizar o retirar la metodología | `spec-first-protocol` | Ninguna candidata modifica `.sfp/` ni los bloques `sfp:start`/`sfp:end` |
@@ -141,7 +141,7 @@ Fuente única de verdad del enrutamiento. Si dos filas parecen aplicar, **gana l
 | Disparador | Herramienta | Prohibido explícitamente |
 |---|---|---|
 | Implementar un ítem de `tasks.md` (o un cambio trivial) con comportamiento comprobable | `test-driven-development` (Superpowers) | Saltarse la spec en cambios no triviales. Los tests escritos primero viven **dentro** del paso de implementación: el gate de tests sigue después y ejecuta la suite completa (el orden de gates no cambia) |
-| Un bug, un test que falla, un comportamiento inesperado | `systematic-debugging` (Superpowers) | Aplicar un arreglo que cambie contratos o comportamiento sin pasar por la spec (regla 3 del digest) |
+| Un bug, un test que falla, un comportamiento inesperado | `systematic-debugging` (Superpowers) | Aplicar un arreglo que cambie contratos o comportamiento sin pasar por la spec (regla 3 del resumen) |
 | A punto de dar por terminado, hacer commit o abrir una PR | `verification-before-completion` (Superpowers) | Inventar comandos de verificación: usar los de "Verificación" del punto de entrada (`templates.md` sección 3) |
 | Llegan hallazgos del Reviewer de SFP o de una persona | `receiving-code-review` (Superpowers) | Iniciar revisiones (eso es SFP) |
 | Trabajo terminado y verificado: decidir merge, PR, conservar o descartar | `finishing-a-development-branch` (Superpowers) | Hacer merge, push o borrar ramas sin aprobación humana (acción de alto impacto); crear worktrees |
@@ -194,7 +194,7 @@ Los cinco roles base (Architect, Developer, Frontend, Tester, Reviewer) son **pl
 | Varios runtimes o modelos disponibles | Asignar el rol reviewer a otro modelo o runtime que el de implementación |
 | Orquestador elegido | Un supervisor + workers mínimos; no crear workers a los que no se vaya a delegar |
 
-La relación rol ↔ tier es una **sugerencia** (p. ej. un rol de arquitectura o de revisión final suele ir al tier de Alta capacidad, según la regla 5 del digest); la asignación real depende de complejidad y riesgo de cada tarea, no solo del rol.
+La relación rol ↔ tier es una **sugerencia** (p. ej. un rol de arquitectura o de revisión final suele ir al tier de Alta capacidad, según la regla 5 del resumen); la asignación real depende de complejidad y riesgo de cada tarea, no solo del rol.
 
 ### Reglas
 - No duplicar en el rol la metodología global ni todas las herramientas o skills: el rol referencia, no copia.

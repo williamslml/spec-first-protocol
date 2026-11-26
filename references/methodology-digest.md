@@ -6,6 +6,8 @@ Es el **resumen práctico** de SFP. El texto completo, con diagramas y justifica
 
 ## 1. Reglas que deben llegar al proyecto
 
+Fuera de este documento, estas reglas se citan como "regla N del resumen", para no confundirlas con las reglas inviolables de `SKILL.md` (que se citan como "regla inviolable N"). Dentro de este documento se dice "regla N de este resumen".
+
 | # | Regla |
 |---|---|
 | 1 | **Separación de capas**: metodología → (orquestación) → agentes → modelos → runtime/CLI (programa que ejecuta al agente) → skills → tools; nada se ata a un proveedor, modelo, runtime u orquestador concreto; las capas se nombran por función, no por herramienta |
@@ -51,7 +53,7 @@ En el punto de entrada de un proyecto **no** copiar los 22 principios: resumir e
 
 Para **cada** fila, marcar: `Instalado` · `Ya existía (ruta)` · `Omitido por decisión del usuario` · `N/A (motivo)`. Nada puede quedar sin marcar.
 
-- [ ] Instrucciones de proyecto por runtime (reglas 1–3, 6, 8, 10–12 resumidas)
+- [ ] Instrucciones de proyecto por runtime (reglas 1–3, 6, 8 y 10–12 de este resumen)
 - [ ] Estructura de conocimiento: `docs/adr`, `docs/runbooks`, `docs/lessons`
 - [ ] Capa de especificación y los 4 artefactos por change; límite con el ADR
 - [ ] Carpeta global (SYSTEM.md; methodology/, agents/, skills/, tools/ solo si procede); versionada en Git
@@ -79,7 +81,7 @@ Huecos de la metodología **sin respuesta única**. El setup los resuelve con el
 
 | # | Decisión abierta | Tratamiento en el setup |
 |---|---|---|
-| 1 | "No trivial" (regla 3) y "señales de alto riesgo" (regla 6) son listas distintas y no dicen cuál manda. Un cambio de una línea en autenticación es trivial por el primer criterio y Alta capacidad por el segundo | Preguntar (entrevista 21) y fijar en las instrucciones cuál manda (propuesta: la señal de alto riesgo vuelve no trivial el cambio) |
+| 1 | "No trivial" (regla 3 de este resumen) y "señales de alto riesgo" (regla 6 de este resumen) son listas distintas y no dicen cuál manda. Un cambio de una línea en autenticación es trivial por el primer criterio y Alta capacidad por el segundo | Preguntar (entrevista 21) y fijar en las instrucciones cuál manda (propuesta: la señal de alto riesgo vuelve no trivial el cambio) |
 | 2 | El reparto usa **señales fijas** y a la vez un juicio multicriterio (complejidad, ambigüedad, coste, historial…) | Señales fijas = mínimo obligatorio (Alta capacidad); los demás criterios solo para elegir entre Ligero y Generalista |
 | 3 | Ligero se describe como "simple y bajo riesgo" y también como "worker completo, complejidad baja/media" | Definir su alcance con el usuario según su rendimiento real |
 | 4 | El ejemplo 50 % Alta capacidad / 30 / 20 contradice "Alta capacidad solo donde el riesgo lo justifica" | No usar porcentajes como objetivo; omitirlos o dejarlos `PENDIENTE` hasta tener métricas |

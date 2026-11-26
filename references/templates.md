@@ -271,7 +271,7 @@ Describe el proyecto antes de construirlo. Se arma conversando; guardar solo con
 Completa el bloque "Verificación" del punto de entrada (sección 3): para cada nivel de riesgo, los comandos reales que un agente o script puede ejecutar sin interpretar texto. Solo comandos verificados del proyecto (de `discover.sh` o confirmados por el usuario); `PENDIENTE` donde aún no existan.
 
 ```yaml
-# gates.yml — quality gates por nivel de riesgo (ver methodology-digest.md regla 10)
+# gates.yml — quality gates por nivel de riesgo (regla 10 del resumen, methodology-digest.md)
 version: 1
 rigor: ligero | estandar | estricto   # elegido en la entrevista, bloque 5, pregunta 20
 
@@ -293,7 +293,7 @@ gates:
     - architecture: "<references/structure-verification.md: comando elegido, o PENDIENTE>"
     - regression: "<comando o PENDIENTE>"
 
-# señales de alto riesgo (methodology-digest.md regla 6): fijas, no cuotas
+# señales de alto riesgo (regla 6 del resumen, methodology-digest.md): fijas, no cuotas
 senales_alto_riesgo:
   - produccion
   - auth
@@ -439,7 +439,7 @@ Dónde instalarlo según el análisis inicial (`discover.sh`, sección de hooks:
 |---|---|
 | Sin gestor de hooks y sin `core.hooksPath` | `.git/hooks/commit-msg`. Si no existe: `create` con `#!/bin/sh` más el bloque, y permiso de ejecución (`chmod +x`; Git for Windows no lo necesita). Si existe: `merge` del bloque justo después de la línea `#!`. **No se versiona**: aplica solo en ese clon; avisarlo si hay equipo |
 | husky (`.husky/`) | `merge` del bloque en `.husky/commit-msg` (`create` si no existe). Versionado: aplica a todo el equipo |
-| lefthook, pre-commit u otro gestor | `create` de `.sfp/hooks/commit-msg-ai-attribution.sh` (copia del archivo fuente) y `merge` en la configuración del gestor de un hook `commit-msg` que ejecute `sh .sfp/hooks/commit-msg-ai-attribution.sh <archivo-del-mensaje>`. La sintaxis exacta y cómo activa ese gestor el tipo `commit-msg` se verifican en su documentación vigente (regla 8) |
+| lefthook, pre-commit u otro gestor | `create` de `.sfp/hooks/commit-msg-ai-attribution.sh` (copia del archivo fuente) y `merge` en la configuración del gestor de un hook `commit-msg` que ejecute `sh .sfp/hooks/commit-msg-ai-attribution.sh <archivo-del-mensaje>`. La sintaxis exacta y cómo activa ese gestor el tipo `commit-msg` se verifican en su documentación vigente (regla inviolable 8) |
 | `core.hooksPath` local apuntando a una carpeta versionada | `merge` o `create` en `<esa carpeta>/commit-msg` |
 
 **Prohibido por defecto:** `git config --global core.hooksPath`, que hace que Git ignore los hooks propios de **todos** los repositorios (husky, lefthook, pre-commit). Si el usuario quiere el filtro en todos sus repos, la alternativa menos intrusiva es `git config --global init.templateDir <carpeta>` con el hook en `<carpeta>/hooks/commit-msg`: solo afecta a los que se clonen o creen después y no anula hooks existentes. Es global: `[MANUAL]`, con confirmación aparte.

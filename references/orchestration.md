@@ -8,7 +8,7 @@ Texto completo: `sfp-sin-orquestador.md` (sobre todo secciones 6, 9.5 a 9.6, 12,
 
 Qué implica:
 - Cada sesión es independiente; el **estado compartido** vive en los documentos de especificación (`tasks.md` o equivalente), no en el chat.
-- Agente y modelo se eligen por niveles (tiers; regla 5 del digest), no por un supervisor.
+- Agente y modelo se eligen por niveles (tiers; regla 5 del resumen), no por un supervisor.
 - Implementar y revisar, en **sesiones separadas**, mejor con otro modelo o runtime (editor o CLI con agentes). La revisión recibe specs + `tasks.md` + diff (cambios del código), no el historial del chat.
 - Sesiones paralelas: un git worktree (copia de trabajo aparte) o rama por sesión.
 - Lecciones aprendidas: registro **manual** en `docs/lessons/` (o donde se acuerde) con formato "Aplica cuando: …"; pasan a la metodología global solo si se repiten (guía: ~3 veces).
