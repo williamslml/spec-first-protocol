@@ -33,18 +33,19 @@ Qué se hace con las respuestas:
 
 ## sección 2 Skills y tools
 
-**Funciones posibles** (catálogo en la sección 6 de `architecture.md`): flujo de trabajo, navegación de código por significado, reducción de ruido en la terminal, visualización de arquitectura, diseño visual de frontend, u otras que proponga el usuario. Se pregunta por la función que quiere cubrir. El producto lo trae el usuario o se elige entre las candidatas conocidas del catálogo (sección 6 de `architecture.md`), que se ofrecen como opciones y pasan por este mismo cuestionario antes de planificarse.
+**Funciones posibles** (catálogo en la sección 6 de `architecture.md`): flujo de trabajo, navegación de código por significado, reducción de ruido en la terminal, visualización de arquitectura, diseño visual de frontend, corrección técnica del código web, documentación vigente de librerías, u otras que proponga el usuario. Se pregunta por la función que quiere cubrir. El producto lo trae el usuario o se elige entre las candidatas conocidas del catálogo (sección 6 de `architecture.md`), que se ofrecen como opciones y pasan por este mismo cuestionario antes de planificarse.
 
 | # | Área | Qué averiguar |
 |---|---|---|
 | 1 | Identidad y madurez | Fuente oficial, versión, licencia, mantenimiento |
-| 2 | Función real | Qué hace hoy según su documentación (no según su nombre) y qué función del catálogo cubre |
+| 2 | Función real | Qué hace hoy según su documentación (no según su nombre) y qué función del catálogo cubre. Si la sesión tiene Context7, sirve para llegar a esa documentación; se cita la página oficial original |
 | 3 | Instalación y alcance | Dónde se instala (proyecto, usuario, global), qué archivos crea; ¿requiere red, cuenta o claves? |
 | 4 | Runtimes | En qué runtimes funciona y con qué mecanismo (skill, comando, plugin, servidor de herramientas) |
 | 5 | Permisos y privacidad | Qué herramientas o comandos ejecuta, qué contenido del repo puede salir, telemetría (datos de uso enviados) |
 | 6 | Contexto | Cuánta información carga y cuándo (¿muestra el detalle solo cuando hace falta?); riesgo de contradecir la metodología |
 
 Qué se hace con las respuestas:
-- Cada skill/tool aprobado se registra como acción del plan (con su fuente y fecha en `note`) y debe justificar su existencia (regla inviolable 6). Sin aprobación no se instala nada (regla 7).
+- Cada skill/tool aprobado se registra como acción del plan (con su fuente y fecha en `note`) y debe justificar su existencia (regla inviolable 6). Sin aprobación no se instala nada (regla inviolable 7).
 - Para las candidatas conocidas, su fila de la matriz de la sección 6.1 de `architecture.md` ya fija cuándo se usan y qué tienen prohibido. Para una herramienta que nombre el usuario, completar una fila nueva con el mismo formato (disparador → herramienta → prohibido) **antes** de planificar, y copiarla al punto de entrada del proyecto (sección 3 de `templates.md`).
 - Si contradice reglas de la metodología (p. ej. un flujo que se salta la spec en cambios no triviales), mostrarlo y decidir con el usuario qué manda. Si se aparta de SFP, va como ADR (registro de decisión de arquitectura) de desviación.
+- **Si las áreas 3 o 4 no se pueden confirmar para el runtime de destino** (la documentación no lo dice, es ambigua o no se puede consultar): no se instala en ese runtime. Se informa qué no se pudo confirmar, se ofrece instalarla solo en los runtimes donde sí está confirmada, o una instalación manual que haga la persona siguiendo la documentación oficial, y queda en el reporte como "No hecho: no se pudo verificar" (regla inviolable 8).

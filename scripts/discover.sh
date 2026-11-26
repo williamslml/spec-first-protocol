@@ -150,6 +150,26 @@ if [ -f package.json ]; then
   fi
 fi
 
+# Interfaz web y gestor de paquetes (para ofrecer frontend-design y modern-web-guidance, y elegir con qué
+# se ejecuta el CLI de skills): mismos criterios que scripts/integrations.sh. Hechos, no decisiones.
+IW=""
+if [ -f package.json ] && grep -Eq '"(react|react-dom|vue|svelte|@angular/core|next|nuxt|solid-js|preact|astro|lit|@remix-run/react|@sveltejs/kit|electron|@tauri-apps/api)"[[:space:]]*:' package.json; then IW="si (package.json)"
+elif [ -d src-tauri ]; then IW="si (src-tauri)"
+else
+  H1=$(find . -maxdepth 5 \( $PRUNE -o -name .sfp -o -name .archify -o -name coverage -o -name htmlcov -o -name site -o -name _build \) -prune -o -type f \( -name '*.tsx' -o -name '*.jsx' -o -name '*.vue' -o -name '*.svelte' -o -name '*.html' -o -name '*.css' -o -name '*.scss' \) -print 2>/dev/null | head -1)
+  [ -n "$H1" ] && IW="si (${H1#./})"
+fi
+echo "interfaz_web: ${IW:-no detectada}"
+PMG=""
+[ -f package.json ] && PMG=$(sed -n 's/.*"packageManager"[[:space:]]*:[[:space:]]*"\([a-z]*\)@.*/\1/p' package.json | head -1)
+if [ -z "$PMG" ]; then
+  if [ -f pnpm-lock.yaml ]; then PMG=pnpm
+  elif [ -f bun.lock ] || [ -f bun.lockb ]; then PMG=bun
+  elif [ -f yarn.lock ]; then PMG=yarn
+  elif [ -f package-lock.json ]; then PMG=npm; fi
+fi
+echo "gestor_de_paquetes_js: ${PMG:-no declarado}"
+
 section "monorepo"
 MONO=no
 for f in pnpm-workspace.yaml lerna.json nx.json turbo.json go.work rush.json; do [ -f "$f" ] && { echo "indicador: $f"; MONO=posible; }; done
@@ -167,6 +187,12 @@ for p in .eslintrc .eslintrc.js .eslintrc.cjs .eslintrc.json .eslintrc.yml eslin
 done
 echo "directorios_de_tests (prof<=3):"
 find . -maxdepth 3 \( $PRUNE \) -prune -o -type d \( -name test -o -name tests -o -name __tests__ -o -name spec -o -name e2e -o -name cypress -o -name playwright \) -print 2>/dev/null | sed 's#^\./##' | sort | head -15 | sed 's/^/  /'
+# Tests fuera de las carpetas de tests (junto al código): hecho para references/development-practices.md sección 5.
+TJ=$(find . -maxdepth 6 \( $PRUNE -o -name test -o -name tests -o -name __tests__ -o -name spec -o -name e2e -o -name cypress -o -name playwright \) -prune -o -type f \( -name '*.test.*' -o -name '*.spec.*' -o -name '*_test.go' -o -name '*_test.py' -o -name 'test_*.py' -o -name '*Test.java' -o -name '*Test.kt' -o -name '*Tests.cs' -o -name '*_spec.rb' \) -print 2>/dev/null | sed 's#^\./##' | LC_ALL=C sort)
+NTJ=0
+[ -n "$TJ" ] && NTJ=$(printf '%s\n' "$TJ" | grep -c .)
+echo "tests_fuera_de_carpetas_de_tests: $NTJ"
+[ "$NTJ" -gt 0 ] && printf '%s\n' "$TJ" | head -10 | sed 's/^/  /'
 echo "configs_de_test:"
 for p in jest.config.js jest.config.ts jest.config.cjs jest.config.mjs vitest.config.ts vitest.config.js playwright.config.ts playwright.config.js cypress.config.ts cypress.config.js pytest.ini conftest.py phpunit.xml .mocharc.json karma.conf.js; do
   [ -e "$p" ] && echo "  $p"
@@ -183,6 +209,8 @@ section "documentacion-existente"
 for p in README.md README README.rst CONTRIBUTING.md CHANGELOG.md CODE_OF_CONDUCT.md SECURITY.md LICENSE docs doc documentation wiki; do
   [ -e "$p" ] && echo "  $p"
 done
+echo "contratos_de_api (OpenAPI/Swagger, prof<=4):"
+find . -maxdepth 4 \( $PRUNE \) -prune -o -type f \( -iname 'openapi.json' -o -iname 'openapi.yaml' -o -iname 'openapi.yml' -o -iname 'swagger.json' -o -iname 'swagger.yaml' -o -iname 'swagger.yml' -o -iname '*.openapi.json' -o -iname '*.openapi.yaml' -o -iname '*.openapi.yml' \) -print 2>/dev/null | sed 's#^\./##' | LC_ALL=C sort | head -10 | sed 's/^/  /'
 echo "candidatos_adr_runbooks_lessons (prof<=4):"
 find . -maxdepth 4 \( $PRUNE \) -prune -o -type d \( -iname adr -o -iname adrs -o -iname decisions -o -iname 'architecture-decision*' -o -iname rfc -o -iname rfcs -o -iname runbook -o -iname runbooks -o -iname playbooks -o -iname lessons -o -iname lessons-learned -o -iname postmortems \) -print 2>/dev/null | sed 's#^\./##' | sort | head -20 | sed 's/^/  /'
 

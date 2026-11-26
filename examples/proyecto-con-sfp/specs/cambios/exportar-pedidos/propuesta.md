@@ -17,3 +17,5 @@ Un botón "Exportar pedidos del mes" que descargue un archivo CSV con fecha, cli
 
 ## Riesgo
 Medio, por los datos personales. Por eso, antes de implementar se pedirá la aprobación explícita de la persona responsable.
+
+README: añadir "Exportar pedidos" a la lista de características cuando el cambio se apruebe e implemente.

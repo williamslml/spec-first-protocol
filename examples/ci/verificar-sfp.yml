@@ -1,0 +1,60 @@
+# Ejemplo para GitHub Actions: verificar SFP en cada solicitud de cambios.
+#
+# Copiar a .github/workflows/verificar-sfp.yml del proyecto y ajustar SFP_REF.
+# Trata los cuatro códigos de salida de verify.sh así:
+#   0 = sin fallas y completo  -> pasa
+#   3 = sin fallas, INCOMPLETO -> pasa con una advertencia visible: algo no se pudo comprobar (una
+#                                 herramienta, el respaldo, o un verify_command que solo corre con
+#                                 --run-verify)
+#   1 = fallas                 -> falla
+#   2 = llamada incorrecta     -> falla
+# Para que el 3 también falle, añadir --strict-tooling a la llamada de verify.sh. Si el manifiesto registra
+# un verify_command y el equipo ya lo aprobó, añadir --run-verify para que se ejecute (si no, sale 3).
+#
+# Si el proyecto ya guarda una copia fija del skill (por ejemplo en tools/spec-first-protocol),
+# quitar el paso "Descargar el skill" y usar esa ruta como SFP_DIR. El skill se descarga fuera de la
+# carpeta del proyecto para que verify.sh no lo confunda con una copia fija dentro del proyecto.
+
+name: Verificar SFP
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+env:
+  SFP_REF: master           # rama, etiqueta o commit del skill que se quiere usar
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el proyecto
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0          # verify.sh compara contra el respaldo (etiqueta pre-sfp)
+
+      - name: Descargar el skill
+        run: |
+          SFP_DIR="$RUNNER_TEMP/spec-first-protocol"   # fuera del proyecto: no cuenta como copia del skill
+          git clone --quiet https://github.com/williamslml/spec-first-protocol.git "$SFP_DIR"
+          git -C "$SFP_DIR" checkout --quiet "$SFP_REF"
+
+      - name: Activar el filtro de firmas de IA en esta copia
+        # SFP versiona el filtro en .githooks; git no lo activa solo al clonar, y verify.sh lo comprueba.
+        run: |
+          if [ -f .githooks/commit-msg ]; then git config core.hooksPath .githooks; fi
+
+      - name: Verificar SFP
+        run: |
+          SFP_DIR="$RUNNER_TEMP/spec-first-protocol"
+          set +e
+          sh "$SFP_DIR/scripts/verify.sh" .
+          codigo=$?
+          set -e
+          case "$codigo" in
+            0) echo "SFP: sin fallas y completo" ;;
+            3) echo "::warning::SFP: sin fallas, pero la verificación quedó incompleta (ver los AVISO del registro)" ;;
+            *) echo "::error::SFP: verify.sh terminó con código $codigo (1 = fallas, 2 = llamada incorrecta)"; exit 1 ;;
+          esac

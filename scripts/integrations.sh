@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 # integrations.sh — instala, configura, verifica y retira las candidatas del catálogo de skills/tools
-# (references/architecture.md sección 6, sección 6.1 matriz de enrutamiento, sección 6.2 este script). Solo Claude Code.
+# (references/architecture.md sección 6, sección 6.1 matriz de enrutamiento, sección 6.2 este script).
+# Asistentes: Claude Code (probado) y Codex (en pruebas: skills en .agents/skills, Serena y Context7 en
+# su config.toml, y RTK con su hook).
 #
-# Componentes: archify · frontend-design · superpowers (solo 5 skills, nunca el plugin) · serena · rtk
-# más el healthcheck de la propia skill sfp (spec-first-protocol). Requiere bash >= 4 (no sh/dash).
+# Componentes: archify · frontend-design · modern-web-guidance · superpowers (solo 5 skills, nunca el
+# plugin) · serena · context7 · rtk, más el healthcheck de la propia skill sfp (spec-first-protocol).
+# Requiere bash >= 4 (no sh/dash).
 #
 # Uso:
 #   bash integrations.sh [modo] [opciones] [<ruta-del-proyecto>]       (por defecto: directorio actual)
@@ -22,23 +25,38 @@
 #                            global  = ~/.claude/skills y MCP de usuario.
 #   --rtk-scope global|project  Enganche de RTK (defecto: global, único modo con hook en Claude Code;
 #                            project solo añade un bloque de instrucciones a <proyecto>/CLAUDE.md).
-#   --only a,b,...           Solo estos componentes (archify,frontend-design,superpowers,serena,rtk).
+#   --only a,b,...           Solo estos componentes (archify,frontend-design,modern-web-guidance,
+#                            superpowers,serena,context7,rtk).
 #   --skip a,b,...           Excluir estos componentes.
-#   --force-frontend         Instalar frontend-design aunque no se detecte frontend.
+#   --force-frontend         Instalar frontend-design y modern-web-guidance aunque no se detecte frontend.
 # Otras:
-#   --state <archivo>        Estado (defecto: <proyecto>/.sfp/integrations.json; fuera del repo en el
+#   --agent claude-code|codex  Asistente de destino (defecto: claude-code). La skill lo pregunta en la
+#                            entrevista; el script no lo adivina. Con codex, las skills van a
+#                            <proyecto>/.agents/skills o ~/.agents/skills; Serena y Context7, a
+#                            <proyecto>/.codex/config.toml (Codex solo lo lee en proyectos de confianza)
+#                            o a ~/.codex/config.toml; RTK, con 'rtk init -g --codex'.
+#   --runner auto|npx|npm|pnpm|bun|yarn  Cómo se ejecuta el CLI de skills. auto (defecto) usa el gestor
+#                            del proyecto (packageManager de package.json o su lockfile; package-lock.json
+#                            es npm) y, si no hay ninguno o no está instalado, el primero disponible: npx,
+#                            npm exec, pnpm dlx, bunx, yarn dlx. Probado con npx, npm y pnpm; bun y yarn
+#                            (2 o superior), en pruebas.
+#   --strict-tooling         Un resultado INCOMPLETO (3) sale como falla (1), para CI estrictos.
+#   --state <archivo>        Estado (defecto: <proyecto>/.sfp/integrations.json, o
+#                            .sfp/integrations-codex.json con --agent codex; fuera del repo en el
 #                            modo sin rastros).
 #   -h, --help               Esta ayuda.
 #
 # Variables de entorno:
 #   CLAUDE_CONFIG_DIR   Carpeta de configuración de Claude Code (defecto: ~/.claude), igual que Claude Code.
 #   SFP_CLAUDE_JSON     Archivo de estado de Claude Code con los MCP de usuario (defecto: ~/.claude.json).
+#   CODEX_HOME          Carpeta de configuración de Codex (defecto: ~/.codex), igual que Codex.
 #
 # Estados: [GLOBAL DETECTADO] [INSTALADO EN PROYECTO] [INSTALADO GLOBAL] [OMITIDO - YA CONFIGURADO]
 #   [OMITIDO - NO SELECCIONADO] [OMITIDO - SIN FRONTEND] [PLAN] [OK] [AVISO] [CONFLICTO] [FALLA] [MANUAL]
 #
 # Códigos de salida: 0 = completo y sin fallas · 1 = fallas o conflictos · 2 = uso/ruta inválida ·
 #                    3 = sin fallas pero INCOMPLETO (falta una dependencia para comprobar algo).
+#                    En CI: tratar 3 como advertencia y fallar solo con 1 o 2 (o usar --strict-tooling).
 #
 # Idempotente: cada acción se decide por detección del estado real; ejecutarlo N veces no duplica
 # entradas de JSON/TOML ni reinstala lo que ya está. Nunca sobrescribe configuración existente:
@@ -55,11 +73,12 @@ fi
 # --------------------------------------------------------------------------- versiones fijadas
 # Verificadas el 2026-11-20 contra las fuentes oficiales. Para actualizar: cambiar aquí, revisar el
 # repositorio en esa versión y repetir el healthcheck.
-readonly SKILL_VERSION="1.14.0"
+readonly SKILL_VERSION="1.15.0"
 readonly SKILLS_CLI_PKG="skills@1.9.0"                                  # npm: CLI oficial de skills.sh
 readonly ARCHIFY_SOURCE="tt-a1i/archify@v3.2.0"
 readonly FRONTEND_SOURCE="anthropics/skills@e4bb5d960d87126ff3b3a8af1a104b7db67560ba"   # sin tags: commit
 readonly SUPERPOWERS_SOURCE="obra/superpowers@v7.0.2"
+readonly MWG_SOURCE="GoogleChrome/modern-web-guidance@v1.0.2"   # Apache-2.0; guías CC-BY-4.0 (verificado 2026-11-26)
 readonly SERENA_PKG="serena-agent==2.1.0"
 readonly SERENA_PY="3.13"
 readonly RTK_VERSION="1.2.1"
@@ -82,13 +101,25 @@ readonly SP_EXCLUDE=(brainstorming writing-plans executing-plans subagent-driven
 # Serena: contexto claude-code (sin herramientas de lectura/búsqueda de texto) y sin memorias.
 readonly SERENA_ARGS=(start-mcp-server --context claude-code --project-from-cwd --add-mode no-memories)
 readonly SERENA_UVX=(uvx -p "$SERENA_PY" --from "$SERENA_PKG" serena "${SERENA_ARGS[@]}")
+# Serena en Codex: contexto "codex", el que la documentación de Serena indica para Codex (verificado el
+# 2026-11-26).
+readonly SERENA_CODEX_UVX=(uvx -p "$SERENA_PY" --from "$SERENA_PKG" serena start-mcp-server --context codex --project-from-cwd --add-mode no-memories)
+
+# Context7 (documentación vigente de librerías): servidor MCP local con versión fijada. Licencia MIT;
+# exige Node.js >= 20.18.1 (registro de npm, verificado el 2026-11-26). La clave es opcional y nunca se
+# escribe en el repositorio: el servidor la lee de la variable de entorno CONTEXT7_API_KEY.
+readonly CONTEXT7_PKG="@upstash/context7-mcp@4.9.0"
+readonly CONTEXT7_CMD=(npx -y "$CONTEXT7_PKG")
+
+# RTK en Codex: 'rtk init -g --codex' instala su hook global en $CODEX_HOME (por defecto ~/.codex), también en
+# Windows; se retira con 'rtk init -g --codex --uninstall' (documentación de RTK, verificada el 2026-11-26).
 
 # RTK: comandos que nunca debe reescribir (scripts de SFP). Regex anclado ('^' = regex en RTK).
 # La evidencia que ejecuta el agente (git, grep, find…) se protege con RTK_DISABLED=1 (sección 6.1).
 readonly RTK_EXCLUDES=('^(ba)?sh .*spec-first-protocol' '^(powershell|pwsh).*spec-first-protocol'
                        '^python[0-9.]* .*manifest_tool\.py')
 
-readonly ALL_COMPONENTS=(archify frontend-design superpowers serena rtk)
+readonly ALL_COMPONENTS=(archify frontend-design modern-web-guidance superpowers serena context7 rtk)
 
 # --------------------------------------------------------------------------- argumentos
 MODE=plan          # plan | apply | check | uninstall
@@ -101,8 +132,13 @@ FORCE_FRONTEND=0
 SEL_GIVEN=0
 STATE_ARG=""
 PROJECT_ARG=""
+AGENT=claude-code
+AGENT_GIVEN=0
+RUNNER=auto
+RUNNER_GIVEN=0
+STRICT=0
 
-usage() { sed -n '2,48p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,64p' "$0" | sed 's/^# \{0,1\}//'; }
 die_usage() { echo "ERROR: $1" >&2; echo "Ayuda: bash $0 --help" >&2; exit 2; }
 set_mode() { [ "$MODE" = plan ] || [ "$MODE" = "$1" ] || die_usage "--check y --uninstall son excluyentes"; MODE="$1"; }
 
@@ -120,6 +156,11 @@ while [ $# -gt 0 ]; do
     --skip) [ $# -ge 2 ] || die_usage "--skip requiere valor"; SKIP="$2"; SEL_GIVEN=1; shift ;;
     --skip=*) SKIP="${1#*=}"; SEL_GIVEN=1 ;;
     --force-frontend) FORCE_FRONTEND=1; SEL_GIVEN=1 ;;
+    --agent) [ $# -ge 2 ] || die_usage "--agent requiere valor"; AGENT="$2"; AGENT_GIVEN=1; shift ;;
+    --agent=*) AGENT="${1#*=}"; AGENT_GIVEN=1 ;;
+    --runner) [ $# -ge 2 ] || die_usage "--runner requiere valor"; RUNNER="$2"; RUNNER_GIVEN=1; shift ;;
+    --runner=*) RUNNER="${1#*=}"; RUNNER_GIVEN=1 ;;
+    --strict-tooling) STRICT=1 ;;
     --state) [ $# -ge 2 ] || die_usage "--state requiere valor"; STATE_ARG="$2"; shift ;;
     --state=*) STATE_ARG="${1#*=}" ;;
     -h|--help) usage; exit 0 ;;
@@ -138,7 +179,11 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SFP_DIR="$(dirname "$SCRIPT_DIR")"
 CLAUDE_HOME="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 CLAUDE_JSON="${SFP_CLAUDE_JSON:-$HOME/.claude.json}"
-STATE="${STATE_ARG:-$PROJ/.sfp/integrations.json}"
+CODEX_HOME_DIR="${CODEX_HOME:-$HOME/.codex}"
+case "$AGENT" in claude-code|codex) ;; *) die_usage "--agent debe ser claude-code o codex" ;; esac
+case "$RUNNER" in auto|npx|npm|pnpm|bun|yarn) ;; *) die_usage "--runner debe ser auto, npx, npm, pnpm, bun o yarn" ;; esac
+if [ "$AGENT" = codex ]; then STATE="${STATE_ARG:-$PROJ/.sfp/integrations-codex.json}"
+else STATE="${STATE_ARG:-$PROJ/.sfp/integrations.json}"; fi
 
 # --------------------------------------------------------------------------- utilidades
 have() { command -v "$1" >/dev/null 2>&1; }
@@ -164,14 +209,14 @@ INCOMPLETE=0
 declare -a SUMMARY=()
 
 status() { # status <ETIQUETA> <componente> <mensaje>
-  printf '  %-30s %-16s %s\n' "[$1]" "$2" "$3"
+  printf '  %-30s %-20s %s\n' "[$1]" "$2" "$3"
   case "$1" in
     FALLA|CONFLICTO) FAILS=$((FAILS + 1)) ;;
   esac
 }
 incomplete() { status AVISO "$1" "NO comprobado: $2"; INCOMPLETE=$((INCOMPLETE + 1)); }
 section() { printf '\n== %s\n' "$1"; }
-record() { SUMMARY+=("$(printf '%-16s %s' "$1" "$2")"); }
+record() { SUMMARY+=("$(printf '%-20s %s' "$1" "$2")"); }
 
 # helper <subcomando> [args...]: lógica JSON/TOML/estado en integrations_helpers.py (biblioteca estándar).
 helper() { PYTHONUTF8=1 "$PY" -I "$(native "$SCRIPT_DIR/integrations_helpers.py")" "$@"; }
@@ -183,6 +228,11 @@ if [ $SEL_GIVEN = 0 ] && [ "$MODE" != apply ] && [ -n "$PY" ] && [ -f "$STATE" ]
     case "$_k" in
       only) ONLY="$_v" ;; skip) SKIP="$_v" ;; scope) SCOPE="$_v" ;; rtk_scope) RTK_SCOPE="$_v" ;;
       force_frontend) FORCE_FRONTEND="$_v" ;;
+      runner) [ $RUNNER_GIVEN = 1 ] || RUNNER="$_v" ;;
+      agent)
+        if [ $AGENT_GIVEN = 0 ]; then AGENT="$_v"
+        elif [ -n "$_v" ] && [ "$_v" != "$AGENT" ]; then die_usage "el estado $STATE es del asistente $_v, no de $AGENT"; fi ;;
+      legacy) [ "$_v" = 1 ] && [ -z "$ONLY" ] && SKIP="${SKIP:+$SKIP,}modern-web-guidance,context7" ;;   # estado anterior a 1.15.0
     esac
   done < <(helper state-select "$(native "$STATE")")
   SEL_FROM_STATE=1
@@ -190,6 +240,8 @@ else
   SEL_FROM_STATE=0
 fi
 
+case "$AGENT" in claude-code|codex) ;; *) die_usage "agente inválido en el estado: $AGENT" ;; esac
+case "$RUNNER" in auto|npx|npm|pnpm|bun|yarn) ;; *) die_usage "gestor inválido en el estado: $RUNNER" ;; esac
 case "$SCOPE" in project|global) ;; *) die_usage "--scope debe ser project o global" ;; esac
 case "$RTK_SCOPE" in project|global) ;; *) die_usage "--rtk-scope debe ser project o global" ;; esac
 for list in "$ONLY" "$SKIP"; do
@@ -256,9 +308,28 @@ refresh_path() {
 refresh_path
 winget_cmd() { command -v winget 2>/dev/null || command -v winget.exe 2>/dev/null; }
 
-# skill_dir <scope:global|project> <nombre> → ruta de la carpeta de la skill
-skill_dir() { if [ "$1" = global ]; then echo "$CLAUDE_HOME/skills/$2"; else echo "$PROJ/.claude/skills/$2"; fi; }
+# skill_roots <scope:global|project> → carpetas de skills que lee el asistente; la primera es donde se instala.
+# Codex lee .agents/skills (proyecto) y ~/.agents/skills (usuario); no lee .claude/skills (documentación de
+# Codex y tabla de agentes del CLI de skills, verificadas el 2026-11-26).
+skill_roots() {
+  if [ "$AGENT" = codex ]; then
+    if [ "$1" = global ]; then echo "$HOME/.agents/skills"; else echo "$PROJ/.agents/skills"; fi
+  else
+    if [ "$1" = global ]; then echo "$CLAUDE_HOME/skills"; else echo "$PROJ/.claude/skills"; fi
+  fi
+}
+# skill_dir <scope> <nombre> → carpeta donde está la skill (o donde se instalaría si no está)
+skill_dir() {
+  local r first=""
+  while IFS= read -r r; do
+    [ -z "$first" ] && first="$r"
+    if [ -f "$r/$2/SKILL.md" ]; then echo "$r/$2"; return 0; fi
+  done < <(skill_roots "$1")
+  echo "$first/$2"
+}
 skill_at() { [ -f "$(skill_dir "$1" "$2")/SKILL.md" ]; }
+# skill_at_primary <scope> <nombre>: la skill está en la carpeta donde instala este script (no en otra compatible)
+skill_at_primary() { local r; r=$(skill_roots "$1" | head -n 1); [ -f "$r/$2/SKILL.md" ]; }
 
 # skill_name_ok <dir> <nombre>: el frontmatter declara ese nombre
 skill_name_ok() { grep -Eq "^name:[[:space:]]*\"?$2\"?[[:space:]]*$" "$1/SKILL.md" 2>/dev/null; }
@@ -266,32 +337,93 @@ skill_name_ok() { grep -Eq "^name:[[:space:]]*\"?$2\"?[[:space:]]*$" "$1/SKILL.m
 # plugin_enabled <nombre>: el plugin está habilitado en settings de usuario o del proyecto,
 # o figura en installed_plugins.json. Imprime dónde.
 plugin_enabled() {
+  [ "$AGENT" = claude-code ] || return 1   # los plugins de Claude Code no aplican a otros asistentes
   [ -n "$PY" ] || return 2
   helper plugin-enabled "$1" "$(native "$CLAUDE_HOME/settings.json")" "$(native "$PROJ/.claude/settings.json")" \
     "$(native "$PROJ/.claude/settings.local.json")" "$(native "$CLAUDE_HOME/plugins/installed_plugins.json")"
 }
 
-# skills CLI (npx), versión fijada. skills_add <scope> <origen> <skill...> · skills_remove <scope> <skill...>
-skills_cli() { ( cd "$PROJ" && DISABLE_TELEMETRY=1 DO_NOT_TRACK=1 npx -y "$SKILLS_CLI_PKG" "$@" ); }
+# CLI de skills, versión fijada, con el gestor de paquetes elegido (--runner): npx o npm exec (los dos de npm),
+# pnpm dlx, bunx o yarn dlx.
+node18() { have node && node -e 'process.exit(+process.versions.node.split(".")[0] >= 18 ? 0 : 1)' >/dev/null 2>&1; }
+# project_pm → gestor que declara el proyecto: "packageManager" de package.json, o su lockfile (vacío si ninguno)
+project_pm() {
+  local pm=""
+  [ -f "$PROJ/package.json" ] && pm=$(sed -n 's/.*"packageManager"[[:space:]]*:[[:space:]]*"\([a-z]*\)@.*/\1/p' "$PROJ/package.json" | head -n 1)
+  if [ -z "$pm" ]; then
+    if [ -f "$PROJ/pnpm-lock.yaml" ]; then pm=pnpm
+    elif [ -f "$PROJ/bun.lock" ] || [ -f "$PROJ/bun.lockb" ]; then pm=bun
+    elif [ -f "$PROJ/yarn.lock" ]; then pm=yarn
+    elif [ -f "$PROJ/package-lock.json" ]; then pm=npm; fi
+  fi
+  echo "$pm"
+}
+yarn_dlx_ok() { have yarn && [ "$(yarn --version 2>/dev/null | cut -d. -f1)" -ge 2 ] 2>/dev/null; }   # yarn 1 no tiene dlx
+runner_avail() {
+  case "$1" in
+    npx) node18 && have npx ;;
+    npm) node18 && have npm ;;
+    pnpm) node18 && have pnpm ;;
+    bun) have bunx || have bun ;;
+    yarn) node18 && yarn_dlx_ok ;;
+    *) return 1 ;;
+  esac
+}
+resolve_runner() {
+  local pm c
+  case "$RUNNER" in
+    auto)
+      pm=$(project_pm)
+      if [ -n "$pm" ] && runner_avail "$pm"; then echo "$pm"; return 0; fi
+      for c in npx npm pnpm bun yarn; do runner_avail "$c" && { echo "$c"; return 0; }; done ;;
+    *) runner_avail "$RUNNER" && echo "$RUNNER" ;;
+  esac
+  return 0
+}
+RUNNER_RES=""
+runner_ok() { [ -n "$RUNNER_RES" ]; }
+runner_need() { echo "requiere Node.js >= 18 con npx, npm, pnpm o yarn 2+, o bun (opción --runner; elegido: $RUNNER)"; }
+runner_text() { # texto del ejecutor, para mostrar y para el estado
+  case "$RUNNER_RES" in npm) echo "npm exec --yes --" ;; pnpm) echo "pnpm dlx" ;; bun) echo "bunx" ;; yarn) echo "yarn dlx" ;; *) echo "npx -y" ;; esac
+}
+# skills_cli <args...>: el CLI de skills con el ejecutor elegido, desde la carpeta del proyecto
+skills_cli() {
+  case "$RUNNER_RES" in
+    pnpm) ( cd "$PROJ" && DISABLE_TELEMETRY=1 DO_NOT_TRACK=1 pnpm dlx "$SKILLS_CLI_PKG" "$@" ) ;;
+    bun) if have bunx; then ( cd "$PROJ" && DISABLE_TELEMETRY=1 DO_NOT_TRACK=1 bunx "$SKILLS_CLI_PKG" "$@" )
+         else ( cd "$PROJ" && DISABLE_TELEMETRY=1 DO_NOT_TRACK=1 bun x "$SKILLS_CLI_PKG" "$@" ); fi ;;
+    npm) ( cd "$PROJ" && DISABLE_TELEMETRY=1 DO_NOT_TRACK=1 npm exec --yes -- "$SKILLS_CLI_PKG" "$@" ) ;;
+    yarn) ( cd "$PROJ" && DISABLE_TELEMETRY=1 DO_NOT_TRACK=1 yarn dlx "$SKILLS_CLI_PKG" "$@" ) ;;
+    *) ( cd "$PROJ" && DISABLE_TELEMETRY=1 DO_NOT_TRACK=1 npx -y "$SKILLS_CLI_PKG" "$@" ) ;;
+  esac
+}
+# skills_add <scope> <origen> <skill...>
 skills_add() {
   local scope="$1" src="$2"; shift 2
-  local args=(add "$src" --skill "$@" --agent claude-code --copy --yes)
+  local args=(add "$src" --skill "$@" --agent "$AGENT" --copy --yes)
   [ "$scope" = global ] && args+=(--global)
   skills_cli "${args[@]}"
 }
+# Opción de asistente para "remove": en Codex se omite, porque .agents/skills es una carpeta compartida con
+# otros asistentes y el CLI de skills no la borra si se le indica uno (comprobado con skills@1.9.0).
+remove_agent_args() { [ "$AGENT" = codex ] || printf -- '--agent %s ' "$AGENT"; }
 skills_undo_cmd() { # texto del comando que deshace la instalación (para el estado)
   local scope="$1"; shift
-  printf 'npx -y %s remove%s --agent claude-code -y %s' "$SKILLS_CLI_PKG" "$([ "$scope" = global ] && echo ' --global')" "$*"
+  printf '%s %s remove%s %s-y %s' "$(runner_text)" "$SKILLS_CLI_PKG" "$([ "$scope" = global ] && echo ' --global')" "$(remove_agent_args)" "$*"
 }
-
-node_ok() { have node && have npx && node -e 'process.exit(+process.versions.node.split(".")[0] >= 18 ? 0 : 1)' >/dev/null 2>&1; }
+# skills_remove_project <skill>: la retira del proyecto para el asistente elegido
+skills_remove_project() {
+  if [ "$AGENT" = codex ]; then skills_cli remove "$1" -y
+  else skills_cli remove "$1" --agent "$AGENT" -y; fi
+}
 
 # --------------------------------------------------------------------------- frontend
 has_frontend() {
   if [ -f "$PROJ/package.json" ] &&
-     grep -Eq '"(react|react-dom|vue|svelte|@angular/core|next|nuxt|solid-js|preact|astro|lit|@remix-run/react|@sveltejs/kit)"[[:space:]]*:' "$PROJ/package.json"; then
+     grep -Eq '"(react|react-dom|vue|svelte|@angular/core|next|nuxt|solid-js|preact|astro|lit|@remix-run/react|@sveltejs/kit|electron|@tauri-apps/api)"[[:space:]]*:' "$PROJ/package.json"; then
     return 0
   fi
+  [ -d "$PROJ/src-tauri" ] && return 0   # aplicación de escritorio con interfaz web (Tauri)
   # Se podan las carpetas generadas (incluidos los diagramas de archify y los informes de cobertura),
   # que contienen HTML/CSS sin ser frontend del proyecto.
   local hit
@@ -319,8 +451,8 @@ ensure_skill() {
     status "OMITIDO - YA CONFIGURADO" "$comp" "$(skill_dir project "$name")"
     record "$comp" "OMITIDO - YA CONFIGURADO"; return 0
   fi
-  if ! node_ok; then
-    status FALLA "$comp" "requiere Node.js >= 18 y npx (no encontrados)"; record "$comp" "FALLA"; return 0
+  if ! runner_ok; then
+    status FALLA "$comp" "$(runner_need)"; record "$comp" "FALLA"; return 0
   fi
   if ! run "$comp" "instalar $name ($src) en ámbito $SCOPE" -- skills_add "$SCOPE" "$src" "$name"; then
     record "$comp" "FALLA"; return 0
@@ -353,6 +485,19 @@ do_frontend() {
   ensure_skill frontend-design "$FRONTEND_SOURCE" frontend-design
 }
 
+do_mwg() {
+  local comp=modern-web-guidance where=""
+  if [ "$FORCE_FRONTEND" = 0 ] && ! has_frontend && ! skill_at project $comp && ! skill_at global $comp; then
+    status "OMITIDO - SIN FRONTEND" $comp "no se detectó interfaz web (usar --force-frontend para instalarla igual)"
+    record $comp "OMITIDO - SIN FRONTEND"; return 0
+  fi
+  if [ -n "$PY" ] && where=$(plugin_enabled modern-web-guidance); then
+    status "GLOBAL DETECTADO" $comp "como plugin: ${where//$'\n'/; }"
+    record $comp "GLOBAL DETECTADO (plugin)"; return 0
+  fi
+  ensure_skill $comp "$MWG_SOURCE" modern-web-guidance
+}
+
 do_superpowers() {
   local comp=superpowers where="" n s missing=() conflict=0
   if [ -z "$PY" ]; then
@@ -378,7 +523,7 @@ do_superpowers() {
   if [ ${#missing[@]} -eq 0 ]; then
     record $comp "$([ $conflict = 1 ] && echo CONFLICTO || echo 'OMITIDO - YA CONFIGURADO')"; return 0
   fi
-  if ! node_ok; then status FALLA $comp "requiere Node.js >= 18 y npx"; record $comp FALLA; return 0; fi
+  if ! runner_ok; then status FALLA $comp "$(runner_need)"; record $comp FALLA; return 0; fi
   if ! run $comp "instalar ${#missing[@]} skills (${missing[*]}) en ámbito $SCOPE; sin plugin ni hooks" -- \
        skills_add "$SCOPE" "$SUPERPOWERS_SOURCE" "${missing[@]}"; then
     record $comp FALLA; return 0
@@ -407,6 +552,48 @@ serena_entry() {
 # serena_conforms <línea de comando> → 0 si respeta sección 6.1 (contexto claude-code y sin memorias)
 serena_conforms() { case "$1" in *"--context claude-code"*) ;; *) return 1 ;; esac; case "$1" in *no-memories*) return 0 ;; *) return 1 ;; esac; }
 
+# serena_conforms_codex <línea>: en Codex, contexto codex y sin memorias
+serena_conforms_codex() { case "$1" in *"--context codex"*) ;; *) return 1 ;; esac; case "$1" in *no-memories*) return 0 ;; *) return 1 ;; esac; }
+
+# --------------------------------------------------------------------------- Codex: config.toml
+# Servidores MCP en [mcp_servers.<nombre>] con command y args (documentación de Codex, verificada el 2026-11-26).
+# Proyecto: <proyecto>/.codex/config.toml, que Codex solo lee si el proyecto es de confianza. Global: ~/.codex/config.toml.
+codex_config() { if [ "$1" = global ]; then echo "$CODEX_HOME_DIR/config.toml"; else echo "$PROJ/.codex/config.toml"; fi; }
+
+# ensure_mcp_codex <componente> <nombre> <función que valida la entrada, o "-"> <segundos de arranque> <comando...>
+ensure_mcp_codex() {
+  local comp="$1" name="$2" check="$3" timeout="$4"; shift 4
+  local cfg entry rc=0
+  cfg=$(codex_config "$SCOPE")
+  entry=$(helper codex-mcp-entry "$(native "$cfg")" "$name" 2>/dev/null) || rc=$?
+  if [ $rc = 0 ]; then
+    if [ "$check" = "-" ] || "$check" "$entry"; then
+      status "OMITIDO - YA CONFIGURADO" "$comp" "$cfg: $name ($entry)"; record "$comp" "OMITIDO - YA CONFIGURADO"
+    else
+      status CONFLICTO "$comp" "$cfg tiene una entrada $name distinta de la esperada (sección 6.1): $entry"
+      status MANUAL "$comp" "decisión humana: ajustar esa entrada; el script no sobrescribe configuración existente"
+      record "$comp" CONFLICTO
+    fi
+    return 0
+  elif [ $rc = 3 ]; then
+    incomplete "$comp" "Python >= 3.11 necesario para leer y escribir $cfg (TOML)"; record "$comp" INCOMPLETO; return 0
+  elif [ $rc = 2 ]; then
+    status CONFLICTO "$comp" "$cfg no es TOML válido: no se toca"; record "$comp" CONFLICTO; return 0
+  fi
+  run "$comp" "registrar $name en $cfg ([mcp_servers.$name])" -- \
+    helper codex-mcp-add "$(native "$cfg")" "$name" "$timeout" "$@" || { record "$comp" FALLA; return 0; }
+  if [ $APPLY = 1 ]; then
+    if [ "$SCOPE" = project ]; then
+      status "INSTALADO EN PROYECTO" "$comp" "$cfg ($name). Codex solo lo usa si el proyecto está marcado como de confianza"
+      record "$comp" "INSTALADO EN PROYECTO"
+      remember "$comp" project codexmcp 1 ".codex/config.toml#$name" "$*"
+    else
+      status "INSTALADO GLOBAL" "$comp" "$cfg ($name) (global: retiro [MANUAL])"; record "$comp" "INSTALADO GLOBAL"
+      remember "$comp" global codexmcp 0 "$cfg#$name" "quitar [mcp_servers.$name] de $cfg"
+    fi
+  else record "$comp" PLAN; fi
+}
+
 # Añade la entrada 'serena' a <proyecto>/.mcp.json sin tocar las demás ni reformatear (idempotente).
 write_project_mcp() { helper mcp-add "$(native "$PROJ/.mcp.json")" serena "$@"; }
 
@@ -420,6 +607,17 @@ install_uv() {
   fi
   refresh_path
 }
+# serena_ensure_uv: uv/uvx, requisito de Serena (global por necesidad: es un ejecutable)
+serena_ensure_uv() {
+  if have uv && have uvx; then status "GLOBAL DETECTADO" serena "uv $(uv --version 2>/dev/null | head -n1 | tr -d '\r')"; return 0; fi
+  run serena "instalar uv $UV_VERSION (requisito de Serena; global por necesidad)" -- install_uv || return 1
+  if [ $APPLY = 1 ]; then
+    have uvx || { status FALLA serena "uv instalado pero uvx no está en PATH: abrir una terminal nueva y repetir"; return 1; }
+    status "INSTALADO GLOBAL" serena "uv $UV_VERSION (global: retiro [MANUAL])"
+    remember serena global binary 0 uv "$(uv_undo_cmd)"
+  fi
+  return 0
+}
 uv_undo_cmd() {
   if [ "$OS" = windows ]; then echo "winget uninstall --id $UV_WINGET_ID -e"
   else echo "rm ~/.local/bin/uv ~/.local/bin/uvx  (ver https://docs.astral.sh/uv/getting-started/installation/#uninstallation)"; fi
@@ -427,6 +625,12 @@ uv_undo_cmd() {
 
 do_serena() {
   local comp=serena entry
+  if [ "$AGENT" = codex ]; then
+    if [ -z "$PY" ]; then incomplete $comp "requiere Python 3 para leer/escribir config.toml"; record $comp INCOMPLETO; return 0; fi
+    serena_ensure_uv || { record $comp FALLA; return 0; }
+    ensure_mcp_codex $comp serena serena_conforms_codex 15 "${SERENA_CODEX_UVX[@]}"
+    return 0
+  fi
   if [ -z "$PY" ]; then incomplete $comp "requiere Python 3 para leer/escribir la configuración MCP"; record $comp INCOMPLETO; return 0; fi
   if entry=$(serena_entry); then
     local scope="${entry%%$'\t'*}" cmd="${entry#*$'\t'}"
@@ -485,8 +689,59 @@ do_serena() {
   else record $comp PLAN; fi
 }
 
+# --------------------------------------------------------------------------- context7
+node_context7_ok() { have node && have npx && node -e 'const [a,b]=process.versions.node.split(".").map(Number);process.exit(a>20||(a===20&&b>=18)?0:1)' >/dev/null 2>&1; }
+
+do_context7() {
+  local comp=context7 where="" entry
+  if [ -z "$PY" ]; then incomplete $comp "requiere Python 3 para leer/escribir la configuración MCP"; record $comp INCOMPLETO; return 0; fi
+  if ! node_context7_ok; then
+    status FALLA $comp "requiere Node.js >= 20.18.1 con npx (lo exige $CONTEXT7_PKG)"; record $comp FALLA; return 0
+  fi
+  status AVISO $comp "envía las consultas a un servicio externo (context7.com). La clave es opcional y no se escribe en el repositorio: si la tienes, ponla en la variable de entorno CONTEXT7_API_KEY"
+  if [ "$AGENT" = codex ]; then ensure_mcp_codex $comp context7 - 20 "${CONTEXT7_CMD[@]}"; return 0; fi
+  if where=$(plugin_enabled context7); then
+    status "GLOBAL DETECTADO" $comp "como plugin: ${where//$'\n'/; }"; record $comp "GLOBAL DETECTADO (plugin)"; return 0
+  fi
+  if entry=$(helper mcp-entry "$(native "$PROJ/.mcp.json")" "$(native "$CLAUDE_JSON")" "$(native "$PROJ")" context7); then
+    status "OMITIDO - YA CONFIGURADO" $comp "MCP 'context7' (${entry%%$'\t'*}): ${entry#*$'\t'}"; record $comp "OMITIDO - YA CONFIGURADO"; return 0
+  fi
+  if [ "$SCOPE" = project ]; then
+    run $comp "registrar Context7 en $PROJ/.mcp.json ($CONTEXT7_PKG)" -- \
+      helper mcp-add "$(native "$PROJ/.mcp.json")" context7 "${CONTEXT7_CMD[@]}" || { record $comp FALLA; return 0; }
+    if [ $APPLY = 1 ]; then
+      status "INSTALADO EN PROYECTO" $comp "$PROJ/.mcp.json (Claude Code pedirá aprobar el servidor la primera vez)"; record $comp "INSTALADO EN PROYECTO"
+      remember $comp project mcp 1 ".mcp.json#context7" "${CONTEXT7_CMD[*]}"
+    else record $comp PLAN; fi
+    return 0
+  fi
+  have claude || [ $APPLY = 0 ] || { status FALLA $comp "falta el CLI 'claude' para registrar el MCP de usuario"; record $comp FALLA; return 0; }
+  run $comp "registrar MCP 'context7' de usuario" -- claude mcp add --scope user context7 -- "${CONTEXT7_CMD[@]}" || { record $comp FALLA; return 0; }
+  if [ $APPLY = 1 ]; then
+    status "INSTALADO GLOBAL" $comp "MCP de usuario (global: retiro [MANUAL])"; record $comp "INSTALADO GLOBAL"
+    remember $comp global mcp 0 "user#context7" "claude mcp remove --scope user context7"
+  else record $comp PLAN; fi
+}
+
 # --------------------------------------------------------------------------- rtk
 rtk_ok() { have rtk && rtk --version >/dev/null 2>&1 && rtk gain >/dev/null 2>&1; }
+# rtk_codex_hook_ok: el hook de RTK está en la configuración global de Codex
+rtk_codex_hook_ok() { grep -qi 'rtk' "$CODEX_HOME_DIR/hooks.json" 2>/dev/null; }
+# rtk_hook_codex: hook global de RTK para Codex (usa installed y changed de do_rtk)
+rtk_hook_codex() {
+  if rtk_codex_hook_ok; then status "OMITIDO - YA CONFIGURADO" rtk "hook en $CODEX_HOME_DIR/hooks.json"; return 0; fi
+  if [ "$installed" = 1 ] && ! rtk init --help 2>&1 | grep -q -e '--codex'; then
+    status MANUAL rtk "esta versión de rtk no admite --codex: actualizar rtk es decisión humana"; return 0
+  fi
+  run rtk "(global) instalar el hook de RTK para Codex (rtk init -g --codex)" -- \
+    sh -c 'rtk init -g --codex </dev/null' || return 1
+  if [ $APPLY = 1 ]; then
+    status "INSTALADO GLOBAL" rtk "hook de Codex en $CODEX_HOME_DIR (global: retiro [MANUAL])"
+    remember rtk global hook 0 "codex/hooks.json:rtk" "rtk init -g --codex --uninstall"
+    changed=1
+  fi
+  return 0
+}
 
 install_rtk() {
   case "$OS" in
@@ -536,7 +791,9 @@ do_rtk() {
   fi
 
   # Enganche al runtime
-  if [ "$RTK_SCOPE" = global ]; then
+  if [ "$AGENT" = codex ]; then
+    rtk_hook_codex || { record $comp FALLA; return 0; }
+  elif [ "$RTK_SCOPE" = global ]; then
     if rtk_hook_global; then
       status "OMITIDO - YA CONFIGURADO" $comp "hook PreToolUse en $CLAUDE_HOME/settings.json"
     else
@@ -642,6 +899,14 @@ healthcheck() {
     else status FALLA frontend-design "no instalada"; fi
   fi
 
+  # 3b. modern-web-guidance (como frontend-design)
+  if selected modern-web-guidance; then
+    if [ -n "$PY" ] && entry=$(plugin_enabled modern-web-guidance); then status OK modern-web-guidance "plugin: ${entry//$'\n'/; }"
+    elif d=$(hc_skill modern-web-guidance modern-web-guidance); then status OK modern-web-guidance "$d"
+    elif [ "$FORCE_FRONTEND" = 0 ] && ! has_frontend; then status OK modern-web-guidance "no instalada: el proyecto no tiene interfaz web (correcto según sección 6)"
+    else status FALLA modern-web-guidance "no instalada"; fi
+  fi
+
   # 4. superpowers (subconjunto)
   if selected superpowers; then
     local ok=1
@@ -655,7 +920,15 @@ healthcheck() {
   fi
 
   # 5. serena
-  if selected serena; then
+  if selected serena && [ "$AGENT" = codex ]; then
+    local ccf; ccf=$(codex_config "$SCOPE")
+    if [ -z "$PY" ]; then incomplete serena "sin Python 3 no se lee config.toml"
+    elif entry=$(helper codex-mcp-entry "$(native "$ccf")" serena 2>/dev/null); then
+      if ! serena_conforms_codex "$entry"; then status CONFLICTO serena "la entrada de $ccf no usa --context codex y --add-mode no-memories (sección 6.1): $entry"
+      elif ! have "${entry%% *}"; then status FALLA serena "el comando '${entry%% *}' de la entrada no está en PATH"
+      else status OK serena "$ccf: $entry"; fi
+    else status FALLA serena "no hay entrada [mcp_servers.serena] en $ccf (o falta Python 3.11 para leerlo)"; fi
+  elif selected serena; then
     if [ -z "$PY" ]; then incomplete serena "sin Python 3 no se lee la configuración MCP"
     elif entry=$(serena_entry); then
       local cmdline="${entry#*$'\t'}" first
@@ -666,13 +939,27 @@ healthcheck() {
     else status FALLA serena "no hay entrada MCP 'serena' (proyecto, local ni usuario)"; fi
   fi
 
+  # 5b. context7
+  if selected context7; then
+    if [ -z "$PY" ]; then incomplete context7 "sin Python 3 no se lee la configuración MCP"
+    elif ! node_context7_ok; then status FALLA context7 "requiere Node.js >= 20.18.1 con npx"
+    elif [ "$AGENT" = codex ]; then
+      local ccf7; ccf7=$(codex_config "$SCOPE")
+      if entry=$(helper codex-mcp-entry "$(native "$ccf7")" context7 2>/dev/null); then status OK context7 "$ccf7: $entry"
+      else status FALLA context7 "no hay entrada [mcp_servers.context7] en $ccf7 (o falta Python 3.11 para leerlo)"; fi
+    elif entry=$(plugin_enabled context7); then status OK context7 "plugin: ${entry//$'\n'/; }"
+    elif entry=$(helper mcp-entry "$(native "$PROJ/.mcp.json")" "$(native "$CLAUDE_JSON")" "$(native "$PROJ")" context7); then status OK context7 "MCP ${entry%%$'\t'*}: ${entry#*$'\t'}"
+    else status FALLA context7 "no hay entrada MCP 'context7' (proyecto, local ni usuario)"; fi
+  fi
+
   # 6. rtk
   if selected rtk; then
     if ! rtk_ok; then status FALLA rtk "binario rtk-ai/rtk no accesible"
     elif [ -z "$PY" ]; then incomplete rtk "sin Python 3 no se comprueban hook ni exclusiones"
     else
       local ok=1 rc=0
-      if [ "$RTK_SCOPE" = global ]; then rtk_hook_global || { status FALLA rtk "falta el hook PreToolUse en $CLAUDE_HOME/settings.json"; ok=0; }
+      if [ "$AGENT" = codex ]; then rtk_codex_hook_ok || { status FALLA rtk "falta el hook de RTK en $CODEX_HOME_DIR/hooks.json"; ok=0; }
+      elif [ "$RTK_SCOPE" = global ]; then rtk_hook_global || { status FALLA rtk "falta el hook PreToolUse en $CLAUDE_HOME/settings.json"; ok=0; }
       else rtk_block_project || { status FALLA rtk "falta el bloque $RTK_BLOCK_START en $PROJ/CLAUDE.md"; ok=0; }; fi
       cfg=$(rtk_config_path) || cfg=""
       cfg=$(cygpath -u "$cfg" 2>/dev/null || echo "$cfg")
@@ -686,7 +973,7 @@ healthcheck() {
   fi
 
   # 7. colisiones de nombres de skill entre ámbitos (la misma skill dos veces)
-  for n in archify frontend-design "${SP_INCLUDE[@]}"; do
+  for n in archify frontend-design modern-web-guidance "${SP_INCLUDE[@]}"; do
     if skill_at global "$n" && skill_at project "$n"; then status AVISO colisiones "$n existe en global y en proyecto: dos copias que pueden divergir"; fi
   done
   return 0
@@ -713,16 +1000,30 @@ uninstall_all() {
     fi
     case "$kind" in
       skill)
-        if run "$comp" "retirar la skill $target del proyecto" -- skills_cli remove "$target" --agent claude-code -y; then
+        # En Codex la skill vive en .agents/skills, carpeta compartida con otros asistentes: el CLI solo la borra
+        # sin --agent, y así también borra la copia de .claude/skills (comprobado con skills@1.9.0). Si existe
+        # esa copia de Claude Code, no se toca nada y se deja a decisión humana.
+        if [ "$AGENT" = codex ] && [ -f "$PROJ/.claude/skills/$target/SKILL.md" ]; then
+          status MANUAL "$comp" "$target también está en .claude/skills (Claude Code); el CLI de skills la quitaría de los dos. Si Codex ya no la usa, borrar a mano $(skill_roots project | head -n 1)/$target y su entrada en skills-lock.json"
+          continue
+        fi
+        if run "$comp" "retirar la skill $target del proyecto" -- skills_remove_project "$target"; then
           if [ $APPLY = 1 ]; then
-            if skill_at project "$target"; then status FALLA "$comp" "sigue existiendo $(skill_dir project "$target")"
+            if skill_at_primary project "$target"; then status FALLA "$comp" "sigue existiendo $(skill_roots project | head -n 1)/$target"
             else status OK "$comp" "retirada $target"; done_idx+=("$idx"); fi
           fi
         fi ;;
       mcp)
         # shellcheck disable=SC2086  # el comando guardado se separa en palabras a propósito
-        if run "$comp" "quitar mcpServers.serena de .mcp.json (solo si no se modificó)" -- helper mcp-remove "$(native "$PROJ/.mcp.json")" serena $undo; then
-          [ $APPLY = 1 ] && { status OK "$comp" ".mcp.json#serena retirado"; done_idx+=("$idx"); }
+        if run "$comp" "quitar mcpServers.${target#*#} de .mcp.json (solo si no se modificó)" -- helper mcp-remove "$(native "$PROJ/.mcp.json")" "${target#*#}" $undo; then
+          [ $APPLY = 1 ] && { status OK "$comp" ".mcp.json#${target#*#} retirado"; done_idx+=("$idx"); }
+        else
+          [ $APPLY = 1 ] && status MANUAL "$comp" "la entrada cambió después de instalarla: retirarla a mano si procede"
+        fi ;;
+      codexmcp)
+        # shellcheck disable=SC2086
+        if run "$comp" "quitar [mcp_servers.${target#*#}] de .codex/config.toml (solo si no se modificó)" -- helper codex-mcp-remove "$(native "$PROJ/.codex/config.toml")" "${target#*#}" $undo; then
+          [ $APPLY = 1 ] && { status OK "$comp" ".codex/config.toml#${target#*#} retirado"; done_idx+=("$idx"); }
         else
           [ $APPLY = 1 ] && status MANUAL "$comp" "la entrada cambió después de instalarla: retirarla a mano si procede"
         fi ;;
@@ -741,7 +1042,7 @@ uninstall_all() {
       rm -f "$PROJ/skills-lock.json" && status OK retiro "skills-lock.json vacío borrado"
     fi
     local dir
-    for dir in "$PROJ/.claude/skills" "$PROJ/.claude" "$(dirname "$STATE")"; do
+    for dir in "$PROJ/.claude/skills" "$PROJ/.claude" "$PROJ/.agents/skills" "$PROJ/.agents" "$PROJ/.codex" "$(dirname "$STATE")"; do
       if [ -d "$dir" ] && rmdir "$dir" 2>/dev/null; then status OK retiro "carpeta vacía borrada: $dir"; fi
     done
   fi
@@ -749,8 +1050,20 @@ uninstall_all() {
 }
 
 # --------------------------------------------------------------------------- principal
-echo "integrations.sh $SKILL_VERSION — modo: $MODE$([ $APPLY = 1 ] && [ "$MODE" = uninstall ] && echo ' --apply') · proyecto: $PROJ · ámbito: $SCOPE · rtk: $RTK_SCOPE · so: $OS"
-echo "config de Claude Code: $CLAUDE_HOME · estado: $STATE · python: ${PY:-NO} · node: $(node --version 2>/dev/null || echo NO)"
+RUNNER_RES=$(resolve_runner)
+# finish_incomplete: un 3 (INCOMPLETO) sale como 1 con --strict-tooling
+finish_incomplete() {
+  echo "en CI: tratar 3 como advertencia y fallar solo con 1 o 2 (--strict-tooling convierte el 3 en 1)"
+  if [ $STRICT = 1 ]; then echo "--strict-tooling: lo incompleto se trata como falla"; exit 1; fi
+  exit 3
+}
+echo "integrations.sh $SKILL_VERSION — modo: $MODE$([ $APPLY = 1 ] && [ "$MODE" = uninstall ] && echo ' --apply') · proyecto: $PROJ · asistente: $AGENT$([ "$AGENT" = codex ] && echo ' (en pruebas)') · ámbito: $SCOPE · rtk: $RTK_SCOPE · so: $OS"
+PM_PROJ=$(project_pm)
+echo "CLI de skills con: ${RUNNER_RES:-NINGUNO} (--runner $RUNNER; gestor del proyecto: ${PM_PROJ:-no declarado})$(case "$RUNNER_RES" in bun|yarn) echo ' (en pruebas)' ;; esac)"
+if [ "$RUNNER" = auto ] && [ -n "$PM_PROJ" ] && [ -n "$RUNNER_RES" ] && [ "$RUNNER_RES" != "$PM_PROJ" ]; then
+  echo "AVISO: el proyecto usa $PM_PROJ, pero no está disponible en este equipo: se usará $RUNNER_RES"
+fi
+echo "config de $([ "$AGENT" = codex ] && echo "Codex: $CODEX_HOME_DIR" || echo "Claude Code: $CLAUDE_HOME") · estado: $STATE · python: ${PY:-NO} · node: $(node --version 2>/dev/null || echo NO)"
 [ -n "$PY" ] || echo "AVISO: sin Python 3, Serena, RTK, el estado y la detección de plugins quedan sin comprobar (resultado INCOMPLETO)"
 
 if [ "$MODE" = uninstall ]; then
@@ -758,7 +1071,7 @@ if [ "$MODE" = uninstall ]; then
   echo
   [ $APPLY = 1 ] || echo "PLAN DE RETIRO: no se escribió nada. Repetir con --uninstall --apply tras la aprobación."
   [ $FAILS -eq 0 ] || { echo "resultado: $FAILS falla(s)"; exit 1; }
-  [ $INCOMPLETE -eq 0 ] || exit 3
+  [ $INCOMPLETE -eq 0 ] || finish_incomplete
   exit 0
 fi
 
@@ -771,13 +1084,15 @@ if [ "$MODE" != check ]; then
       frontend-design) do_frontend ;;
       superpowers) do_superpowers ;;
       serena) do_serena ;;
+      context7) do_context7 ;;
+      modern-web-guidance) do_mwg ;;
       rtk) do_rtk ;;
     esac
   done
   section "RESUMEN"
   for l in "${SUMMARY[@]}"; do echo "  $l"; done
   if [ $APPLY = 1 ] && [ -n "$PY" ]; then
-    helper state-save "$(native "$STATE")" "$ONLY" "$SKIP" "$SCOPE" "$RTK_SCOPE" "$FORCE_FRONTEND" "$SKILL_VERSION"
+    helper state-save "$(native "$STATE")" "$ONLY" "$SKIP" "$SCOPE" "$RTK_SCOPE" "$FORCE_FRONTEND" "$SKILL_VERSION" "$AGENT" "$RUNNER"
     echo "  selección y registros guardados en $STATE (--check y --uninstall los reutilizan)"
   fi
 fi
@@ -786,7 +1101,7 @@ if [ "$MODE" = plan ]; then
   echo
   echo "PLAN: no se escribió nada. Revisar arriba y repetir con --apply tras la aprobación."
   [ $FAILS -eq 0 ] || { echo "Hay $FAILS falla(s)/conflicto(s) que resolver antes de aplicar."; exit 1; }
-  [ $INCOMPLETE -eq 0 ] || { echo "Plan INCOMPLETO: $INCOMPLETE comprobación(es) no ejecutada(s)."; exit 3; }
+  [ $INCOMPLETE -eq 0 ] || { echo "Plan INCOMPLETO: $INCOMPLETE comprobación(es) no ejecutada(s)."; finish_incomplete; }
   exit 0
 fi
 
@@ -796,7 +1111,7 @@ echo
 if [ $FAILS -ne 0 ]; then
   echo "resultado: $FAILS falla(s) o conflicto(s) — ver arriba"; exit 1
 elif [ $INCOMPLETE -ne 0 ]; then
-  echo "resultado: INCOMPLETO — $INCOMPLETE comprobación(es) no ejecutada(s). No presentar como 'sin fallas'"; exit 3
+  echo "resultado: INCOMPLETO — $INCOMPLETE comprobación(es) no ejecutada(s). No presentar como 'sin fallas'"; finish_incomplete
 fi
 echo "resultado: sin fallas (sfp + componentes seleccionados accesibles y sin conflictos)"
 exit 0

@@ -1,14 +1,15 @@
 #!/bin/sh
 # verify.sh — comprobaciones para la Fase 7 (y para los modos Actualización y Retiro).
-# Uso: sh verify.sh [--run-verify] [ruta-del-proyecto]
+# Uso: sh verify.sh [--run-verify] [--strict-tooling] [ruta-del-proyecto]
 # Garantías por defecto: SOLO LECTURA, sin red, POSIX sh. No ejecuta nada que venga del
 # manifiesto: los verify_command se muestran, y solo se ejecutan con --run-verify
 # (el manifiesto es dato, no instrucciones; mostrar el comando al usuario antes).
 # Comprueba, contra .sfp/manifest.json si existe (schema 1 o 2):
 #   E) que el manifiesto cumple references/manifest.schema.json y las reglas entre campos
 #      (scripts/manifest_tool.py check; necesita Python 3; sin él la verificación es INCOMPLETA)
-#   0) versión del skill registrada vs. vigente, y entradas "[accion: si]" del CHANGELOG
-#      posteriores a la registrada (delta para el modo Actualización)
+#   0) versión del skill registrada vs. vigente y vs. la instalación global, entradas "[accion: si]"
+#      del CHANGELOG posteriores a la registrada (modo Actualización) y copias fijas del skill
+#      dentro del proyecto que quedaron atrás (solo avisa; nada se actualiza solo)
 #   1) que cada acción con ruta dejó algo real en esa ruta (en "move", que el origen ya no esté),
 #      que la ruta no sale del proyecto, y si la huella sha256 cambió desde el setup (informativo)
 #   2) que los marcadores sfp:start/end están balanceados en los archivos fusionados
@@ -16,19 +17,25 @@
 #      ejecución de los verify_command (el de cada workspace corre dentro de su carpeta)
 #   4) (si hay git y el respaldo registrado existe) qué cambió fuera de las rutas del manifiesto,
 #      incluidos los archivos nuevos sin commit
+#   5) si el filtro de firmas de IA está en el repositorio, que esté activo en esta copia (los hooks de
+#      git no viajan al clonar: se avisa con el comando para activarlo)
 # Lector de JSON: jq, o Python 3 (python3 o python) si no hay jq. Sin ninguno, las comprobaciones que dependen del
 # manifiesto NO se ejecutan y el resultado final lo dice (no se presenta como "sin fallas").
 # Códigos de salida: 0 = sin fallas y completo · 1 = hay fallas · 2 = uso/ruta inválida ·
 #                    3 = sin fallas pero INCOMPLETO (alguna comprobación no se pudo ejecutar).
+# En CI: tratar 3 como advertencia y fallar solo con 1 o 2. Con --strict-tooling, un 3 sale como 1
+# (para equipos que quieren que lo no comprobado rompa el build). Ejemplo: examples/ci/.
 # No reemplaza la revisión humana del reporte de Fase 7.
 
 set -u
 RUN_VERIFY=0
+STRICT=0
 PROJECT="."
 for a in "$@"; do
   case "$a" in
     --run-verify) RUN_VERIFY=1 ;;
-    -h|--help) sed -n '2,24p' "$0"; exit 0 ;;
+    --strict-tooling) STRICT=1 ;;
+    -h|--help) sed -n '2,28p' "$0"; exit 0 ;;
     -*) echo "ERROR: opción desconocida: $a" >&2; exit 2 ;;
     *) PROJECT="$a" ;;
   esac
@@ -69,6 +76,47 @@ run_cmd() {
     SKIPPED=1
   fi
 }
+
+# Versión de la instalación global del skill (la más reciente entre las carpetas globales conocidas,
+# sin contar las que están dentro del proyecto). SFP_GLOBAL_SKILL_DIR indica otra carpeta.
+PROJ_ABS=$(pwd)
+skill_ver() { sed -n 's/^## \([0-9][0-9.]*\).*/\1/p' "$1/CHANGELOG.md" 2>/dev/null | head -1; }
+GLOBAL_VER=""
+GLOBAL_DIR=""
+H=${HOME:-}
+for g in "${SFP_GLOBAL_SKILL_DIR:-$SKILL_DIR}" "$SKILL_DIR" "$H/.claude/skills/spec-first-protocol" "$H/.agents/skills/spec-first-protocol" \
+         "$H/.config/opencode/skills/spec-first-protocol" "$H/.cursor/skills/spec-first-protocol" \
+         "$H/.copilot/skills/spec-first-protocol" "$H/.gemini/skills/spec-first-protocol" \
+         "$H/.codeium/windsurf/skills/spec-first-protocol"; do
+  case "$g" in /.*) [ -z "$H" ] && continue ;; esac   # sin HOME, solo las carpetas indicadas
+  [ -f "$g/SKILL.md" ] || continue
+  g=$(cd "$g" 2>/dev/null && pwd) || continue
+  case "$g/" in "$PROJ_ABS"/*) continue ;; esac
+  v=$(skill_ver "$g")
+  [ -z "$v" ] && continue
+  if [ -z "$GLOBAL_VER" ] || ver_gt "$v" "$GLOBAL_VER"; then GLOBAL_VER="$v"; GLOBAL_DIR="$g"; fi
+done
+
+section "copias del skill dentro del proyecto"
+grep_files '^name: *spec-first-protocol[[:space:]]*$' > "$TMPDIR_V/copias.txt"
+NCOP=0
+while IFS= read -r f; do
+  case "$f" in */SKILL.md) ;; *) continue ;; esac
+  d=$(dirname "$f")
+  NCOP=$((NCOP + 1))
+  v=$(skill_ver "$d")
+  echo "  copia fija: ${d#./} (versión ${v:-desconocida})"
+  if [ -z "$v" ]; then
+    echo "  AVISO: no se pudo leer la versión de esta copia (falta su CHANGELOG.md): no se comparó con la instalación global"
+  elif [ -n "$GLOBAL_VER" ] && ver_gt "$GLOBAL_VER" "$v"; then
+    echo "  AVISO: la copia de este proyecto usa la $v y tu instalación global ya tiene la $GLOBAL_VER ($GLOBAL_DIR). Nada se actualiza solo: actualizar la copia es decisión del equipo; después, pedir 'Actualiza SFP en este proyecto'"
+  elif [ -z "$GLOBAL_VER" ]; then
+    echo "  no se encontró una instalación global para comparar (se puede indicar con SFP_GLOBAL_SKILL_DIR)"
+  else
+    echo "  al día respecto a la instalación global ($GLOBAL_VER)"
+  fi
+done < "$TMPDIR_V/copias.txt"
+[ "$NCOP" -eq 0 ] && echo "  ninguna: el proyecto usa la instalación global, que está al día por definición"
 
 section "manifiesto"
 if [ ! -f "$MANIFEST" ]; then
@@ -129,6 +177,13 @@ else
       echo "  la IA evalúa cada 'aplica-si' contra este manifiesto y propone solo lo que aplica"
     elif [ -n "$REG" ] && [ -n "$CUR" ] && [ "$REG" != "$CUR" ]; then
       echo "  nota: el manifiesto registra una versión más nueva que este skill; no proponer cambios"
+    fi
+  fi
+
+  if [ -n "$GLOBAL_VER" ] && [ -n "$JSON_TOOL" ]; then
+    echo "  versión de referencia del skill: $GLOBAL_VER ($GLOBAL_DIR: la instalación global más reciente o la copia desde la que se ejecuta este script; otra carpeta con SFP_GLOBAL_SKILL_DIR)"
+    if [ -n "${REG:-}" ] && ver_gt "$GLOBAL_VER" "$REG"; then
+      echo "  AVISO: este proyecto se instaló o actualizó con la $REG y tu instalación global ya tiene la $GLOBAL_VER. Nada se actualiza solo: para traer las mejoras, pedir 'Actualiza SFP en este proyecto'"
     fi
   fi
 
@@ -257,18 +312,111 @@ if have git && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     SKIPPED=1
   fi
 else
-  echo "  sin git en este directorio; no se puede diferenciar automáticamente (NO ejecutado)"
+  BTYPE=""
+  [ -f "$MANIFEST" ] && [ -n "$JSON_TOOL" ] && BTYPE=$(mget backup.type)
+  if [ "$BTYPE" = "copia" ]; then
+    echo "  sin git: el respaldo es una copia ($(mget backup.ref)); comparar a mano contra ella (NO ejecutado)"
+  else
+    echo "  sin git en este directorio; no se puede diferenciar automáticamente (NO ejecutado)"
+  fi
   SKIPPED=1
 fi
 
+section "5. filtro de firmas de IA en los commits (si se instaló)"
+# El filtro se reconoce por la línea que define su lista de agentes (al inicio de la línea). Se excluyen la
+# copia fuente del skill y cualquier copia del skill dentro del proyecto (sus scripts la mencionan).
+grep_files "^[[:space:]]*SFP_AI_NAMES='" | grep -v 'scripts/hooks/commit-msg-ai-attribution\.sh$' > "$TMPDIR_V/filtro-todo.txt"
+: > "$TMPDIR_V/filtro.txt"
+while IFS= read -r f; do
+  dentro=0
+  while IFS= read -r c; do
+    case "$c" in */SKILL.md) ;; *) continue ;; esac
+    case "$f" in "$(dirname "$c")"/*) dentro=1 ;; esac
+  done < "$TMPDIR_V/copias.txt"
+  [ "$dentro" -eq 0 ] && echo "$f" >> "$TMPDIR_V/filtro.txt"
+done < "$TMPDIR_V/filtro-todo.txt"
+case "$(uname -s 2>/dev/null)" in MINGW*|MSYS*|CYGWIN*) EXEC_OK=1 ;; *) EXEC_OK=0 ;; esac   # Git for Windows no exige permiso de ejecución
+if ! have git || ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  if [ -s "$TMPDIR_V/filtro.txt" ]; then
+    echo "  sin git: no se puede comprobar si el filtro está activo (NO ejecutado)"; SKIPPED=1
+  else
+    echo "  sin git: no aplica"
+  fi
+elif [ -s "$TMPDIR_V/filtro.txt" ] && [ -n "$(git rev-parse --show-prefix 2>/dev/null)" ]; then
+  TOP=$(git rev-parse --show-toplevel 2>/dev/null)
+  # El filtro está en una subcarpeta de otro repositorio: los hooks son de ese repositorio, no de esta carpeta
+  echo "  el filtro está en esta carpeta, pero la carpeta está dentro de otro repositorio ($TOP): sus hooks no se activan desde aquí (NO ejecutado)"
+  SKIPPED=1
+else
+  HOOKS_DIR=$(git rev-parse --git-path hooks 2>/dev/null | tr -d '\r')
+  ACTIVE=0
+  NOEXEC=0
+  if [ -f "$HOOKS_DIR/commit-msg" ] && [ "$EXEC_OK" -eq 0 ] && [ ! -x "$HOOKS_DIR/commit-msg" ]; then
+    NOEXEC=1   # git ignora un hook sin permiso de ejecución (Linux, macOS)
+  elif [ -f "$HOOKS_DIR/commit-msg" ]; then
+    if grep -q -e 'SFP_KEEP_AI_ATTRIBUTION' -e 'commit-msg-ai-attribution' "$HOOKS_DIR/commit-msg" 2>/dev/null; then
+      ACTIVE=1
+    else
+      case "$HOOKS_DIR" in
+        *.husky/_|*.husky/_/)
+          HUSKY_HOOK="${HOOKS_DIR%/}"; HUSKY_HOOK="${HUSKY_HOOK%/_}/commit-msg"
+          [ -f "$HUSKY_HOOK" ] && grep -q 'SFP_KEEP_AI_ATTRIBUTION' "$HUSKY_HOOK" 2>/dev/null && ACTIVE=1 ;;
+      esac
+      grep -qi -e 'lefthook' -e 'pre-commit' "$HOOKS_DIR/commit-msg" 2>/dev/null && [ -s "$TMPDIR_V/filtro.txt" ] && ACTIVE=2
+    fi
+  fi
+  if [ -s "$TMPDIR_V/filtro.txt" ]; then
+    echo "  el filtro está en el repositorio:"
+    sed 's#^\./#    #' "$TMPDIR_V/filtro.txt"
+    case "$ACTIVE" in
+      1) echo "  ok: activo en esta copia ($HOOKS_DIR/commit-msg)" ;;
+      2) echo "  ok: el hook commit-msg de esta copia lo gestiona un gestor de hooks (lefthook o pre-commit); su configuración llama al filtro" ;;
+      *)
+        echo "  FALLA: el filtro está en el repositorio pero NO está activo en esta copia: los commits pueden salir con firmas de IA"
+        DIRH=$(sed -n 's#^\./\(.*\)/commit-msg$#\1#p' "$TMPDIR_V/filtro.txt" | head -1)
+        if [ "$NOEXEC" -eq 1 ]; then
+          echo "    $HOOKS_DIR/commit-msg no tiene permiso de ejecución y git lo ignora: chmod +x $HOOKS_DIR/commit-msg (y versionarlo así: git update-index --chmod=+x <archivo>)"
+        elif [ "$DIRH" = ".husky" ]; then
+          echo "    husky no está instalado en esta copia: instalar las dependencias del proyecto (p. ej. npm install), que activa husky"
+        elif [ -n "$DIRH" ] && [ -d "$DIRH" ]; then
+          echo "    para activarlo en esta copia (una vez por clon): git config core.hooksPath $DIRH"
+        else
+          echo "    para activarlo: instalar el gestor de hooks del proyecto (p. ej. npm install con husky, lefthook install o pre-commit install --hook-type commit-msg)"
+        fi
+        FAIL=1 ;;
+    esac
+  elif [ "$NOEXEC" -eq 1 ] && grep -q 'SFP_KEEP_AI_ATTRIBUTION' "$HOOKS_DIR/commit-msg" 2>/dev/null; then
+    echo "  AVISO: $HOOKS_DIR/commit-msg tiene el filtro pero no tiene permiso de ejecución: git lo ignora (chmod +x $HOOKS_DIR/commit-msg)"
+  elif [ "$ACTIVE" = 1 ]; then
+    echo "  AVISO: el filtro solo está en $HOOKS_DIR/commit-msg de esta copia: no se versiona y no llega a quien clone el repositorio"
+    echo "    para que viaje con el código: versionarlo en una carpeta de hooks (references/templates.md, sección 17)"
+  else
+    echo "  no se usa el filtro en este proyecto"
+  fi
+fi
+
 section "fin"
+# explicar_codigo <código>: qué significa y cómo tratarlo en un pipeline de CI
+explicar_codigo() {
+  echo "código de salida: $1 (0 = sin fallas y completo · 1 = fallas · 2 = llamada incorrecta · 3 = sin fallas, pero INCOMPLETO)"
+  echo "el 3 no es un error del proyecto: algo no se pudo comprobar (falta jq o Python 3, git, el respaldo, o un verify_command que solo se ejecuta con --run-verify; ver los AVISO y NO ejecutado de arriba)"
+  echo "en CI: tratar 3 como advertencia y fallar solo con 1 o 2; --strict-tooling convierte el 3 en 1"
+}
 if [ "$FAIL" -ne 0 ]; then
   echo "verificación: hay al menos una falla arriba — no la ignores en el reporte de Fase 7"
+  explicar_codigo 1
   exit 1
 elif [ "$SKIPPED" -ne 0 ]; then
   echo "verificación: INCOMPLETA — alguna comprobación no se ejecutó (ver AVISO / NO ejecutado arriba). No presentar esto como 'sin fallas'"
+  if [ "$STRICT" -eq 1 ]; then
+    echo "--strict-tooling: lo incompleto se trata como falla"
+    explicar_codigo 1
+    exit 1
+  fi
+  explicar_codigo 3
   exit 3
 else
   echo "verificación: sin fallas detectadas por este script (sigue haciendo falta la revisión humana del reporte)"
+  explicar_codigo 0
   exit 0
 fi

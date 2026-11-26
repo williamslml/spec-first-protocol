@@ -8,7 +8,7 @@
 **Trabaja con asistentes de IA de forma ordenada: primero se define por escrito qué se va a hacer, y después se implementa.**
 
 <p>
-  <img src="https://img.shields.io/badge/versi%C3%B3n-1.14.0-2563eb?style=for-the-badge" alt="Versión 1.14.0">
+  <img src="https://img.shields.io/badge/versi%C3%B3n-1.15.0-2563eb?style=for-the-badge" alt="Versión 1.15.0">
   <img src="https://img.shields.io/badge/licencia-MIT-22c55e?style=for-the-badge" alt="Licencia MIT">
   <img src="https://img.shields.io/badge/idioma-espa%C3%B1ol-f97316?style=for-the-badge" alt="En español">
   <a href="#compatibilidad"><img src="https://img.shields.io/badge/compatibilidad-cualquier_asistente-0ea5e9?style=for-the-badge" alt="Reglas compatibles con cualquier asistente de IA"></a>
@@ -105,7 +105,7 @@ flowchart LR
     E --> G["Se verifica<br/><sub>y se entrega un resumen</sub>"]
 ```
 
-> **Importante:** hasta que el plan se aprueba, la skill **no escribe nada** en el proyecto.
+> **Importante:** hasta que el plan se aprueba, la skill **no escribe nada** en el proyecto. Una vez aprobado, lo ejecuta completo sin preguntar entre una fase y otra, y ejecuta ella misma los comandos que puede ejecutar. Solo se detiene ante una falla real, algo que el plan no contemplaba o una acción que siempre requiere aprobación.
 
 #### Adaptación a cada proyecto
 
@@ -140,7 +140,7 @@ Publicar código, borrar archivos, mezclar ramas o tocar producción siempre req
 <td valign="top">
 
 #### Calidad y revisión según el riesgo
-Controles proporcionales al riesgo, con las pruebas y los revisores automáticos que el proyecto ya tiene. Y una revisión independiente: quien revisa no es quien programó.
+Controles proporcionales al riesgo, con las pruebas y los revisores automáticos que el proyecto ya tiene. Las pruebas se escriben mientras se construye y en un lugar acordado. Y una revisión independiente: quien revisa no es quien programó, también cuando se trabaja con un solo asistente. Solo los cambios triviales se quedan con una verificación básica, y el resumen lo dice.
 
 </td>
 <td valign="top">
@@ -153,8 +153,8 @@ Cada tarea se asigna a un rol (arquitectura, desarrollo, interfaz, pruebas o rev
 <tr>
 <td valign="top">
 
-#### Memoria del proyecto
-Las decisiones importantes (ADR), los procedimientos (runbooks), las lecciones aprendidas y las especificaciones archivadas quedan documentados en el repositorio, no se pierden al cerrar la sesión.
+#### Memoria y documentación al día
+Las decisiones importantes (ADR), los procedimientos (runbooks), las lecciones aprendidas y las especificaciones archivadas quedan en el repositorio, con un índice de lo que sigue vigente. El README y, si hay una API, su documento de OpenAPI se actualizan con cada cambio.
 
 </td>
 <td valign="top">
@@ -174,7 +174,7 @@ Opcional. Según el tipo de proyecto (API, interfaz, móvil, datos, librería, i
 <td valign="top">
 
 #### Todo cambio es reversible
-Lo que la skill instala queda registrado y puede retirarse sin afectar cambios posteriores.
+Lo que la skill instala queda registrado y puede retirarse sin afectar cambios posteriores. Antes de aplicar se guarda un punto de retorno: con Git, o con una copia de respaldo si el proyecto no lo usa. Solo se seguiría sin él si lo decides expresamente, y nunca al reestructurar.
 
 </td>
 </tr>
@@ -188,7 +188,7 @@ Toda la documentación generada se entiende sin conocer el código. Sin jerga t�
 <td valign="top">
 
 #### Complementos opcionales
-Commits sin firmas de IA y herramientas complementarias, cada una con límites de uso claros.
+Herramientas complementarias, cada una con límites de uso claros. Y, siempre, commits sin firmas de IA.
 
 </td>
 </tr>
@@ -270,8 +270,8 @@ SFP es una metodología y no depende de un asistente en particular. Lo que cambi
 | Skill de instalación guiada | Sí | Requiere un asistente que cargue skills en formato `SKILL.md`. El único con el que se ha probado es Claude Code; en los demás, el formato es el mismo pero no se ha probado |
 | Scripts de análisis, verificación y retiro | No | Solo necesitan una terminal con `sh` o `bash` |
 | Filtro de firmas de IA en los commits | No | Es un hook de Git, ajeno al asistente |
-| Ajuste de firmas en la herramienta | Sí, por asistente | Verificado solo en Claude Code. Para los demás, la skill consulta su documentación antes de cambiar nada |
-| Instalador de herramientas complementarias | Sí | Solo funciona con Claude Code |
+| Ajuste de firmas en la herramienta | Sí, por asistente | Verificado solo en Claude Code. Para los demás, la skill consulta su documentación antes de cambiar nada; si no puede confirmarlo, no lo cambia y usa la regla escrita y el filtro del repositorio |
+| Instalador de herramientas complementarias | Sí | Probado con Claude Code. Con Codex, en pruebas: instala y retira las skills, Serena y Context7 en su `config.toml`, y RTK con su hook. Falta comprobarlo con Codex en uso. Ejecuta el instalador de skills con el gestor de paquetes del proyecto (npx, npm, pnpm, bun o yarn) |
 
 #### Dónde se instala la skill
 
@@ -305,23 +305,27 @@ Se ofrecen únicamente cuando tienen sentido para el proyecto, y nunca se instal
 | [RTK](https://github.com/rtk-ai/rtk) | Reducir el consumo al leer la salida de los comandos | Para reducir costos |
 | [archify](https://github.com/tt-a1i/archify) | Diagramar la arquitectura del sistema | Opcional |
 | [frontend-design](https://github.com/anthropics/skills) | Diseño visual de pantallas | Solo si el proyecto tiene interfaz |
+| [Modern Web Guidance](https://github.com/GoogleChrome/modern-web-guidance) | Código web moderno y correcto: HTML semántico, CSS actual, accesibilidad, rendimiento y seguridad | Solo si el proyecto tiene interfaz web, también en escritorio con Electron o Tauri. Consulta sus guías ejecutando su propio paquete de npm en la última versión, con conexión a internet |
+| [Context7](https://github.com/upstash/context7) | Consultar la documentación vigente de las librerías del proyecto; la skill también la usa para comprobar la documentación de otras herramientas | Cuando el proyecto usa librerías que cambian a menudo. Envía las consultas a un servicio externo; la clave es opcional y nunca se guarda en el repositorio |
 
-Cada herramienta tiene prohibido duplicar funciones que ya cubre SFP, para evitar contradicciones. Por ejemplo, Superpowers no planifica: esa función corresponde a SFP.
+Cada herramienta tiene prohibido duplicar funciones que ya cubre SFP, para evitar contradicciones. Por ejemplo, Superpowers no planifica: esa función corresponde a SFP. Y Modern Web Guidance no se ocupa del diseño visual, que es de frontend-design.
 
 </details>
 
 <details>
-<summary><strong>Commits sin firmas de IA</strong>, de cualquier asistente</summary>
+<summary><strong>Commits sin firmas de IA</strong>, de cualquier asistente, siempre</summary>
 
 <br>
 
-Varios asistentes añaden su firma a los commits ("Co-Authored-By: …", "Generated with…"). Si se solicita, la skill lo evita de tres formas:
+Varios asistentes añaden su firma a los commits ("Co-Authored-By: …", "Generated with…"). La skill lo evita **siempre**, en toda instalación y sin preguntarlo, de tres formas:
 
-1. Un ajuste en la herramienta, cuando existe.
+1. Un ajuste en la herramienta, cuando su documentación lo confirma.
 2. Una regla escrita que cualquier asistente puede leer.
 3. Un filtro automático en el repositorio que elimina esas firmas, sin importar el asistente de origen.
 
-Los coautores humanos se conservan. Si la empresa **exige** declarar el uso de IA, la skill lo consulta antes de actuar y no elimina nada.
+Los coautores humanos se conservan. Si la empresa exige declarar el uso de IA, se hace con una línea `Assisted-by`, que el filtro no toca; las firmas automáticas se quitan igual.
+
+Git no copia los filtros automáticos al clonar un repositorio. Por eso el filtro se guarda en una carpeta versionada del proyecto y cada persona lo activa una vez después de clonar, con el comando que queda escrito en el README del proyecto. La verificación de la skill comprueba en cada copia que el filtro esté activo y, si falta, lo dice con el comando para activarlo.
 
 </details>
 
@@ -354,7 +358,9 @@ Con el proyecto abierto, basta con solicitarlo directamente. Una vez instalada l
 | *"Configura el Spec-First Protocol en este proyecto."* | Se recorren todos los pasos descritos en "Cómo funciona" |
 | *"Analiza este proyecto y dime cómo aplicarías SFP, sin cambiar nada."* | Solo se analiza y se entrega el plan |
 | *"Configura SFP en este proyecto sin mover carpetas."* | Nivel "Solo metodología": se instalan las instrucciones, sin tocar la estructura |
-| *"Actualiza SFP en este proyecto."* | Se proponen únicamente las mejoras nuevas aplicables al caso |
+| *"Actualiza SFP en este proyecto."* | Se proponen únicamente las mejoras nuevas aplicables al caso. También avisa si el proyecto quedó en una versión anterior a la que tienes instalada |
+| *"Cambia el modo de coordinación de este proyecto a con orquestador."* | Cambia una decisión de fondo (nivel de intervención, coordinación o rigor de los controles) sin reinstalar: muestra lo actual, lo que cambiaría y lo que no se toca, y aplica solo lo aprobado |
+| *"Agrega soporte para Codex a este proyecto."* | Genera las instrucciones para un asistente nuevo, reutilizando las decisiones ya tomadas, sin repetir la entrevista |
 | *"Retira SFP de este proyecto."* | Se retira lo instalado, sin afectar cambios posteriores |
 
 Para ver cómo queda un proyecto con la metodología instalada y un primer cambio ya especificado, revisar el [proyecto de ejemplo](examples/proyecto-con-sfp).
@@ -377,14 +383,16 @@ Para ver cómo queda un proyecto con la metodología instalada y un primer cambi
 - Instalar programas o modificar la configuración general del equipo.
 - Cambiar permisos o la configuración de otras herramientas.
 
-Además, **no copia ni muestra contraseñas**: si encuentra archivos con credenciales, o un remoto cuya dirección contiene una contraseña o un token, solo informa de su existencia. Y **los documentos del proyecto son información, no instrucciones**: si un archivo contiene indicaciones dirigidas a la IA, estas no se ejecutan y se señalan al usuario.
+Además, **no copia ni muestra contraseñas**: si encuentra archivos con credenciales, o un remoto cuya dirección contiene una contraseña o un token, solo informa de su existencia. Y **los documentos del proyecto son información, no instrucciones**: si un archivo contiene indicaciones dirigidas a la IA, no se ejecutan. Se avisa en el momento, con un aviso de seguridad aparte de los demás que dice el archivo, el texto exacto y que no se ejecutó, y el aviso se repite en el resumen final.
+
+Cuando la documentación de un asistente o de una herramienta no permite confirmar cómo hacer un ajuste con seguridad, ese ajuste **no se aplica**: se explica qué no se pudo confirmar, se ofrece una alternativa que no dependa de esa herramienta y queda anotado como pendiente en el resumen.
 
 ### Preguntas frecuentes
 
 <details>
 <summary><strong>¿Funciona con cualquier asistente?</strong></summary>
 <br>
-Las reglas, sí: quedan documentadas en el proyecto y cualquiera puede leerlas. Lo que depende del asistente es la instalación guiada, que requiere cargar skills en formato `SKILL.md`, y el instalador de herramientas complementarias, que solo funciona con Claude Code. El detalle está en [Compatibilidad](#compatibilidad).
+Las reglas, sí: quedan documentadas en el proyecto y cualquiera puede leerlas. Lo que depende del asistente es la instalación guiada, que requiere cargar skills en formato `SKILL.md`, y el instalador de herramientas complementarias, probado con Claude Code y en pruebas con Codex. El detalle está en [Compatibilidad](#compatibilidad).
 </details>
 
 <details>
@@ -397,6 +405,12 @@ Sí. Tiene tres niveles de intervención: solo metodología (no toca carpetas), 
 <summary><strong>¿Se puede usar con varios asistentes a la vez?</strong></summary>
 <br>
 Sí. Sin orquestador, cada sesión es independiente y comparte el estado mediante las especificaciones y la lista de tareas, no mediante el chat. Con orquestador (una herramienta que coordina varios asistentes), la skill se ajusta a sus capacidades, que se verifican y no se suponen.
+</details>
+
+<details>
+<summary><strong>¿Quién hace la revisión independiente si trabajo solo, con un único asistente?</strong></summary>
+<br>
+Depende del riesgo del cambio. Si es medio o alto, la revisa el asistente en una sesión nueva, que solo recibe la especificación, las tareas y los cambios, y además la revisas tú antes de aprobar. Si es bajo, basta la sesión nueva. Si es trivial, basta una verificación básica. El resumen de cada cambio dice qué revisión tuvo. Una revisión hecha en la misma conversación donde se programó no cuenta como independiente, y así se informa.
 </details>
 
 <details>
@@ -414,7 +428,13 @@ No. Agrega documentos de trabajo e instrucciones para el asistente. Solo reorgan
 <details>
 <summary><strong>¿Qué pasa si el resultado no es el esperado?</strong></summary>
 <br>
-Antes de aplicar cualquier cambio se guarda un punto de retorno. Además, puede retirarse por completo en cualquier momento.
+Antes de aplicar cualquier cambio se guarda un punto de retorno (salvo que decidas expresamente seguir sin él). Además, puede retirarse por completo en cualquier momento.
+</details>
+
+<details>
+<summary><strong>¿Qué pasa si el proyecto no usa Git?</strong></summary>
+<br>
+Antes de aplicar cualquier cambio, la skill lo detecta, lo informa y ofrece dos opciones: inicializar Git (con tu aprobación) o hacer una copia de respaldo de lo que se va a tocar, en una carpeta fuera del proyecto y con la fecha en el nombre. La decisión es tuya, y el resumen dice cómo volver atrás con ese respaldo. En el nivel "Reestructurar" no se continúa sin alguna de las dos. Sin ninguna, los cambios no tendrían punto de retorno, y por eso se pide confirmación expresa antes de seguir.
 </details>
 
 <details>
@@ -439,6 +459,8 @@ Cualquier persona puede proponer cambios. Solo los mantenedores, [williamslml](h
    La primera prueba los scripts. La segunda revisa que los textos cumplan el formato del proyecto (sin emojis, sin voseo, sin firmas de IA, enlaces válidos).
 4. Subir la rama a la copia propia y abrir una solicitud de cambios (PR) hacia `master`, completando la plantilla que aparece. Las mismas comprobaciones se ejecutan solas en GitHub y sirven de aviso para quien revisa.
 5. Un mantenedor revisa la solicitud. Puede pedir ajustes y, con su aprobación, se mezcla.
+
+Para reportar un problema o sugerir una mejora basta con abrir un issue. Si la skill detecta un problema propio mientras trabaja y está instalado el CLI `gh` con sesión iniciada, puede preparar el reporte con los datos de la skill, sin nada de tu proyecto. Lo muestra en la siguiente pausa y solo lo publica si lo apruebas.
 
 Hay una versión corta de estos pasos en [CONTRIBUTING.md](CONTRIBUTING.md). Los problemas de seguridad no se reportan públicamente: seguir [SECURITY.md](SECURITY.md).
 
@@ -470,7 +492,7 @@ Estas reglas valen para todas las personas, incluidos los mantenedores:
 | Usar la skill | Un asistente que cargue skills en formato `SKILL.md` (ver [Compatibilidad](#compatibilidad)) |
 | Los scripts de análisis, verificación y retiro | `sh`, `find`, `grep`, `awk` y `sed` (incluidos en Git for Windows, macOS y Linux). `git` recomendado |
 | Validar el registro de cambios y deshacerlos automáticamente | Python 3 (en Windows suele llamarse `python`) o `jq` |
-| El instalador de herramientas complementarias | bash 4 o superior, Python 3.11 o superior, Node.js 18 o superior |
+| El instalador de herramientas complementarias | bash 4 o superior, Python 3.11 o superior, y Node.js 18 o superior con npx, npm o pnpm, o bun |
 | Windows | Git for Windows (Git Bash) o WSL. `scripts/run.ps1` los detecta automáticamente |
 
 Probado en Windows 11 (Git Bash), Debian 12 y Alpine 3.20. El instalador de herramientas no se ha probado en macOS: con el bash incluido de fábrica se detiene con un aviso (`brew install bash` lo resuelve).
@@ -485,22 +507,24 @@ Probado en Windows 11 (Git Bash), Debian 12 y Alpine 3.20. El instalador de herr
 | Script | Qué hace | ¿Escribe? |
 |---|---|---|
 | `scripts/discover.sh <proyecto>` | Analiza el proyecto | No |
-| `scripts/verify.sh <proyecto>` | Verifica lo instalado | No |
+| `scripts/verify.sh [--strict-tooling] <proyecto>` | Verifica lo instalado | No |
 | `scripts/fingerprint.sh --propose / --accept <proyecto>` | Registra huellas de lo instalado para poder deshacerlo con seguridad | Solo en `.sfp/` |
 | `scripts/uninstall.sh <proyecto> [--apply]` | Retira SFP. Sin `--apply` solo muestra qué haría | Solo con `--apply` |
 | `scripts/sfp-section.sh <con\|sin> <sección>` | Muestra una sección del texto completo de la metodología | No |
-| `scripts/integrations.sh [--apply \| --check \| --uninstall] <proyecto>` | Instala, verifica o retira las herramientas complementarias. Sin `--apply` solo muestra el plan | Solo con `--apply` |
+| `scripts/integrations.sh [--apply \| --check \| --uninstall] [--agent claude-code\|codex] [--runner auto\|npx\|npm\|pnpm\|bun\|yarn] <proyecto>` | Instala, verifica o retira las herramientas complementarias. Sin `--apply` solo muestra el plan | Solo con `--apply` |
 | `scripts/hooks/commit-msg-ai-attribution.sh <archivo>` | Filtro que elimina las firmas de IA de un mensaje de commit | Solo ese archivo |
 | `scripts/run.ps1 <script> …` | Ejecuta cualquiera de los anteriores desde PowerShell | Igual que el script que ejecuta |
 
-Los scripts usan los siguientes códigos de salida:
+Los scripts usan los siguientes códigos de salida, y `verify.sh` los explica al terminar:
 
 | Código | Significa |
 |---|---|
 | `0` | Sin incidencias |
 | `1` | Se encontraron problemas |
 | `2` | Llamada incorrecta (opción o ruta inválida) |
-| `3` | No se encontraron problemas, pero no pudo verificarse todo (falta una herramienta). Nunca se presenta como "todo correcto" |
+| `3` | No se encontraron problemas, pero no pudo verificarse todo: falta una herramienta, Git o el respaldo, o hay un comando registrado que solo se ejecuta con `--run-verify`. Nunca se presenta como "todo correcto". En `uninstall.sh`, el 3 significa que quedan pasos `[MANUAL]` |
+
+En un pipeline de integración continua (CI), conviene tratar el `3` como advertencia y fallar solo con `1` o `2`: así una herramienta faltante no se confunde con un error del proyecto. Si se prefiere que también falle, `verify.sh --strict-tooling` convierte el `3` en `1`. Hay un ejemplo listo para GitHub Actions en [examples/ci](examples/ci/verificar-sfp.yml).
 
 </details>
 
@@ -519,12 +543,13 @@ spec-first-protocol/
 ├── LICENSE
 ├── .github/            # Plantillas de issues y de solicitudes de cambios, revisores y verificación automática
 ├── assets/             # Logo en versión oscura (tema claro) y blanca (tema oscuro)
-├── examples/           # Un proyecto de ejemplo con SFP instalado y un cambio especificado
+├── examples/           # Un proyecto de ejemplo con SFP instalado y un ejemplo de verificación en CI
 ├── tests/              # Pruebas de los scripts y verificación del formato de los textos
 ├── references/         # Documentos que se consultan solo cuando son necesarios
 │   ├── methodology-digest.md   # Resumen de la metodología
 │   ├── sfp-con-orquestador.md  # Texto completo, para coordinar varios asistentes
 │   ├── sfp-sin-orquestador.md  # Texto completo, para trabajar con uno solo
+│   ├── development-practices.md  # Cómo se ejecuta el trabajo: plan de corrido, pruebas, OpenAPI, README, revisión
 │   ├── git-practices.md        # Commits, ramas, merge, PRs y remotes
 │   ├── templates.md            # Plantillas de lo que se instala en el proyecto
 │   ├── vendor/                 # Guías de terceros incluidas tal cual, con su licencia
@@ -554,6 +579,8 @@ Este repositorio se publica bajo la licencia [MIT](LICENSE).
 | Serena | GPL-3.0 o posterior (su parte SolidLSP es MIT) |
 | RTK | Apache-2.0 |
 | frontend-design | Apache-2.0 |
+| Modern Web Guidance | Apache-2.0 (sus guías, CC-BY-4.0) |
+| Context7 | MIT |
 | CLI `skills` (npm) y uv | Las de sus respectivos proyectos |
 
 <div align="center">

@@ -14,6 +14,11 @@ Subcomandos:
                                              añade la entrada si no existe (idempotente)
   mcp-remove <.mcp.json> <nombre> <comando> [args...]
                                              la quita solo si coincide exactamente (1 si difiere)
+  codex-mcp-entry <config.toml> <nombre>    imprime el comando de [mcp_servers.<nombre>] de Codex
+  codex-mcp-add <config.toml> <nombre> <segundos|-> <comando> [args...]
+                                             añade la tabla al final, sin reescribir el resto
+  codex-mcp-remove <config.toml> <nombre> <comando...>
+                                             la quita solo si el comando coincide (1 si cambió)
   hook-has <settings.json> <Evento> <texto>  ¿algún hook de <Evento> ejecuta un comando con <texto>?
   env-has <settings.json> <VARIABLE> <texto> ¿env.<VARIABLE> contiene <texto>?
   toml-list <check|apply|remove> <config.toml> <tabla> <clave> <valor...>
@@ -22,7 +27,7 @@ Subcomandos:
   block-remove <archivo> <marca-inicio> <marca-fin>
                                              quita el bloque entre marcas (incluidas)
   state-select <estado.json>                 imprime la selección guardada como líneas clave=valor
-  state-save <estado.json> <only> <skip> <scope> <rtk_scope> <force_frontend> <versión>
+  state-save <estado.json> <only> <skip> <scope> <rtk_scope> <force_frontend> <versión> [<agente> [<runner>]]
   state-add <estado.json> <componente> <ámbito> <tipo> <auto:0|1> <objetivo> <deshacer>
   state-list <estado.json>                   registros: idx\\tcomp\\támbito\\ttipo\\tauto\\tobjetivo\\tdeshacer
   state-drop <estado.json> <idx...>          quita registros; borra el archivo si no queda ninguno
@@ -155,6 +160,103 @@ def cmd_mcp_remove(project_mcp, name, command, *args):
         return 0
     write_atomic(project_mcp, dump_like(project_mcp, d))
     print(f"quitado mcpServers.{name}")
+    return 0
+
+
+# ----------------------------------------------------------------------------- Codex (config.toml)
+# Formato verificado el 2026-11-26 en la documentación de Codex: [mcp_servers.<nombre>] con command, args y,
+# opcionalmente, startup_timeout_sec. Se añade una tabla al final del archivo, sin reescribir lo demás (se
+# conservan los comentarios), y el resultado se valida con tomllib antes de guardarlo. Requiere Python 3.11.
+def _tomllib():
+    try:
+        import tomllib
+        return tomllib
+    except ImportError:
+        return None
+
+
+def _read_text(path):
+    if not os.path.isfile(path):
+        return ""
+    with open(path, encoding="utf-8") as fh:
+        return fh.read()
+
+
+def _codex_cmdline(entry):
+    return " ".join([str(entry.get("command", ""))] + [str(a) for a in entry.get("args", [])])
+
+
+def cmd_codex_mcp_entry(path, name):
+    """Imprime el comando de [mcp_servers.<nombre>]: 1 si no existe, 2 si el TOML no es válido, 3 sin tomllib."""
+    tl = _tomllib()
+    if tl is None:
+        print("Python >= 3.11 requerido (tomllib)")
+        return 3
+    text = _read_text(path)
+    if not text:
+        return 1
+    entry = (tl.loads(text).get("mcp_servers") or {}).get(name)  # TOML inválido → ValueError → 2
+    if not isinstance(entry, dict):
+        return 1
+    print(_codex_cmdline(entry))
+    return 0
+
+
+def cmd_codex_mcp_add(path, name, timeout, command, *args):
+    tl = _tomllib()
+    if tl is None:
+        print("Python >= 3.11 requerido (tomllib)")
+        return 3
+    if not re.fullmatch(r"[A-Za-z0-9_-]+", name):
+        raise SystemExit(f"nombre de servidor no válido: {name!r}")
+    text = _read_text(path)
+    if text and name in (tl.loads(text).get("mcp_servers") or {}):
+        print(f"ya existe [mcp_servers.{name}]: no se modifica")
+        return 0
+    block = [f"[mcp_servers.{name}]", f"command = {_toml_str(command)}",
+             "args = [" + ", ".join(_toml_str(a) for a in args) + "]"]
+    if timeout not in ("", "-"):
+        block.append(f"startup_timeout_sec = {int(timeout)}")
+    new = (text.rstrip("\n") + "\n\n" if text.strip() else "") + "\n".join(block) + "\n"
+    entry = (tl.loads(new).get("mcp_servers") or {}).get(name)
+    if not isinstance(entry, dict) or _codex_cmdline(entry) != " ".join((command,) + args):
+        raise SystemExit("la entrada añadida no se lee como se esperaba: no se escribe nada")
+    write_atomic(path, new)
+    print(f"añadido [mcp_servers.{name}]")
+    return 0
+
+
+def cmd_codex_mcp_remove(path, name, *command):
+    tl = _tomllib()
+    if tl is None:
+        print("Python >= 3.11 requerido (tomllib)")
+        return 3
+    text = _read_text(path)
+    entry = (tl.loads(text).get("mcp_servers") or {}).get(name) if text else None
+    if not isinstance(entry, dict):
+        print(f"no hay [mcp_servers.{name}]: nada que quitar")
+        return 0
+    if _codex_cmdline(entry) != " ".join(command):
+        print(f"[mcp_servers.{name}] fue modificado después de instalarlo: no se toca")
+        return 1
+    # Se quitan su cabecera y sus subtablas ([mcp_servers.<nombre>.env]…) hasta la siguiente tabla ajena.
+    propia = re.compile(r"^\s*\[\s*mcp_servers\.%s(\.[^\]]+)?\s*\]\s*(#.*)?$" % re.escape(name))
+    cabecera = re.compile(r"^\s*\[")
+    out, dentro = [], False
+    for linea in text.splitlines():
+        if cabecera.match(linea):
+            dentro = bool(propia.match(linea))
+        if not dentro:
+            out.append(linea)
+    nuevo = re.sub(r"\n{3,}", "\n\n", "\n".join(out).strip("\n") + "\n") if any(l.strip() for l in out) else ""
+    if nuevo and name in ((tl.loads(nuevo).get("mcp_servers") or {})):
+        raise SystemExit("no se pudo quitar la entrada sin tocar lo demás: retirarla a mano")
+    if not nuevo:
+        os.remove(path)
+        print(f"quitado [mcp_servers.{name}]; {path} quedó vacío y se borró")
+        return 0
+    write_atomic(path, nuevo)
+    print(f"quitado [mcp_servers.{name}]")
     return 0
 
 
@@ -312,20 +414,23 @@ def cmd_state_select(path):
     if not os.path.isfile(path):
         return 1
     sel = _load_state(path).get("selection") or {}
-    for k in ("only", "skip", "scope", "rtk_scope"):
-        v = str(sel.get(k, ""))
+    defaults = {"agent": "claude-code", "runner": "auto"}
+    for k in ("only", "skip", "scope", "rtk_scope", "agent", "runner"):
+        v = str(sel.get(k, defaults.get(k, "")))
         if not re.fullmatch(r"[a-z0-9,-]*", v):
             raise SystemExit(f"valor inválido en selection.{k}: {v!r}")
         print(f"{k}={v}")
     print("force_frontend=" + ("1" if sel.get("force_frontend") else "0"))
+    # Un estado sin "agent" es anterior a 1.15.0: los componentes nuevos no estaban en su selección
+    print("legacy=" + ("0" if "agent" in sel else "1"))
     return 0
 
 
-def cmd_state_save(path, only, skip, scope, rtk_scope, force, version):
+def cmd_state_save(path, only, skip, scope, rtk_scope, force, version, agent="claude-code", runner="auto"):
     d = _load_state(path)
     d["skill_version"] = version
     d["selection"] = {"only": only, "skip": skip, "scope": scope, "rtk_scope": rtk_scope,
-                      "force_frontend": force == "1"}
+                      "force_frontend": force == "1", "agent": agent, "runner": runner}
     d["updated"] = datetime.date.today().isoformat()
     write_atomic(path, json.dumps(d, indent=2, ensure_ascii=False) + "\n")
     return 0
@@ -376,6 +481,9 @@ COMMANDS = {
     "mcp-entry": (cmd_mcp_entry, 4),
     "mcp-add": (cmd_mcp_add, 3),
     "mcp-remove": (cmd_mcp_remove, 3),
+    "codex-mcp-entry": (cmd_codex_mcp_entry, 2),
+    "codex-mcp-add": (cmd_codex_mcp_add, 4),
+    "codex-mcp-remove": (cmd_codex_mcp_remove, 3),
     "hook-has": (cmd_hook_has, 3),
     "env-has": (cmd_env_has, 3),
     "toml-list": (cmd_toml_list, 5),

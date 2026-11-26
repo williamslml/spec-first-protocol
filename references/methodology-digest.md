@@ -6,6 +6,8 @@ Es el **resumen práctico** de SFP. El texto completo, con diagramas y justifica
 
 ## 1. Reglas que deben llegar al proyecto
 
+Fuera de este documento, estas reglas se citan como "regla N del resumen", para no confundirlas con las reglas inviolables de `SKILL.md` (que se citan como "regla inviolable N"). Dentro de este documento se dice "regla N de este resumen".
+
 | # | Regla |
 |---|---|
 | 1 | **Separación de capas**: metodología → (orquestación) → agentes → modelos → runtime/CLI (programa que ejecuta al agente) → skills → tools; nada se ata a un proveedor, modelo, runtime u orquestador concreto; las capas se nombran por función, no por herramienta |
@@ -39,7 +41,7 @@ En el punto de entrada de un proyecto **no** copiar los 22 principios: resumir e
 | Capa de orquestación | Supervisor + workers (agentes ejecutores); patrones de coordinación; el orquestador lo elige el usuario y sus capacidades y límites se averiguan con la sección B.1 de `orchestration.md` (no se suponen) | No existe; se puede añadir después entre METHODOLOGY y AGENTS sin rediseñar el resto |
 | Reparto de trabajo | El supervisor decide agente/modelo y paraleliza, siguiendo las listas fijas (alto riesgo y alto impacto) | Selección por criterios de tiers; cada sesión es independiente |
 | Estado compartido | Lo gestiona el orquestador | `tasks.md` y la spec; no depende de ningún chat |
-| Revisión | Parte del flujo de la capa | Sesión separada, otro modelo/runtime; recibe specs + tasks + diff |
+| Revisión | Parte del flujo de la capa | Sesión separada, otro modelo/runtime; recibe specs + tasks + diff. Con una sola sesión: sesión nueva y, en riesgo medio o alto, también la persona; el resumen dice qué revisión hubo (sección 8 de `development-practices.md`) |
 | Paralelismo | Workers en paralelo | Un git worktree (copia de trabajo aparte) o rama por sesión paralela |
 | Permisos | Restricciones de herramientas del orquestador, con el alcance que confirme su ficha (si aísla menos de lo que exige el riesgo, compensar) | Configurar el mínimo necesario en **cada** runtime antes de usarlo |
 | Lecciones | Autoaprendizaje opcional (opt-in) del orquestador (memoria operativa) + `docs/lessons/` como fuente de verdad | Registro manual en `docs/lessons/` al archivar un change relevante |
@@ -51,7 +53,7 @@ En el punto de entrada de un proyecto **no** copiar los 22 principios: resumir e
 
 Para **cada** fila, marcar: `Instalado` · `Ya existía (ruta)` · `Omitido por decisión del usuario` · `N/A (motivo)`. Nada puede quedar sin marcar.
 
-- [ ] Instrucciones de proyecto por runtime (reglas 1–3, 6, 8, 10–12 resumidas)
+- [ ] Instrucciones de proyecto por runtime (reglas 1–3, 6, 8 y 10–12 de este resumen)
 - [ ] Estructura de conocimiento: `docs/adr`, `docs/runbooks`, `docs/lessons`
 - [ ] Capa de especificación y los 4 artefactos por change; límite con el ADR
 - [ ] Carpeta global (SYSTEM.md; methodology/, agents/, skills/, tools/ solo si procede); versionada en Git
@@ -60,6 +62,12 @@ Para **cada** fila, marcar: `Instalado` · `Ya existía (ruta)` · `Omitido por 
 - [ ] Tiers de modelo asignados + señales de alto riesgo + escalamiento
 - [ ] Lista de acciones de alto impacto (aprobación humana) distinta de la de alto riesgo
 - [ ] Controles de calidad ajustados a los comandos reales
+- [ ] Prácticas de desarrollo en el punto de entrada (`development-practices.md`): plan aprobado de corrido, comandos ejecutados por el asistente, evidencia antes de declarar algo inviable, orden del backlog
+- [ ] Convención de dónde viven las pruebas (unitarias, e integración y extremo a extremo aparte) y pruebas mientras se construye
+- [ ] Documentación de la API en OpenAPI (o "N/A: el proyecto no expone una API")
+- [ ] README vivo: base del README y revisión en cada cambio no trivial (o "Omitido por decisión del usuario")
+- [ ] Revisión independiente definida también para una sola sesión
+- [ ] Memoria a largo plazo: estado de ADR y lecciones, e índices de lo vigente
 - [ ] Permisos y mínimo privilegio configurados (por runtime o por orquestador)
 - [ ] Orquestación (solo con orquestador) con su ficha de la sección B.1 de `orchestration.md` completa, o guía de sesiones independientes y worktrees (sin orquestador)
 - [ ] Registro de lecciones (formato "Aplica cuando") y regla de promoción
@@ -67,7 +75,7 @@ Para **cada** fila, marcar: `Instalado` · `Ya existía (ruta)` · `Omitido por 
 - [ ] Skills/herramientas elegidas por el usuario (no por defecto), con su fila de la matriz de enrutamiento (sección 6.1 de `architecture.md`) copiada al punto de entrada y la comprobación `scripts/integrations.sh --check` en verde
 - [ ] Idioma y claridad en el punto de entrada (en español: neutro, sin voseo ni regionalismos; lenguaje claro, sin referencias que nadie va a seguir)
 - [ ] Convenciones de Git acordadas (`git-practices.md`): las del repositorio o los valores por defecto, en la sección "Git" del punto de entrada
-- [ ] Atribución de IA en commits/PRs (sección 17 de `templates.md`): capas elegidas, o "N/A: no se pidió" o "política exige declararla"
+- [ ] Sin firmas de IA en commits/PRs (sección 17 de `templates.md`, siempre): capa A en cada runtime verificado, B y C (o la razón por la que una capa no se pudo aplicar, p. ej. proyecto sin Git)
 - [ ] Manifiesto (lista de lo instalado) y respaldo/rollback
 - [ ] Decisiones documentadas como ADR cuando el proyecto se desvió de un valor por defecto global
 - [ ] Perfil y etapa de `project-structure.md` elegidos (o "N/A: usuario usa su propia estructura")
@@ -79,7 +87,7 @@ Huecos de la metodología **sin respuesta única**. El setup los resuelve con el
 
 | # | Decisión abierta | Tratamiento en el setup |
 |---|---|---|
-| 1 | "No trivial" (regla 3) y "señales de alto riesgo" (regla 6) son listas distintas y no dicen cuál manda. Un cambio de una línea en autenticación es trivial por el primer criterio y Alta capacidad por el segundo | Preguntar (entrevista 21) y fijar en las instrucciones cuál manda (propuesta: la señal de alto riesgo vuelve no trivial el cambio) |
+| 1 | "No trivial" (regla 3 de este resumen) y "señales de alto riesgo" (regla 6 de este resumen) son listas distintas y no dicen cuál manda. Un cambio de una línea en autenticación es trivial por el primer criterio y Alta capacidad por el segundo | Preguntar (entrevista 21) y fijar en las instrucciones cuál manda (propuesta: la señal de alto riesgo vuelve no trivial el cambio) |
 | 2 | El reparto usa **señales fijas** y a la vez un juicio multicriterio (complejidad, ambigüedad, coste, historial…) | Señales fijas = mínimo obligatorio (Alta capacidad); los demás criterios solo para elegir entre Ligero y Generalista |
 | 3 | Ligero se describe como "simple y bajo riesgo" y también como "worker completo, complejidad baja/media" | Definir su alcance con el usuario según su rendimiento real |
 | 4 | El ejemplo 50 % Alta capacidad / 30 / 20 contradice "Alta capacidad solo donde el riesgo lo justifica" | No usar porcentajes como objetivo; omitirlos o dejarlos `PENDIENTE` hasta tener métricas |

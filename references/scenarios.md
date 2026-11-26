@@ -29,7 +29,7 @@ Objetivo: añadir la metodología sin mover nada.
 
 1. Buscar equivalencias (p. ej. `docs/decisions/` ya cumple el papel de `docs/adr/`). **Reusar lo existente**; no crear duplicados. Si el nombre difiere, anotar la equivalencia en las instrucciones en vez de renombrar.
 2. Añadir solo lo que falte y el usuario aceptó: instrucciones por runtime, `docs/lessons/`, capa de specs, plantillas de los agentes elegidos.
-3. Archivos existentes (README, instrucciones de runtimes): **fusionar con marcadores**, nunca reemplazar.
+3. Archivos existentes (README, instrucciones de runtimes): **fusionar con marcadores**, nunca reemplazar. Reordenar un README existente es un ítem aparte, aprobado por separado (sección 9 de `development-practices.md`).
 4. Ajustar los controles de calidad (quality gates) a los comandos reales del proyecto (leer sus scripts, no inventar).
 5. Primer cambio sugerido: algo pequeño y real de los pendientes, para probar el flujo.
 
@@ -110,7 +110,7 @@ Caso: un producto (p. ej. `api`, `web`, `mobile`, `contracts`, `infra`) vive en 
 | **Windows sin `sh`** | `scripts/run.ps1` (Git Bash o WSL); si no hay ninguno, comprobaciones a mano, avisándolo en el plan y el reporte (`windows.md`). |
 | **El usuario no aprueba el plan** | No se aplica nada; ofrecer exportarlo con el formato y la ubicación de la sección 16 de `templates.md` (fuera del repo salvo que pida otra cosa). |
 | **Sin git** | Avisar; ofrecer `git init` o copia de los archivos a tocar. Sin respaldo no hay reestructuración. |
-| **Muchas convenciones propias** | Mandan las del proyecto; la metodología se adapta con un ADR de desviación intencional (regla 2 del digest), no al revés. |
+| **Muchas convenciones propias** | Mandan las del proyecto; la metodología se adapta con un ADR de desviación intencional (regla 2 del resumen), no al revés. |
 | **Instrucciones previas de otros runtimes** | Inventariarlas, no borrarlas. Sin contradicciones: una sola fuente que los demás archivos enlazan. |
 | **Equipo con varios editores** | Una sola fuente de verdad y un adaptador por runtime (enlace simbólico, copia generada o referencia); documentar cómo regenerarlo. |
 | **Entorno sin red** | No instalar herramientas externas; dejar instrucciones de instalación manual y marcar el paso pendiente. |

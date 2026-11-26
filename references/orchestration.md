@@ -8,8 +8,9 @@ Texto completo: `sfp-sin-orquestador.md` (sobre todo secciones 6, 9.5 a 9.6, 12,
 
 Qué implica:
 - Cada sesión es independiente; el **estado compartido** vive en los documentos de especificación (`tasks.md` o equivalente), no en el chat.
-- Agente y modelo se eligen por niveles (tiers; regla 5 del digest), no por un supervisor.
+- Agente y modelo se eligen por niveles (tiers; regla 5 del resumen), no por un supervisor.
 - Implementar y revisar, en **sesiones separadas**, mejor con otro modelo o runtime (editor o CLI con agentes). La revisión recibe specs + `tasks.md` + diff (cambios del código), no el historial del chat.
+- Con una sola persona y un solo asistente: la revisión se hace en una sesión nueva y, si el riesgo es medio o alto, también la revisa la persona. Si un cambio no tuvo revisión independiente, el resumen lo dice (sección 8 de `development-practices.md`).
 - Sesiones paralelas: un git worktree (copia de trabajo aparte) o rama por sesión.
 - Lecciones aprendidas: registro **manual** en `docs/lessons/` (o donde se acuerde) con formato "Aplica cuando: …"; pasan a la metodología global solo si se repiten (guía: ~3 veces).
 - Métricas: anotación manual por tarea.
@@ -34,7 +35,7 @@ SFP describe esta capa por su **función** (un supervisor, workers —agentes ej
 Cuándo: la pregunta 15 de la entrevista da un nombre, o lo mencionan el análisis inicial o los documentos del usuario. Antes de planificar, responder esta lista **para ese orquestador concreto**, sin arrastrar suposiciones de otros.
 
 Fuentes, en este orden:
-1. **Documentación oficial vigente** (repositorio, sitio de documentación, changelog): búsqueda web si hay herramienta; si no, documentación local.
+1. **Documentación oficial vigente** (repositorio, sitio de documentación, changelog): búsqueda web o Context7 si están disponibles (con Context7 se cita la página oficial original, no Context7); si no, documentación local.
 2. **El propio orquestador**, solo con permiso: comando de versión o ayuda. Nunca arrancarlo ni modificarlo "para ver qué pasa".
 3. **El usuario**, para lo que no esté escrito o no se pueda consultar.
 
@@ -53,12 +54,12 @@ Preguntas (omitir, diciéndolo, las que claramente no aplican):
 | 4 | Modelo de agentes | ¿Qué es un supervisor y qué un worker?, dónde y en qué formato se definen roles o perfiles, máximo de workers a la vez, ¿el supervisor es configurable o fijo? |
 | 5 | Coordinación | Patrones que ofrece (síncrono, asíncrono, mensajería, otros) y su nombre propio, paralelismo real, manejo de fallos, tiempos límite y reintentos |
 | 6 | Permisos y aislamiento | Nivel de aislamiento (proceso, contenedor, máquina virtual, ninguno), detalle de las restricciones de herramientas (por rol, herramienta, ruta o comando), **quién las hace cumplir** (orquestador o runtime) y qué pasa si el runtime las ignora, aislamiento de archivos y de red |
-| 7 | Aprobación humana | ¿Puede pausar y esperar aprobación?, ¿dónde se aprueba (terminal, interfaz, otro)?, ¿se pueden bloquear por defecto las acciones de alto impacto (regla 11 de `methodology-digest.md`)? |
+| 7 | Aprobación humana | ¿Puede pausar y esperar aprobación?, ¿dónde se aprueba (terminal, interfaz, otro)?, ¿se pueden bloquear por defecto las acciones de alto impacto (regla 11 del resumen, `methodology-digest.md`)? |
 | 8 | Memoria y lecciones | ¿Guarda memoria o lecciones?, ¿hay que activarla o viene activa?, ¿dónde (dentro o fuera del repo) y en qué formato?, ¿promueve sola?, ¿cómo se revisa antes de aplicarse? |
 | 9 | Estado y specs | ¿Lleva su propio registro de tareas?, ¿cómo convive con `tasks.md` o la capa de specs?, ¿qué manda si no coinciden? |
 | 10 | Git y concurrencia | ¿Aísla workers por worktree o rama?, ¿hace commits o push por su cuenta?, ¿cómo evita que dos workers editen lo mismo? |
 | 11 | Configuración | Dónde vive (repo, usuario, global), formato, ¿se puede versionar?, ¿choca con la configuración de runtimes que ya existe?, ¿cómo maneja secretos? |
-| 12 | Observabilidad | Registros, trazas, coste o tokens, métricas: qué muestra y dónde (para la regla 18 de la sección 1 de `methodology-digest.md` y la sección 11 de `templates.md`) |
+| 12 | Observabilidad | Registros, trazas, coste o tokens, métricas: qué muestra y dónde (para la regla 18 del resumen, `methodology-digest.md` y la sección 11 de `templates.md`) |
 | 13 | Privacidad y red | Telemetría, datos enviados a terceros, conexiones salientes, qué contenido del repo puede salir |
 | 14 | Limitaciones conocidas | Lo que su documentación admite que no hace, incidencias abiertas relevantes, plataformas problemáticas |
 | 15 | Salida | Cómo se desinstala, qué deja dentro y fuera del repo, ¿se puede pasar a "sin orquestador" sin perder specs ni lecciones? |
