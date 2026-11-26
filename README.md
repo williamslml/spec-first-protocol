@@ -188,7 +188,7 @@ Toda la documentación generada se entiende sin conocer el código. Sin jerga t�
 <td valign="top">
 
 #### Complementos opcionales
-Commits sin firmas de IA y herramientas complementarias, cada una con límites de uso claros.
+Herramientas complementarias, cada una con límites de uso claros. Y, siempre, commits sin firmas de IA.
 
 </td>
 </tr>
@@ -313,19 +313,19 @@ Cada herramienta tiene prohibido duplicar funciones que ya cubre SFP, para evita
 </details>
 
 <details>
-<summary><strong>Commits sin firmas de IA</strong>, de cualquier asistente</summary>
+<summary><strong>Commits sin firmas de IA</strong>, de cualquier asistente, siempre</summary>
 
 <br>
 
-Varios asistentes añaden su firma a los commits ("Co-Authored-By: …", "Generated with…"). Si se solicita, la skill lo evita de tres formas:
+Varios asistentes añaden su firma a los commits ("Co-Authored-By: …", "Generated with…"). La skill lo evita **siempre**, en toda instalación y sin preguntarlo, de tres formas:
 
-1. Un ajuste en la herramienta, cuando existe.
+1. Un ajuste en la herramienta, cuando su documentación lo confirma.
 2. Una regla escrita que cualquier asistente puede leer.
 3. Un filtro automático en el repositorio que elimina esas firmas, sin importar el asistente de origen.
 
-Los coautores humanos se conservan. Si la empresa **exige** declarar el uso de IA, la skill lo consulta antes de actuar y no elimina nada.
+Los coautores humanos se conservan. Si la empresa exige declarar el uso de IA, se hace con una línea `Assisted-by`, que el filtro no toca; las firmas automáticas se quitan igual.
 
-Git no copia los filtros automáticos al clonar un repositorio. Por eso, cuando hay equipo, el filtro se guarda en una carpeta versionada del proyecto y cada persona lo activa una vez después de clonar, con el comando que queda escrito en el README del proyecto. La verificación de la skill comprueba en cada copia que el filtro esté activo y, si falta, lo dice con el comando para activarlo.
+Git no copia los filtros automáticos al clonar un repositorio. Por eso el filtro se guarda en una carpeta versionada del proyecto y cada persona lo activa una vez después de clonar, con el comando que queda escrito en el README del proyecto. La verificación de la skill comprueba en cada copia que el filtro esté activo y, si falta, lo dice con el comando para activarlo.
 
 </details>
 

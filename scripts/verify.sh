@@ -342,6 +342,11 @@ if ! have git || ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   else
     echo "  sin git: no aplica"
   fi
+elif [ -s "$TMPDIR_V/filtro.txt" ] && [ -n "$(git rev-parse --show-prefix 2>/dev/null)" ]; then
+  TOP=$(git rev-parse --show-toplevel 2>/dev/null)
+  # El filtro está en una subcarpeta de otro repositorio: los hooks son de ese repositorio, no de esta carpeta
+  echo "  el filtro está en esta carpeta, pero la carpeta está dentro de otro repositorio ($TOP): sus hooks no se activan desde aquí (NO ejecutado)"
+  SKIPPED=1
 else
   HOOKS_DIR=$(git rev-parse --git-path hooks 2>/dev/null | tr -d '\r')
   ACTIVE=0

@@ -75,7 +75,7 @@ Para **cada** fila, marcar: `Instalado` · `Ya existía (ruta)` · `Omitido por 
 - [ ] Skills/herramientas elegidas por el usuario (no por defecto), con su fila de la matriz de enrutamiento (sección 6.1 de `architecture.md`) copiada al punto de entrada y la comprobación `scripts/integrations.sh --check` en verde
 - [ ] Idioma y claridad en el punto de entrada (en español: neutro, sin voseo ni regionalismos; lenguaje claro, sin referencias que nadie va a seguir)
 - [ ] Convenciones de Git acordadas (`git-practices.md`): las del repositorio o los valores por defecto, en la sección "Git" del punto de entrada
-- [ ] Atribución de IA en commits/PRs (sección 17 de `templates.md`): capas elegidas, o "N/A: no se pidió" o "política exige declararla"
+- [ ] Sin firmas de IA en commits/PRs (sección 17 de `templates.md`, siempre): capa A en cada runtime verificado, B y C (o la razón por la que una capa no se pudo aplicar, p. ej. proyecto sin Git)
 - [ ] Manifiesto (lista de lo instalado) y respaldo/rollback
 - [ ] Decisiones documentadas como ADR cuando el proyecto se desvió de un valor por defecto global
 - [ ] Perfil y etapa de `project-structure.md` elegidos (o "N/A: usuario usa su propia estructura")

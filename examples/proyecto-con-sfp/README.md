@@ -7,6 +7,12 @@ cd examples/proyecto-con-sfp
 npm test        # 5 pruebas, todas correctas (requiere Node.js 18 o superior)
 ```
 
+Si el proyecto se clona como repositorio propio, activar una vez el filtro que quita las firmas de IA de los commits:
+
+```bash
+git config core.hooksPath .githooks
+```
+
 ## Cómo fue el primer cambio
 
 Alguien pidió: *"Que el registro rechace los correos mal escritos."* Esto fue lo que ocurrió:
@@ -43,6 +49,7 @@ Y así se vio la conversación:
 | [docs/adr/](docs/adr/README.md) | Decisiones importantes, con un índice de las que siguen vigentes, para que nadie tenga que redescubrirlas |
 | [docs/lecciones/](docs/lecciones/README.md) | Errores reales y cómo evitarlos la próxima vez, con su estado y un índice |
 | [src/](src/registro.js) y [tests/](tests/registro.test.js) | El código y una prueba por cada requisito |
+| [.githooks/commit-msg](.githooks/commit-msg) | Filtro que quita las firmas de asistentes de IA de cada commit; SFP lo instala siempre |
 | [.sfp/manifest.json](.sfp/manifest.json) | Registro de lo que instaló la skill, con huellas, para poder retirarlo sin dañar el resto |
 
 ## Qué observar

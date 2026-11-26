@@ -43,6 +43,7 @@ Resumen: se atienden las 23 propuestas abiertas del repositorio.
   - Nueva candidata **Context7** (documentación vigente de librerías), de instalación manual aprobada.
   - `integrations.sh --strict-tooling`, como en `verify.sh`.
 - Proyecto de ejemplo actualizado a 1.15.0: instrucciones con las secciones nuevas (sin comandos inventados: el formato queda `PENDIENTE`), índices de ADR y lecciones, estado de la lección y tipo de revisión.
+- **Sin firmas de IA, siempre:** la sección 17 de `templates.md` (ajuste del runtime verificado, regla en el punto de entrada y filtro `commit-msg` versionado) se instala en toda instalación, sin la pregunta 23.1. Es un ítem fijo del plan, que se aprueba con el resto. Declarar la IA con `Assisted-by` sigue siendo posible, porque el filtro no lo toca.
 - Reporte de problemas y mejoras de SFP con `gh` (sección nueva de `SKILL.md`, pregunta 29 de la entrevista): borradores sin interrumpir el trabajo, mostrados en la siguiente pausa, sin datos del proyecto y publicados solo con aprobación de cada uno.
 - Instrucciones dirigidas a la IA dentro del proyecto: aviso de seguridad con formato fijo (archivo, texto literal y que no se ejecutó), en el momento y repetido en el resumen final (sección 2.1 de `intake.md`, regla inviolable 9 y reporte de la Fase 7).
 
@@ -64,6 +65,7 @@ Delta para proyectos ya instalados:
 - [accion: si] aplica-si: el proyecto tiene interfaz web (`discover.sh` o `has_frontend`) y la persona quiere reforzar la calidad del código web · propuesta: ofrecer modern-web-guidance con su fila de la matriz de la sección 6.1 de `architecture.md` e `integrations.sh --only modern-web-guidance` · Modern Web Guidance
 - [accion: si] aplica-si: el punto de entrada no tiene la sección "Reporte de problemas de SFP" · propuesta: pregunta 29 de la entrevista y añadir la sección entre marcadores con la elección · reporte de problemas con gh
 - [accion: no] `integrations.sh --runner` y candidata Context7 (se usan cuando la persona los pide)
+- [accion: si] aplica-si: el punto de entrada no tiene la sección "Atribución en commits y PRs", o la sección 5 de `verify.sh` dice "no se usa el filtro en este proyecto" · propuesta: añadir como ítems del plan, sin preguntar, las capas de la sección 17 de `templates.md` que falten (A en cada runtime verificado, B y C versionada), y el paso de activación en el README del proyecto · sin firmas de IA, siempre
 
 ## 1.14.0
 

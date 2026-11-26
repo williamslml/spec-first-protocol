@@ -28,7 +28,7 @@
       "risk": "bajo",
       "reversible": true,
       "note": "punto de entrada con el flujo de trabajo",
-      "sha256": "7b0b977b996e9c86d1adde234d70e0ad7b5f5b212e6cace94ad94cfa46880ca3"
+      "sha256": "37b2e909522cce6267d3515094cccea4b42e9623c63ccccb2a79dbec895e3c0a"
     },
     {
       "id": 2,
@@ -65,6 +65,15 @@
       "reversible": true,
       "note": "índice de las lecciones vigentes",
       "sha256": "d03ad08932d137a3cd6f5dd05fa7ab9676057b9d2b88bdc6f5a84c316a5d67e8"
+    },
+    {
+      "id": 6,
+      "type": "create",
+      "path": ".githooks/commit-msg",
+      "risk": "bajo",
+      "reversible": true,
+      "note": "filtro de firmas de IA (sección 17 de templates.md, capa C); cada copia lo activa con git config core.hooksPath .githooks",
+      "sha256": "e898c4c749e3baf98631bc0aad9d8c4db25110875b550c18f144d29bf80ba111"
     }
   ]
 }

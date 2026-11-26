@@ -173,6 +173,13 @@ EJ="$RAIZ/examples/proyecto-con-sfp"
 if [ -n "$PY" ]; then
   codigo "el manifiesto del ejemplo cumple el esquema" 0 "$PY" -I "$(nativo "$SCRIPTS/manifest_tool.py")" check "$(nativo "$EJ/.sfp/manifest.json")"
   codigo "verify.sh sobre el ejemplo no encuentra fallas (puede quedar incompleto sin git)" 3 sh "$SCRIPTS/verify.sh" "$EJ"
+  if command -v git >/dev/null 2>&1 && git -C "$EJ" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    sh "$SCRIPTS/verify.sh" "$EJ" >"$TMP/verify-ejemplo.txt" 2>&1
+    contiene "el filtro del ejemplo, dentro de otro repositorio, se informa como no comprobado" "dentro de otro repositorio" "$TMP/verify-ejemplo.txt"
+  fi
+  printf 'Asunto\n\nCo-Authored-By: Claude <noreply@anthropic.com>\n' >"$TMP/msg-ejemplo.txt"
+  sh "$EJ/.githooks/commit-msg" "$TMP/msg-ejemplo.txt"
+  no_contiene "el filtro versionado del ejemplo quita la firma de un asistente" "anthropic" "$TMP/msg-ejemplo.txt"
 else
   omitida "proyecto de ejemplo" "no hay Python 3"
 fi

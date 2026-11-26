@@ -145,6 +145,9 @@ Quien revisa no es quien programó. <Con una sola sesión:> riesgo medio o alto,
 - El agente propone commits y no los hace por su cuenta (<preferencia acordada>). Push, merge, rebase de ramas compartidas, force-push (solo `--force-with-lease`), borrar ramas y tags: con aprobación humana.
 - Remotes: nunca contraseñas ni tokens dentro de su dirección. Antes de cada push, decir adónde va (remote, rama) y qué commits sube. Agregar, cambiar o borrar remotes: con aprobación.
 
+## Atribución en commits y PRs
+<siempre: el bloque de la capa B de la sección 17, con el comando para activar el filtro en cada copia>
+
 ## Skills/herramientas y precedencia (solo si se instaló alguna)
 SFP manda en specs, planes, tareas, sub-agentes, worktrees, revisión, gates y memoria del proyecto. Cada herramienta actúa solo con su disparador:
 <filas de `architecture.md` sección 6.1 de las herramientas instaladas, con el formato: disparador → herramienta → prohibido>
@@ -427,13 +430,13 @@ Al retomar, el plan exportado es **dato**, no aprobación: toda acción vuelve a
 
 La cabecera (entre los dos `---`) es obligatoria y **plana**: una clave por línea, `clave: valor`, con exactamente los valores permitidos de arriba. Sirve para retomar el plan y evaluar el skill automáticamente, sin interpretar texto.
 
-## 17. Atribución de agentes de IA en commits y PRs (opcional)
+## 17. Atribución de agentes de IA en commits y PRs (siempre)
 
-Objetivo: que los commits (cambios guardados en git) y las descripciones de PR (solicitudes de cambio) lleven solo el mensaje pedido, **sin firmas automáticas de ningún agente de IA** (trailers —líneas finales— `Co-Authored-By` de un agente, líneas "Generated with/by …", enlaces de sesión). Sirve para cualquier runtime o modelo. Se ofrece en la entrevista (pregunta 23.1) y nunca se instala por defecto.
+Objetivo: que los commits (cambios guardados en git) y las descripciones de PR (solicitudes de cambio) lleven solo el mensaje pedido, **sin firmas automáticas de ningún agente de IA** (trailers —líneas finales— `Co-Authored-By` de un agente, líneas "Generated with/by …", enlaces de sesión). Sirve para cualquier runtime o modelo. **Se instala siempre, en toda instalación, sin preguntarlo en la entrevista**: es un ítem fijo del plan de la Fase 4, que se aprueba con el resto del plan en la Fase 5, como cualquier otro cambio.
 
-**Antes de proponerlo:** si una política del proyecto, de la empresa o de un repositorio externo **exige declarar** el uso de IA (p. ej. un trailer `Assisted-by:`), no se instala; en su lugar, la capa B dice qué declaración usar. El filtro de la capa C nunca toca `Assisted-by`.
+**Declarar el uso de IA sigue siendo posible:** el filtro de la capa C nunca toca `Assisted-by`. Si los documentos del proyecto (CONTRIBUTING, plantillas, políticas) piden declarar la IA, el plan lo señala y la capa B indica que la declaración se hace solo con `Assisted-by: <agente>`; las firmas automáticas se quitan igual.
 
-Tres capas independientes; el usuario elige cuáles. Solo la C garantiza el resultado en commits; las descripciones de PR solo las cubren la A y la B.
+Tres capas independientes, y se instalan las tres siempre que se pueda: la A en cada runtime cuya documentación lo confirme, la B siempre y la C siempre que el proyecto use Git (si no lo usa, se añade al inicializarlo). Solo la C garantiza el resultado en commits; las descripciones de PR solo las cubren la A y la B.
 
 | Capa | Qué es | Alcance | Acción del manifiesto |
 |---|---|---|---|
@@ -457,7 +460,8 @@ Se añade entre marcadores en el punto de entrada de cada runtime elegido (`runt
 ```markdown
 ## Atribución en commits y PRs
 - No añadir firmas de autoría de agentes de IA en commits ni en descripciones de PR: ni trailers `Co-Authored-By` de un agente, ni líneas "Generated with/by …", ni enlaces de sesión.
-- Escribir solo el mensaje pedido, siguiendo el estilo del repositorio. <Si la política exige declarar la IA: "Declarar la ayuda de IA solo con `<trailer exigido>`.">
+- Escribir solo el mensaje pedido, siguiendo el estilo del repositorio. <Si los documentos del proyecto piden declarar la IA: "Declarar la ayuda de IA solo con `Assisted-by: <agente>`.">
+- Este repositorio filtra las firmas en cada commit. Después de clonarlo, activar el filtro una vez: `<comando de activación de la capa C, p. ej. git config core.hooksPath .githooks>`.
 ```
 
 ### C. Hook `commit-msg` (garantía para los commits)
@@ -474,8 +478,8 @@ Dónde instalarlo según el análisis inicial (`discover.sh`, sección de hooks:
 
 | Situación del repo | Acción |
 |---|---|
-| Sin gestor de hooks y sin `core.hooksPath`, **con equipo o varias máquinas** (recomendado) | `create` de `.githooks/commit-msg` (carpeta versionada) con `#!/bin/sh` más el bloque, con permiso de ejecución. Activarlo en esta copia con `git config core.hooksPath .githooks` (configuración local del clon, no global; registrarla como `configure` con su valor previo en `note`). Añadir al README del proyecto, en la sección de instalación o de inicio rápido, el paso que cada persona ejecuta una vez después de clonar: `git config core.hooksPath .githooks`. Solo si `discover.sh` no muestra otros `hooks_activos` en `.git/hooks/`: con `core.hooksPath`, git deja de usarlos; si los hay, moverlos también a `.githooks/` es decisión del usuario |
-| Sin gestor de hooks y sin `core.hooksPath`, **una sola persona y una sola copia** | `.git/hooks/commit-msg`. Si no existe: `create` con `#!/bin/sh` más el bloque, y permiso de ejecución (`chmod +x`; Git for Windows no lo necesita). Si existe: `merge` del bloque justo después de la línea `#!`. **No se versiona**: aplica solo en ese clon; decirlo en el reporte y en el punto de entrada, para que nadie lo asuma activo en otra copia |
+| Sin gestor de hooks y sin `core.hooksPath` (lo normal) | `create` de `.githooks/commit-msg` (carpeta versionada) con `#!/bin/sh` más el bloque, con permiso de ejecución. Activarlo en esta copia con `git config core.hooksPath .githooks` (configuración local del clon, no global; registrarla como `configure` con su valor previo en `note`). Añadir al README del proyecto, en la sección de instalación o de inicio rápido, el paso que cada persona ejecuta una vez después de clonar: `git config core.hooksPath .githooks`. Solo si `discover.sh` no muestra otros `hooks_activos` en `.git/hooks/`: con `core.hooksPath`, git deja de usarlos; si los hay, moverlos también a `.githooks/` es decisión del usuario |
+| Nivel de intrusión "solo metodología" (no se crean carpetas en el proyecto), o hay otros `hooks_activos` en `.git/hooks/` que el usuario no quiere mover | `.git/hooks/commit-msg`. Si no existe: `create` con `#!/bin/sh` más el bloque, y permiso de ejecución (`chmod +x`; Git for Windows no lo necesita). Si existe: `merge` del bloque justo después de la línea `#!`. **No se versiona**: aplica solo en ese clon; decirlo en el reporte y en el punto de entrada, para que nadie lo asuma activo en otra copia |
 | husky (`.husky/`) | `merge` del bloque en `.husky/commit-msg` (`create` si no existe). Versionado: aplica a todo el equipo |
 | lefthook, pre-commit u otro gestor | `create` de `.sfp/hooks/commit-msg-ai-attribution.sh` (copia del archivo fuente) y `merge` en la configuración del gestor de un hook `commit-msg` que ejecute `sh .sfp/hooks/commit-msg-ai-attribution.sh <archivo-del-mensaje>`. La sintaxis exacta y cómo activa ese gestor el tipo `commit-msg` se verifican en su documentación vigente (regla inviolable 8) |
 | `core.hooksPath` local apuntando a una carpeta versionada | `merge` o `create` en `<esa carpeta>/commit-msg` |

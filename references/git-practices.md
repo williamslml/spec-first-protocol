@@ -43,7 +43,7 @@ Lo que se decida para el proyecto (convención de commits, modelo de ramas, estr
 | `gh repo view …` para descubrir ramas (0xbigboss) | Solo GitHub. Sin `gh`, o en GitLab u otro servidor, usar "Branch Discovery Fallback" de `git-examples.md` (`git symbolic-ref refs/remotes/origin/HEAD`) |
 | "Every commit uses `type(scope): description`" (0xbigboss) | Solo si el repositorio no usa otra convención (sección 1, punto 1). Asunto en el idioma del historial |
 | "Body is optional — only add one when the change is genuinely non-obvious" (0xbigboss) | En un cambio **no trivial** el cuerpo es obligatorio y sigue la plantilla de la sección 4. En un cambio trivial basta un asunto bien escrito |
-| Mensajes de commit y descripciones de PR en general | Según la sección 4 (legibles para quien no conoce el código) y en español neutro si el idioma es español (regla inviolable 10). Si el proyecto eligió quitar la atribución de IA (`templates.md` sección 17), no se añaden firmas de agentes |
+| Mensajes de commit y descripciones de PR en general | Según la sección 4 (legibles para quien no conoce el código) y en español neutro si el idioma es español (regla inviolable 10). Nunca se añaden firmas de agentes de IA: SFP las quita siempre (`templates.md` sección 17) |
 
 ## 3. Contradicción resuelta: squash
 

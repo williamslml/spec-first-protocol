@@ -47,5 +47,10 @@ Trabajamos con un solo asistente. Riesgo medio o alto: revisión en una sesión 
 - Ramas cortas con nombre `tipo/efecto-en-pocas-palabras`, por ejemplo `feat/validar-correo-al-registrarse`.
 - El asistente propone los commits y no los hace por su cuenta. Subir cambios, mezclar y borrar ramas requieren aprobación.
 
+## Atribución en commits y PRs
+- No añadir firmas de autoría de agentes de IA en commits ni en descripciones de PR: ni trailers `Co-Authored-By` de un agente, ni líneas "Generated with/by …", ni enlaces de sesión.
+- Escribir solo el mensaje pedido, siguiendo el estilo del repositorio.
+- Este repositorio filtra las firmas en cada commit con `.githooks/commit-msg`. Después de clonarlo, activar el filtro una vez: `git config core.hooksPath .githooks`.
+
 ## Reporte de problemas de SFP
 Desactivado.
