@@ -15,6 +15,19 @@ Cada versión tiene un resumen en prosa (para quien mantiene el skill) y una sec
 - `aplica-si` usa campos del manifiesto (`templates.md` sección 1) o hechos comprobables; si no se puede evaluar, se pregunta al usuario.
 - Las pruebas de mantenimiento (`project-setup-dev`, fuera del paquete) comprueban que toda entrada siga este formato.
 
+## 1.16.0
+
+Resumen: la entrevista deja de ser un cuestionario. En la práctica preguntaba lo mismo varias veces, hacía demasiadas preguntas sin decir para qué servían, usaba jerga y preguntaba cosas que no aplicaban (por ejemplo, roles de agente sin orquestador).
+- `references/interview.md` reescrito: primero se analiza el proyecto, después se presenta **una sola propuesta** con todas las decisiones ya completadas (del análisis, de los documentos o con un valor por defecto), cada una con qué significa para la persona y de dónde sale. La persona la aprueba o dice qué cambiar, en una respuesta.
+- Solo se pregunta aparte lo que bloquea: no se puede deducir, cambia lo que se instala y no tiene un valor por defecto seguro. Como máximo 3 preguntas, en el mismo mensaje de la propuesta, cada una con una opción recomendada y su motivo.
+- Registro de respuestas: lo respondido o aprobado no se vuelve a preguntar, ni con otras palabras; las preguntas pendientes no se repiten. Si un hallazgo cambia una decisión aprobada, se confirma solo esa.
+- La tabla de decisiones conserva la numeración anterior (5.1, 20.1, 23.1…) y dice, para cada una, su valor por defecto y en qué caso se pregunta. Modelos, roles, lecciones, perfil de estructura, README, ubicación de las pruebas y rigor ya no se preguntan: van en la propuesta.
+- El resumen de intake pasa a ser el primer apartado de la propuesta, sin ronda de preguntas propia. La Fase 3 ya no vuelve a confirmar la combinación.
+- `tests/verificar_formato.py` comprueba que toda decisión de la entrevista citada en los documentos exista en `interview.md`.
+
+Delta para proyectos ya instalados:
+- [accion: no] solo cambia cómo se hace la entrevista en instalaciones, cambios de configuración y actualizaciones nuevas
+
 ## 1.15.0
 
 Resumen: se atienden las 23 propuestas abiertas del repositorio.

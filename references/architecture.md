@@ -180,7 +180,7 @@ Instala, comprueba y retira las candidatas aprobadas. Requiere **Bash ≥ 4** (n
 
 Los cinco roles base (Architect, Developer, Frontend, Tester, Reviewer) son **plantillas iniciales, no una lista cerrada**. Los roles finales los define el usuario **conversando con el setup** (instalador): la skill recomienda, el usuario decide. Nunca crear un rol sin su aprobación, ni asignar tier (nivel de modelo), permisos o modelo sin que lo confirme.
 
-### Procedimiento (Fase 2, bloque 5, y revisión en Fase 4)
+### Procedimiento (Fase 2, solo si la decisión 18 de `interview.md` lo abre, y revisión en Fase 4)
 1. **Partir de hechos**, no de la lista por defecto: salida de `discover.sh` (tipo de proyecto, tecnologías, tamaño, monorepo, frontend sí/no, tests/CI), equipo (solo/varios), runtimes elegidos, variante (con o sin orquestador) y criticidad.
 2. **Preguntar** cómo trabaja hoy: ¿qué tareas se repiten?, ¿dónde se pierde tiempo o hay errores?, ¿qué quiere separar (p. ej. quien implementa de quien revisa)?, ¿cuántos agentes o sesiones usa a la vez?
 3. **Recomendar** un conjunto mínimo, justificando cada rol, y mostrar la alternativa más simple (tabla de criterios). Cada una dice por qué, qué problema resuelve y qué costo de mantenimiento añade.

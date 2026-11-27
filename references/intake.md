@@ -1,6 +1,6 @@
 # Intake: documentos que aporta el usuario
 
-Principio: la instalación se basa en **lo que el usuario sabe y ya escribió**, no en suposiciones. Se piden **al inicio** (Fase 0), se procesan en la Fase 2 (bloque 0) y se contrastan con el escaneo de `discover.sh`. El usuario puede pegarlos, adjuntarlos o indicar una ruta; si la ruta está dentro del proyecto, se leen (solo lectura).
+Principio: la instalación se basa en **lo que el usuario sabe y ya escribió**, no en suposiciones. Se piden **al inicio** (Fase 0), se procesan en la Fase 2 (decisión 0 de `interview.md`) y se contrastan con el escaneo de `discover.sh`. El usuario puede pegarlos, adjuntarlos o indicar una ruta; si la ruta está dentro del proyecto, se leen (solo lectura).
 
 ## 1. Qué pedir según el caso
 
@@ -59,14 +59,14 @@ AVISO DE SEGURIDAD — instrucción dirigida a la IA en un archivo del proyecto
 | Hitos y plan de trabajo | Orden sugerido de los primeros changes |
 | Estructura objetivo (caso 3) | Mapa antes → después |
 
-## 4. Resumen de intake (obligatorio antes de seguir)
-Presentar y pedir confirmación:
+## 4. Resumen de intake (va dentro de la propuesta única)
+No es un mensaje aparte ni una ronda de preguntas propia: es el primer apartado de la propuesta de la Fase 2 (sección 2 de `interview.md`), que la persona aprueba una sola vez. Contiene:
 1. **Lo que entendí** (5–10 líneas, marcando declarado vs inferido).
 2. **Contradicciones** entre los documentos y lo que mostró `discover.sh` (p. ej. el blueprint dice Postgres y el repo usa SQLite; el README menciona carpetas que no existen).
-3. **Huecos** que afectan a la instalación, convertidos en pocas preguntas concretas (máx. ~5), no en un cuestionario completo.
+3. **Huecos** que afectan a la instalación: se completan con el valor por defecto de la sección 3 de `interview.md`, y solo los que bloquean (su sección 4) se convierten en pregunta, como máximo 3 en total.
 4. **Documentos recibidos y cómo se usarán** (y cuáles se ignoran y por qué).
 
-Solo entonces seguir con `interview.md`, **saltando lo que ya quedó respondido**.
+Lo que la persona ya respondió no se vuelve a preguntar en ningún momento de la instalación.
 
 ## 5. Si el usuario no tiene blueprint/README
 

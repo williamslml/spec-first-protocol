@@ -32,7 +32,7 @@ SFP describe esta capa por su **función** (un supervisor, workers —agentes ej
 
 ### B.1 Descubrimiento del orquestador (obligatorio en cuanto el usuario lo nombra)
 
-Cuándo: la pregunta 15 de la entrevista da un nombre, o lo mencionan el análisis inicial o los documentos del usuario. Antes de planificar, responder esta lista **para ese orquestador concreto**, sin arrastrar suposiciones de otros.
+Cuándo: la persona nombra un orquestador (decisión 14 a 16 de `interview.md`), o lo mencionan el análisis inicial o los documentos del usuario. Antes de planificar, responder esta lista **para ese orquestador concreto**, sin arrastrar suposiciones de otros.
 
 Fuentes, en este orden:
 1. **Documentación oficial vigente** (repositorio, sitio de documentación, changelog): búsqueda web o Context7 si están disponibles (con Context7 se cita la página oficial original, no Context7); si no, documentación local.

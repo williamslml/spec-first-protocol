@@ -83,18 +83,17 @@ sh <ruta-del-skill>/scripts/discover.sh <ruta-del-proyecto> [--global <carpeta-d
 
 Producir un **inventario** corto de la salida: stack (tecnologías usadas), estructura, tests/CI, docs existentes, configuración de runtimes/IDEs, specs, ADRs, convenciones, monorepo (varios proyectos en un repositorio) sí/no, tamaño y secretos expuestos (su existencia, nunca su contenido). Las cifras de estructura (`features_max`, `clasificacion` por raíz de código, `convencion_de_framework`, `desplegables_estimados`) se citan tal cual de la sección `estructura-de-codigo`: no se cuentan a mano.
 
-### Fase 2 — Intake (recepción de documentos) y entrevista
-**Primero el intake** (`references/intake.md`): leer lo aportado por el usuario, contrastarlo con la salida de `discover.sh`, presentar el **resumen de intake** (lo entendido, contradicciones, huecos) y obtener su confirmación. Sin blueprint ni README, seguir la sección 5 de `intake.md`.
-
-Luego la entrevista con `references/interview.md`. Reglas:
-- Preguntar por bloques, 1–4 preguntas por turno, con opciones cuando sea posible (con la herramienta de preguntas con opciones si existe; siempre con respuesta libre).
-- No preguntar lo que el escaneo o los documentos ya respondieron con certeza: confirmarlo en una línea.
-- Adaptar la profundidad: usuario experto y claro, menos preguntas; ambiguo, más.
-- **Si el usuario nombra un orquestador:** antes de las preguntas que dependen de él, resolver el cuestionario de la sección B.1 de `references/orchestration.md` (documentación vigente, el propio orquestador con permiso, o el usuario) y presentar su ficha con el formato fijo de la sección 15 de `references/templates.md`.
+### Fase 2 — Propuesta y preguntas mínimas (`references/interview.md`)
+La entrevista **no es un cuestionario**: casi todas las decisiones se deducen del análisis o tienen un valor por defecto. Pasos:
+1. **Analizar antes de preguntar:** la salida de `discover.sh`, los documentos del usuario (leídos según `references/intake.md`, sin una ronda de preguntas propia) y lo que ya se sabe de la sesión. El asistente que ejecuta la skill no se pregunta: se sabe.
+2. **Una sola propuesta** con el formato de la sección 2 de `interview.md`: lo entendido del proyecto, las contradicciones que haya y una tabla con todas las decisiones de la sección 3, cada una con su valor, qué significa para la persona y de dónde sale. La persona la aprueba o dice qué cambiar, en una respuesta.
+3. **Preguntas aparte solo si bloquean** (sección 4 de `interview.md`): como máximo 3, dentro del mismo mensaje de la propuesta, cada una con qué decide, una opción recomendada con su motivo y "decide por mí".
+4. **Nunca repetir:** lo respondido o aprobado queda fijo. No se vuelve a preguntar, ni con otras palabras. Mientras haya preguntas sin responder, no se vuelven a mostrar ni se suman otras. Si un hallazgo posterior cambia una decisión aprobada, se dice qué cambió y se confirma solo esa.
+5. **No preguntar lo que no aplica:** roles sin orquestador ni equipo, modelos por nivel si la persona no usa varios, perfil de estructura si no se reestructura, etc. (columna "Se pregunta solo si" de la sección 3 de `interview.md`).
+- **Si el usuario nombra un orquestador:** antes de planificar, resolver el cuestionario de la sección B.1 de `references/orchestration.md` y presentar su ficha con el formato fijo de la sección 15 de `references/templates.md`.
 - **Si nombra una herramienta de specs o un skill/tool concreto:** mismo tratamiento con `references/tooling.md` (sección 1 capa de specs, sección 2 skills/tools).
-- **Si el producto vive en varios repos** (pregunta 9.1): sección 5 de `references/scenarios.md`.
-- **Los roles de agente los define el usuario contigo**: tú recomiendas y justificas; él decide, edita o crea roles propios (procedimiento en la sección 7 de `references/architecture.md`; los 5 roles base son solo plantillas iniciales).
-- Obligatorio cubrir: estado del proyecto, nivel de intrusión permitido, orquestación, IDE/runtimes, agentes y modelos, herramienta de specs, nivel de rigor (controles de calidad o gates), dónde viven las pruebas, documentación de la API (si expone una) y README, seguridad/permisos, equipo (una persona o varias), dónde vive la metodología global.
+- **Si el producto vive en varios repos** (decisión 9.1): sección 5 de `references/scenarios.md`.
+- **Roles de agente, solo si aplican** (decisión 18): tú recomiendas y justificas; el usuario decide, edita o crea roles propios (sección 7 de `references/architecture.md`).
 
 ### Fase 3 — Clasificación
 La instalación se define por **tres ejes independientes**, no por una lista plana:
@@ -116,7 +115,7 @@ Los 6 casos de uso son combinaciones de esos ejes:
 | 5. No quiere orquestar | (cualquiera) | (cualquiera) | sección A de `orchestration.md` |
 | 6. Quiere orquestar | (cualquiera) | (cualquiera) | sección B de `orchestration.md` |
 
-Los casos 5 y 6 se **combinan** con los casos 1–4 (p. ej., "existente + solo metodología + sin orquestador"). Declarar al usuario la combinación resultante y confirmarla. Si las respuestas se contradicen (p. ej., "no tocar carpetas" + "reestructurar todo"), señalarlo y resolverlo antes de seguir.
+Los casos 5 y 6 se **combinan** con los casos 1–4 (p. ej., "existente + solo metodología + sin orquestador"). La combinación resultante ya va en la propuesta aprobada en la Fase 2: no se vuelve a confirmar. Si las respuestas se contradicen (p. ej., "no tocar carpetas" + "reestructurar todo"), señalarlo y resolverlo antes de seguir.
 
 Elegir la variante (sección 3 de `methodology-digest.md`): con orquestador, leer `references/sfp-con-orquestador.md`; sin orquestador, `references/sfp-sin-orquestador.md`. Si el usuario quiere decidir después, instalar la variante sin orquestador: un orquestador se puede añadir luego como capa entre METHODOLOGY y AGENTS sin rediseñar el resto.
 
@@ -218,12 +217,12 @@ Detalle en `references/scenarios.md` ("Casos límite"): monorepos (perfil por wo
 | `references/intake.md` | Fase 0 (qué pedir) y Fase 2 (procesar, resumen de intake, sin blueprint) |
 | `scripts/discover.sh` | Fase 1, siempre primero (incluye las señales de estructura de la sección 3 de `project-structure.md`) |
 | `scripts/run.ps1`, `references/windows.md` | Windows nativo: ejecutar cualquier script con Git Bash o WSL |
-| `references/interview.md` | Fase 2 |
+| `references/interview.md` | Fase 2: la propuesta única, la tabla de decisiones con su valor por defecto, qué cuenta como pregunta que bloquea y el registro de respuestas |
 | `references/scenarios.md` | Fases 1, 3, 4, 6 (guía del caso y casos límite) |
 | `references/orchestration.md` | Fase 2 (en cuanto se nombra un orquestador: sección B.1, cuestionario de descubrimiento) y Fase 3 en adelante, según eje C |
 | `references/tooling.md` | Fase 2, en cuanto se nombra una herramienta de specs (sección 1) o un skill/tool concreto (sección 2) |
 | `references/architecture.md` | Fase 2 y 4: qué carpetas crear/mapear, global vs proyecto, skills, **definición de roles con el usuario (sección 7)**, métricas |
-| `references/project-structure.md` | Fase 2 (pregunta 5.1, elegir perfil+etapa) y Fase 4 (presentarlo como ítem del plan); perfiles por tipo de proyecto y etapa, desempate (sección 3.1), monorepo por workspace (sección 3.2) |
+| `references/project-structure.md` | Fase 2 (decisión 5.1, solo si se reestructura o la persona lo pide) y Fase 4 (presentarlo como ítem del plan); perfiles por tipo de proyecto y etapa, desempate (sección 3.1), monorepo por workspace (sección 3.2) |
 | `references/structure-verification.md` | Fase 4 (qué herramienta proponer) y Fase 7 (`scripts/verify.sh` la ejecuta) |
 | `scripts/verify.sh` | Fase 7, siempre primero (solo lectura); modo Actualización (la sección 0 lista lo nuevo) |
 | `scripts/hooks/commit-msg-ai-attribution.sh` | Fase 6, si se eligió la capa C de la sección 17 de `templates.md`: única fuente del hook agnóstico |

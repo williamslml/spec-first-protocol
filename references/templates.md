@@ -312,7 +312,7 @@ Completa el bloque "Verificación" del punto de entrada (sección 3): para cada 
 ```yaml
 # gates.yml — quality gates por nivel de riesgo (regla 10 del resumen, methodology-digest.md)
 version: 1
-rigor: ligero | estandar | estricto   # elegido en la entrevista, bloque 5, pregunta 20
+rigor: ligero | estandar | estricto   # decisión 20 de interview.md
 
 gates:
   trivial:
@@ -415,7 +415,7 @@ workspaces: <solo monorepo: ruta=perfil/etapa separados por coma, p. ej. "apps/a
 # Plan de setup — <proyecto>
 
 ## 1. Diagnóstico (inventario + combinación de ejes A/B/C)
-## 2. Respuestas de la entrevista (tabla de cierre de interview.md)
+## 2. Configuración acordada (la tabla de la propuesta aprobada, sección 2 de interview.md)
 ## 3. Brechas y equivalencias
 ## 4. Plan de cambios (tabla de sección 9, con columna "Aprobado: sí/no/editado")
 ## 5. Perfil de estructura (perfil · etapa · regla usada; tabla por workspace si es monorepo)

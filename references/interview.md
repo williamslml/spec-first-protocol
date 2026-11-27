@@ -1,77 +1,102 @@
-# Cuestionario de entrevista
+# Entrevista: primero una propuesta, después solo lo que bloquea
 
-Reglas: preguntar por bloques. Lo ya sabido con certeza solo se confirma (una línea). En cada pregunta técnica, ofrecer "no sé / decide por mí". Las opciones son ejemplos: siempre se admite "otro". Anotar respuestas.
+La entrevista no es un cuestionario. Su fin es completar las decisiones de la instalación, y casi todas se deducen del análisis del proyecto o tienen un valor por defecto razonable. Por eso no se hacen preguntas una por una: se presenta **una sola propuesta** con todo ya decidido, la persona la aprueba o cambia lo que quiera, y solo se pregunta aparte lo que de verdad bloquea.
 
-## Bloque 0 — Intake (antes de todo lo demás)
-0. ¿Tienes documentos del proyecto? Si es nuevo: blueprint, PRD o brief (visión o requisitos). Si existe: README, arquitectura o instrucciones para agentes. Procésalos según `intake.md` y confirma el **resumen de intake**. Salta lo que ya respondan con certeza (confirmándolo en una línea).
+## 1. Cómo se hace (obligatorio)
 
-## Bloque 1 — Estado y objetivo
-1. ¿El proyecto existe o empieza de cero? (Nuevo / Existente)
-2. ¿Qué buscas con la metodología? (orden, calidad, trabajar con varios agentes, documentación, menos retrabajo, otro)
-3. Solo si existe: ¿cuánto puede cambiar el repo (repositorio: el proyecto en git)?
-   - **Solo metodología**: no crear ni mover carpetas del proyecto; lo mínimo, o fuera del repo.
-   - **Integrar**: añadir archivos y carpetas nuevos sin mover nada existente.
-   - **Reestructurar**: permitir mover y renombrar para alinearlo todo.
-4. ¿Qué no se puede tocar? (carpetas, archivos generados, CI —comprobaciones automáticas—, carpetas o código de terceros)
+1. **Analizar antes de preguntar.** Con la salida de `discover.sh`, los documentos del proyecto (sección 1 de `intake.md`) y lo que ya se sabe de la sesión: el asistente que está ejecutando la skill no se pregunta, se sabe.
+2. **Completar cada decisión** de la sección 3 con, en este orden: lo que la persona ya dijo, un hecho del análisis o el valor por defecto de la tabla.
+3. **Presentar una sola propuesta** con el formato de la sección 2. Incluye el resumen de lo entendido (el resumen de intake de `intake.md`) y todas las decisiones. La persona responde una vez: aprueba o dice qué cambiar.
+4. **Preguntar aparte solo lo que bloquea** (sección 4), dentro del mismo mensaje de la propuesta: como máximo 3 preguntas, nunca en rondas sueltas antes ni después.
+5. **Registro de respuestas.** Lo que la persona respondió o aprobó queda fijo para toda la instalación:
+   - No se vuelve a preguntar, ni con otras palabras.
+   - Mientras haya preguntas sin responder, no se vuelven a mostrar ni se suman otras: se espera, o se sigue con lo que no depende de ellas.
+   - Si un hallazgo posterior cambia una decisión ya aprobada, se dice en una línea qué cambió y por qué, y se pide confirmar solo esa decisión.
+6. **Lenguaje claro** (regla inviolable 11): cada decisión y cada pregunta dice en una línea qué decide para la persona. Sin jerga sin explicar. Cada pregunta trae una opción **recomendada**, con su motivo en pocas palabras, y la opción "decide por mí".
 
-## Bloque 2 — Proyecto
-5. Tipo: web frontend, backend/API, fullstack, móvil, escritorio con tecnología web (Electron, Tauri), datos/ML, librería/SDK, infraestructura/DevOps, monorepo (varios proyectos en un repo), otro. Confirmar en una línea lo que dice `interfaz_web` en el análisis inicial.
-5.1. Escala: ¿cuántos equipos lo mantendrán? ¿Habrá varios servicios, apps o módulos publicados por separado? ¿Cuántos módulos o funcionalidades prevés a medio plazo? Sirve para elegir perfil y etapa de `references/project-structure.md` (sección 3: estado actual → tipo → escala frente a la condición de Etapa 2 → contraste con el análisis inicial → propuesta; decide el usuario). No preguntar lo que ya dan las cifras de `discover.sh` (script de análisis inicial: `features_max`, `desplegables_estimados`): confirmarlo en una línea. Empate entre perfiles: sección 3.1. Monorepo: se pregunta por cada workspace o proyecto interno (sección 3.2). Si no lo sabe, asumir Etapa 1 y anotarlo como revisable.
-6. Lenguajes, frameworks y gestor de paquetes.
-7. Tamaño y madurez: prototipo, producción o legado. ¿Hay tests, linter (revisor de estilo), comprobación de tipos, CI?
-8. Riesgo: ¿toca producción, auth (inicio de sesión), pagos, datos personales o contratos de API públicos? (Define las señales de alto riesgo y el rigor de los controles.)
-9. ¿Trabajas solo o en equipo? ¿El equipo usa los mismos editores y agentes?
-9.1. ¿El producto vive solo en este repo o en varios que deberían compartir metodología? Si son varios: ¿cuáles, qué papel tiene cada uno y hay (o quieres) un repo de coordinación? (sección 5 de `scenarios.md`)
+## 2. Formato de la propuesta
 
-## Bloque 3 — Herramientas y runtimes
-10. ¿Qué editores (IDE) o herramientas de terminal (CLI) con agentes (runtimes) usas o usará el equipo? (p. ej. Claude Code, Codex, Cursor, Copilot, Windsurf, OpenCode, Gemini CLI, Kiro, Antigravity, Zed, JetBrains AI, otro). Puede ser más de uno.
-11. ¿Qué modelos, proveedores y planes tienes? ¿Importa el coste? (sí/no). Sirve para asignar modelos reales a cada tier (nivel): Alta capacidad / Generalista / Ligero.
-12. ¿Ya tienes configurados archivos de instrucciones, agentes, skills o MCP (conectores a herramientas)? ¿Quieres conservarlos tal cual?
-13. ¿Existe una carpeta de metodología global (`~/sfp/` u otra)? ¿Dónde? ¿Quieres crearla con las plantillas del skill?
+```markdown
+### Lo que entendí del proyecto
+<3 a 6 líneas: qué es, cómo se construye y se prueba, qué ya tiene. Lo deducido se marca como deducido.>
+<Si hay contradicciones entre los documentos y el repositorio, una línea por cada una.>
 
-## Bloque 4 — Orquestación (decide caso 5 o 6)
-14. ¿Quieres un orquestador (capa que coordina varios agentes: uno supervisa y delega, a veces en paralelo) o sesiones independientes?
-    - Si "no sé": explicar en 3 líneas (con él: coordinación automática y memoria de trabajo, más piezas que mantener; sin él: más simple, lo compartido vive en los documentos de spec) y recomendar **sin orquestador** (lo más simple), aclarando que se puede añadir después.
-15. Si orquesta: ¿cuál? (el que ya use o quiera; no se sugiere ninguno). ¿Ya está instalado? ¿Cuánto aislamiento necesitas? ¿Qué runtimes participarán?
-    - **En cuanto lo nombre**, no basta: resolver el cuestionario de la sección B.1 de `orchestration.md` (documentación vigente → el propio orquestador, con permiso → el usuario) y volver con la ficha: lo que cubre, lo que cubre en parte y lo que no. Las preguntas 22 (aprobaciones), 23 (secretos y políticas) y 24 (lecciones) se contrastan con esa ficha.
-16. Si no orquesta: ¿usarás varias sesiones a la vez? (Implica worktree —copia de trabajo aparte— o rama por sesión, y revisar en otra sesión.) Si trabaja con una sola sesión, explicar cómo será la revisión independiente según el riesgo (sección 8 de `development-practices.md`) y confirmar que revisará la persona los cambios de riesgo medio o alto.
+### Cómo propongo instalar SFP
+| Decisión | Propuesta | Qué significa para ti | De dónde sale |
+|---|---|---|---|
+| <nombre corto> | <valor> | <una línea> | análisis · tus documentos · valor por defecto · lo que dijiste |
 
-## Bloque 5 — Especificación, agentes y calidad
-17. ¿Usas o quieres una spec (descripción escrita del cambio) por cambio: propuesta → requisitos → diseño → tareas? ¿Con qué herramienta (la que ya uses o quieras; no se sugiere ninguna), o con documentos libres?
-    - **En cuanto nombre una herramienta:** resolver la sección 1 de `tooling.md` (documentación vigente → la herramienta, con permiso → el usuario) y anotar el mapeo de sus archivos antes de planificar.
-18. **Roles de agente (se definen conversando: sección 7 de `architecture.md`).** No ofrecer los 5 roles como lista cerrada. Pasos:
-    a. ¿Cómo trabajas hoy con agentes? ¿Qué tareas se repiten? ¿Qué quieres separar (p. ej. programar y revisar)?
-    b. Presentar una **recomendación mínima justificada** con el análisis inicial y las respuestas, más la alternativa más simple.
-    c. El usuario acepta, quita, renombra o crea roles propios.
-    d. Por cada rol aprobado, confirmar uno a uno: nivel o modelo por defecto, permisos mínimos y acciones que requieren aprobación humana.
-    e. Mostrar la tabla final de roles y pedir confirmación.
-19. ¿Qué funciones quieres cubrir con skills o herramientas (catálogo en la sección 6 de `architecture.md`)? ¿Ya usas alguna? Sin preferencia: ofrecer las candidatas de esa función, más "otra" y "ninguna", y solo las que cumplan su "Cuándo plantearla" según el análisis inicial (p. ej. frontend-design solo con frontend; Serena solo en un repo grande). Al elegir una, mostrar su fila de la sección 6.1 (qué hará y qué tiene prohibido) y aclarar para qué asistentes sirve el instalador `integrations.sh`: Claude Code (probado) y Codex (en pruebas: skills, Serena y Context7 en su `config.toml`, y RTK con su hook). Otros runtimes: instalación manual aprobada. Por defecto usa el gestor de paquetes del proyecto (`gestor_de_paquetes_js` del análisis inicial): confirmarlo en una línea, o preguntar si prefiere otro (npx, npm, pnpm, bun o yarn 2+). Si el proyecto usa varios asistentes que el instalador admite, se ejecuta una vez por cada uno. Si nombra una (del catálogo o no): sección 2 de `tooling.md`.
-20. Rigor de los controles de calidad (gates): ligero, estándar o estricto. ¿Qué comandos de lint, tests, tipos y seguridad usa hoy el proyecto?
-20.1. ¿Dónde viven las pruebas? Si el análisis inicial muestra una carpeta de tests, confirmarla en una línea como convención (y, si lista tests fuera de ella, preguntar si se quiere ofrecer reordenarlos como tarea aparte). Si no hay carpeta ni patrón, ofrecer las opciones típicas del stack: carpeta dedicada en espejo, junto al archivo, o una por paquete en un monorepo. Las de integración y extremo a extremo van siempre en una carpeta aparte (sección 5 de `development-practices.md`).
-20.2. Solo si el proyecto expone una API (REST u otra compatible con OpenAPI): ¿ya tiene un documento de OpenAPI o una herramienta que lo genere? Si lo tiene, se respeta; si no, ¿se genera desde el código o se mantiene un archivo junto a los endpoints? La herramienta que lo muestra la elige el equipo (sección 7 de `development-practices.md`).
-20.3. ¿Quieres que el plan incluya una base del README con lo que ya se sabe del proyecto (o la adaptación del actual al formato recomendado, sin inventar nada) y que cada cambio no trivial diga qué cambia en él? (sección 9 de `development-practices.md`)
-21. ¿Qué cambios son "no triviales" para ti? (Por defecto: varios archivos o módulos, cambio de comportamiento o de contrato, riesgo medio o alto.) Además: ¿un cambio pequeño que toque una señal de alto riesgo (auth, datos, producción, contratos de API) debe tratarse como no trivial? (Decisión abierta de SFP: sección 5 de `methodology-digest.md`.)
+Herramientas opcionales que encajan con el proyecto (no se instalan si no las pides): <lista corta, o "ninguna">.
 
-## Bloque 6 — Seguridad y gobernanza
-22. ¿Qué acciones requieren siempre tu aprobación? (Por defecto: producción, destructivas, secretos, pagos, infraestructura crítica, borrados masivos, cambios globales o de metodología.)
-23. ¿Hay secretos o datos sensibles en el repo o en el entorno de los agentes? ¿Políticas de la empresa que respetar?
-23.1. No se pregunta: los commits y las PR salen siempre **sin firmas automáticas de agentes de IA** (sección 17 de `templates.md`; se instala en toda instalación). Solo se confirma en una línea en el cierre de la entrevista. Si los documentos del proyecto piden declarar la IA, decirlo: la declaración se hace con `Assisted-by`, que el filtro no toca.
-24. ¿Registro de lecciones aprendidas: manual, automático (si el orquestador lo permite) o ninguno por ahora?
+### Lo que necesito que decidas
+<Solo si hay algo que bloquea (sección 4). Si no, se omite este apartado.>
+1. <Pregunta>. Decide <qué>. Recomiendo <opción>, porque <motivo>. Otras: <opciones> · decide por mí.
 
-## Bloque 7 — Preferencias de aplicación
-25. ¿Commits por bloque, un solo commit o ningún commit? ¿El repo ya tiene convenciones de git (mensajes, ramas, forma de fusionar, plantilla de PR)? Si el análisis avisó `remoto_con_credenciales`, decirlo sin mostrar el valor y proponer corregirlo. Confirmar lo que muestre el análisis (CONTRIBUTING, commitlint, historial). Si no hay, proponer los valores por defecto de `git-practices.md` y mostrar las reglas de SFP que mandan (sección 2) y las plantillas de mensajes legibles (sección 4), con su ejemplo.
-26. ¿Prefieres antes un dry-run (solo ver el plan) o plan y aplicación en la misma sesión?
-27. ¿Quieres un idioma concreto para los archivos generados? Si es español, se usa español neutro (regla inviolable 10: sin voseo ni regionalismos). Preguntar solo si prefiere tuteo o "usted" en los textos para personas.
-28. ¿Dónde guardar el manifiesto (registro de lo instalado) y el reporte: en el repo, fuera o no guardar?
-29. Si SFP mismo falla o se te ocurre una mejora del skill, ¿quieres que prepare el reporte para su repositorio y, con tu aprobación de cada uno, lo publique con `gh`? Solo si la Fase 0 comprobó que `gh` está instalado y con sesión iniciada; si no, decir cómo instalarlo y que se puede activar más adelante. Los reportes nunca incluyen datos del proyecto ("Reportar problemas y mejoras de SFP" en `SKILL.md`).
+¿Lo apruebas así o cambias algo? Basta con decir qué cambiar.
+```
 
-## Reglas de ramificación
-- Roles: puede acabar con 0, 1 o varios, de los 5 base o propios; no insistir en completar el conjunto.
-- "Nuevo" → saltar las preguntas 3, 4, 12 (en parte) y el análisis de código heredado.
-- "Solo metodología" → no preguntar por carpetas nuevas de documentación; preguntar dónde prefiere las instrucciones (un archivo en la raíz, fuera del repo, o solo en la configuración personal del runtime).
-- "Reestructurar" → añadir: ¿qué organización de carpetas quieres? ¿Hay builds, CI o imports que dependan de rutas? ¿Toleras rutas rotas un tiempo? ¿Quién más debe aprobar?
-- Orquesta = sí → preguntas 14 y 15, más el cuestionario de la sección B.1 de `orchestration.md`; omitir la 16. Orquesta = no → 14 y 16; omitir la 15 y la sección B.1.
-- Respuestas contradictorias → señalarlas y resolverlas antes de la Fase 3.
+La propuesta no escribe nada: las Fases 0 a 4 siguen siendo de solo lectura. Aprobada, se pasa a la Fase 3 y al plan de cambios de la Fase 4, sin volver a preguntar lo decidido.
 
-## Cierre de la entrevista
-Resumir en lenguaje claro (regla inviolable 11) con una tabla: ejes A/B/C, runtimes, agentes, modelos por nivel, capa de specs, controles de calidad, reglas de aprobación y preferencias de aplicación. Preguntar "¿correcto?" y solo entonces pasar a la Fase 3.
+## 3. Decisiones, valor por defecto y cuándo se pregunta
+
+El número de cada decisión se conserva porque otros documentos lo citan ("decisión 20.1", "pregunta 20.1").
+
+| N.º | Decisión | De dónde sale o valor por defecto | Se pregunta solo si |
+|---|---|---|---|
+| 0 | Documentos del proyecto | Se leen los que haya (README, docs, instrucciones); se piden una sola vez, en la Fase 0 | Nunca como pregunta aparte; si no hay, se sigue |
+| 1 | Proyecto nuevo o existente | Análisis | Nunca |
+| 2 | Qué se busca con SFP | No se pregunta: se instala SFP completo y se respeta lo que la persona haya dicho | Nunca |
+| 3 | Cuánto puede cambiar el repositorio | Existente: **integrar** (añade sin mover nada). Nuevo: no aplica | La persona pidió reorganizar o no tocar carpetas, o sus documentos lo contradicen |
+| 4 | Qué no se puede tocar | Análisis: carpetas generadas, de terceros y la CI | Los documentos o la persona mencionan otra restricción |
+| 5 | Tipo de proyecto | Análisis (`interfaz_web`, `estructura-de-codigo`) | El análisis no lo deja claro y cambia la propuesta |
+| 5.1 | Perfil de estructura de carpetas | Sin perfil: no se toca la estructura | Se eligió reestructurar, o la persona lo pide (sección 3 de `project-structure.md`) |
+| 6, 7 | Tecnologías, madurez, pruebas y CI | Análisis | Nunca |
+| 8 | Señales de alto riesgo | Las del análisis (producción, inicio de sesión, pagos, datos personales, API pública) más la lista por defecto | Nunca; van en la propuesta |
+| 9 | Una persona o un equipo | Una persona, salvo que el análisis muestre varias (CODEOWNERS, varios autores recientes) | Nunca; va en la propuesta |
+| 9.1 | Producto repartido en varios repositorios | Un solo repositorio | La persona lo menciona (sección 5 de `scenarios.md`) |
+| 10 | Asistentes que se usan | El que ejecuta la skill y los que ya tienen instrucciones en el repositorio | Nunca; va en la propuesta |
+| 11 | Modelos por nivel | Sin reglas por modelo: se usa el modelo disponible | La persona dice que usa varios modelos o que le importa el costo |
+| 12 | Configuración que ya existe | Se conserva siempre; lo nuevo se añade con marcadores | Nunca |
+| 13 | Carpeta de metodología global | Instrucciones completas dentro del proyecto | El análisis encuentra una carpeta global (se propone usarla) |
+| 14, 15, 16 | Orquestador y sesiones | Sin orquestador, una sesión a la vez | La persona nombra un orquestador o pide sesiones en paralelo |
+| 17 | Cómo se escriben las especificaciones | La herramienta que detecte el análisis; si no hay, documentos simples en `specs/` | La persona nombra una herramienta que el análisis no detectó (sección 1 de `tooling.md`) |
+| 18 | Roles de agente | Ninguno fijo; la revisión sigue la sección 8 de `development-practices.md` | Hay orquestador, sesiones en paralelo o un equipo, y la persona quiere roles (sección 7 de `architecture.md`) |
+| 19 | Herramientas complementarias | Ninguna; las que encajan se listan como opcionales en la propuesta | La persona elige alguna (entonces, su fila de la sección 6.1 de `architecture.md` y el instalador con el gestor de paquetes del proyecto) |
+| 20 | Rigor de los controles de calidad | Estándar, con los comandos que el proyecto ya tiene; estricto en los cambios que tocan una señal de alto riesgo | Nunca; va en la propuesta |
+| 20.1 | Dónde viven las pruebas | La carpeta que detecte el análisis; si no hay, la convención del framework (sección 5 de `development-practices.md`) | Hay pruebas repartidas de varias formas y ninguna predomina |
+| 20.2 | Documentación de la API | Solo si el proyecto expone una: lo que ya exista; si no hay nada, generarla desde el código si el framework lo permite (sección 7 de `development-practices.md`) | Nunca; va en la propuesta |
+| 20.3 | README | Añadir con marcadores lo que falte, sin reescribir lo que hay (sección 9 de `development-practices.md`) | Nunca; va en la propuesta |
+| 21 | Qué cambios llevan especificación | El criterio de SFP (varios archivos, cambia el comportamiento o un contrato, riesgo medio o alto), y un cambio que toca una señal de alto riesgo también la lleva | Nunca; va en la propuesta |
+| 22 | Acciones que requieren tu aprobación | La lista por defecto: producción, operaciones destructivas, secretos, pagos, infraestructura crítica, borrados masivos, cambios globales o de metodología | Nunca; va en la propuesta |
+| 23 | Secretos y datos sensibles | Análisis (sección `riesgos-secretos`): se avisa de su existencia, nunca de su contenido | Nunca |
+| 23.1 | Firmas de IA en commits y PR | Se quitan siempre (sección 17 de `templates.md`) | Nunca |
+| 24 | Lecciones aprendidas | Registro en el proyecto (`docs/lessons/`), que se crea al anotar la primera | Nunca |
+| 25 | Convenciones de Git | Las del repositorio; si no hay, las de `git-practices.md`. El asistente propone los commits y no los hace por su cuenta | Nunca; va en la propuesta. Si el análisis avisa `remoto_con_credenciales`, se dice sin mostrar el valor |
+| 26 | Ver el plan antes de aplicar | Siempre: el plan se aprueba antes de escribir nada | Nunca |
+| 27 | Idioma de los archivos | El de la persona; en español, neutro y con tuteo | Nunca |
+| 28 | Dónde se guarda el registro de lo instalado | `.sfp/` dentro del proyecto | La persona pide no dejar rastros en el repositorio |
+| 29 | Reporte de problemas de SFP con `gh` | Desactivado; si `gh` está listo, se menciona en una línea que se puede activar | Nunca |
+
+## 4. Qué cuenta como pregunta que bloquea
+
+Una decisión se pregunta aparte solo si cumple las tres condiciones:
+1. No se puede deducir del análisis, de los documentos ni de lo que dijo la persona.
+2. Cambia lo que se va a instalar o el riesgo de hacerlo.
+3. No tiene un valor por defecto seguro.
+
+Ejemplos de lo que sí bloquea: una contradicción entre los documentos y el repositorio que cambia el plan, un orquestador nombrado (antes de planificar hay que resolver la sección B.1 de `orchestration.md`) o una reestructuración pedida sin decir cómo debe quedar.
+
+Nunca bloquean, porque tienen un valor por defecto: modelos, roles, lecciones, perfil de estructura, README, ubicación de las pruebas, rigor, idioma o convenciones de Git. Van en la propuesta, y la persona los cambia si quiere.
+
+## 5. Casos que sí abren preguntas propias
+
+Solo cuando aparecen, y con su propio procedimiento:
+- **Orquestador nombrado:** el cuestionario de la sección B.1 de `orchestration.md` y su ficha (sección 15 de `templates.md`).
+- **Herramienta de especificaciones o skill nombrada:** sección 1 o 2 de `tooling.md`.
+- **Reestructurar:** cómo debe quedar la organización de carpetas, qué depende de las rutas (compilación, CI, importaciones) y quién más debe aprobar.
+- **Varios repositorios:** sección 5 de `scenarios.md`.
+- **Roles:** sección 7 de `architecture.md`, solo si la decisión 18 lo abre.
+
+## 6. Después de la aprobación
+
+La tabla aprobada es la **configuración acordada**. Se usa en la Fase 3 (combinación de ejes), en el plan de la Fase 4 y, si el plan se exporta, en su sección 2 (sección 16 de `templates.md`). No se vuelve a confirmar en ninguna fase posterior.

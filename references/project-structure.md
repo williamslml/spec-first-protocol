@@ -1,6 +1,6 @@
 # Estructura de carpetas del proyecto, por etapas
 
-Propuesta por proyecto, no regla global (sección 1 de `architecture.md`). En la Fase 2 (pregunta 5.1) se eligen perfil (tipo de proyecto) y etapa (cuánta estructura necesita hoy) según la sección 3; en la Fase 4 va como punto del plan; solo se aplica tras aprobarse en la Fase 5. Si el framework impone su organización (Next.js `app/`, Rails, etc.), manda sobre el perfil. Cómo comprobar que la regla de dependencia se cumple de verdad y no solo en el papel: `references/structure-verification.md`.
+Propuesta por proyecto, no regla global (sección 1 de `architecture.md`). En la Fase 2 (decisión 5.1, solo si se reestructura o la persona lo pide; si no, no se toca la estructura) se eligen perfil (tipo de proyecto) y etapa (cuánta estructura necesita hoy) según la sección 3; en la Fase 4 va como punto del plan; solo se aplica tras aprobarse en la Fase 5. Si el framework impone su organización (Next.js `app/`, Rails, etc.), manda sobre el perfil. Cómo comprobar que la regla de dependencia se cumple de verdad y no solo en el papel: `references/structure-verification.md`.
 
 ## 0. Reglas comunes a los 8 perfiles
 
@@ -251,7 +251,7 @@ En modo Actualización, el paso 6 de la sección 3 se repite por workspace; uno 
 
 ## 4. Dónde se usa en el flujo del skill
 
-- Fase 2, pregunta 5.1 (`interview.md`): aporta la escala; perfil y etapa se deciden según la sección 3.
+- Fase 2, decisión 5.1 (`interview.md`): solo si se reestructura o la persona lo pide; aporta la escala, y perfil y etapa se deciden según la sección 3.
 - Fase 4: perfil y etapa van como punto del plan, con la condición que aplica o la razón para quedarse en Etapa 1. Incluir qué verificación de dependencias (`structure-verification.md`) se instalará, si alguna.
 - Fase 5: si el usuario prefiere otra estructura, se usa la suya; el perfil es una sugerencia, no una imposición.
 - Fase 7: si se eligió perfil, `scripts/verify.sh` comprueba la coherencia del registro y muestra el `verify_command`; la regla de dependencia se ejecuta con `--run-verify` tras la aprobación del usuario (`structure-verification.md`).

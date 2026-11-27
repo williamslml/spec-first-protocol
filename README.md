@@ -8,7 +8,7 @@
 **Trabaja con asistentes de IA de forma ordenada: primero se define por escrito qué se va a hacer, y después se implementa.**
 
 <p>
-  <img src="https://img.shields.io/badge/versi%C3%B3n-1.15.0-2563eb?style=for-the-badge" alt="Versión 1.15.0">
+  <img src="https://img.shields.io/badge/versi%C3%B3n-1.16.0-2563eb?style=for-the-badge" alt="Versión 1.16.0">
   <img src="https://img.shields.io/badge/licencia-MIT-22c55e?style=for-the-badge" alt="Licencia MIT">
   <img src="https://img.shields.io/badge/idioma-espa%C3%B1ol-f97316?style=for-the-badge" alt="En español">
   <a href="#compatibilidad"><img src="https://img.shields.io/badge/compatibilidad-cualquier_asistente-0ea5e9?style=for-the-badge" alt="Reglas compatibles con cualquier asistente de IA"></a>
@@ -87,7 +87,7 @@ Los controles de calidad son proporcionales al riesgo: un cambio sencillo lleva 
 Esto es lo que hace la skill para dejar SFP instalado en un proyecto, **en este orden**. El ciclo del trabajo diario es el de la sección [Resultado](#resultado):
 
 1. **Analiza el proyecto**, sin modificar nada.
-2. **Formula algunas preguntas** sobre la forma de trabajo del equipo.
+2. **Propone cómo configurarlo**, con todo ya decidido a partir del análisis, y solo pregunta lo que no puede deducir. Nunca repite una pregunta.
 3. **Propone un plan**: cada cambio, su riesgo y cómo revertirlo.
 4. **Aplica el plan únicamente si es aprobado.**
 
@@ -97,7 +97,7 @@ Los mismos pasos en un diagrama, incluido qué ocurre si el plan no se aprueba y
 
 ```mermaid
 flowchart LR
-    A["Analiza el proyecto<br/><sub>sin cambiar nada</sub>"] --> B["Hace preguntas<br/><sub>breves, por partes</sub>"]
+    A["Analiza el proyecto<br/><sub>sin cambiar nada</sub>"] --> B["Propone la configuración<br/><sub>y pregunta solo lo que bloquea</sub>"]
     B --> C["Propone un plan<br/><sub>cada cambio, su riesgo<br/>y cómo deshacerlo</sub>"]
     C --> D{"¿Se aprueba?"}
     D -- Sí --> E["Se aplica<br/><sub>con punto de retorno</sub>"]
@@ -109,7 +109,7 @@ flowchart LR
 
 #### Adaptación a cada proyecto
 
-En el segundo paso, las respuestas definen tres cosas:
+En el segundo paso, la propuesta fija tres cosas, que se pueden cambiar antes de aprobarla:
 
 | Decisión | Opciones |
 |---|---|

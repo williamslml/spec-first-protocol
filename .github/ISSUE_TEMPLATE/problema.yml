@@ -57,6 +57,6 @@ body:
     attributes:
       label: Versión de la skill
       description: La que indica la insignia del README.
-      placeholder: "1.15.0"
+      placeholder: "1.16.0"
     validations:
       required: true

@@ -13,6 +13,7 @@ Reglas que comprueba:
   - Sin firmas de asistentes de IA en los mensajes de commit.
   - Cada mención de una regla numerada dice de qué lista es: "regla inviolable N" (las de
     SKILL.md) o "regla N del resumen" / "de este resumen" (las de methodology-digest.md).
+  - Cada decisión de la entrevista citada ("pregunta N", "decisión N") existe en references/interview.md.
   - Los enlaces internos del README (a secciones y a archivos) existen.
   - Las entradas del CHANGELOG tienen la línea "[accion: si/no]" bien formada.
 
@@ -148,6 +149,32 @@ def revisar_enlaces_readme():
             avisar("README.md", 0, f"el enlace a {ruta} apunta a un archivo que no existe")
 
 
+def revisar_decisiones_de_la_entrevista():
+    """Cada "pregunta N" o "decisión N" citada en los documentos existe en la tabla de interview.md."""
+    entrevista = RAIZ / "references" / "interview.md"
+    if not entrevista.exists():
+        avisar("references/interview.md", 0, "no existe")
+        return
+    numeros = set()
+    for linea in entrevista.read_text(encoding="utf-8").splitlines():
+        m = re.match(r"^\|\s*([\d., ]+?)\s*\|", linea)
+        if m:
+            numeros.update(x.strip() for x in m.group(1).split(",") if x.strip())
+    if not numeros:
+        avisar("references/interview.md", 0, "no se encontró la tabla de decisiones")
+        return
+    # Una o dos cifras: "decisión 0001" es el número de un ADR, no de la entrevista
+    cita = re.compile(r"\b(?:preguntas?|decisi[oó]n(?:es)?|entrevista)\s+(\d{1,2}(?:\.\d+)?)\b(?!\.\d)", re.IGNORECASE)
+    for ruta in archivos_de_texto():
+        rel = ruta.relative_to(RAIZ).as_posix()
+        if ruta.suffix != ".md" or rel in ("CHANGELOG.md", "references/interview.md"):
+            continue
+        for n, linea in enumerate(ruta.read_text(encoding="utf-8").splitlines(), 1):
+            for m in cita.finditer(linea):
+                if m.group(1) not in numeros:
+                    avisar(rel, n, f'cita la decisión {m.group(1)} de la entrevista, que no existe en interview.md')
+
+
 def revisar_changelog():
     archivo = RAIZ / "CHANGELOG.md"
     if not archivo.exists():
@@ -205,6 +232,7 @@ def main():
         total += 1
         revisar_texto(ruta)
     revisar_enlaces_readme()
+    revisar_decisiones_de_la_entrevista()
     revisar_changelog()
     if args.commits:
         revisar_commits(args.commits)
