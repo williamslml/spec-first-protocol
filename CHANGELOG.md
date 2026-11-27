@@ -15,6 +15,15 @@ Cada versión tiene un resumen en prosa (para quien mantiene el skill) y una sec
 - `aplica-si` usa campos del manifiesto (`templates.md` sección 1) o hechos comprobables; si no se puede evaluar, se pregunta al usuario.
 - Las pruebas de mantenimiento (`project-setup-dev`, fuera del paquete) comprueban que toda entrada siga este formato.
 
+## 1.16.2
+
+Resumen: integrar o reestructurar vuelve a ser siempre una decisión de la persona. La 1.16.1 dejaba integrar como valor por defecto y solo ofrecía reestructurar si la persona lo pedía, así que quien no sabía que podía pedirlo nunca lo veía.
+- En un proyecto existente, la propuesta siempre pregunta, una sola vez, entre solo metodología, integrar o reestructurar, explicando cada opción en palabras simples. La skill recomienda según el análisis y dice por qué, pero no lo da por decidido.
+- Reestructurar se explica como lo que es: aplicar a todo el proyecto las buenas prácticas de la skill (arquitectura de carpetas por funcionalidad y nombres estándar de `project-structure.md`), con respaldo obligatorio y el mapa antes → después, respetando lo que exija el framework.
+
+Delta para proyectos ya instalados:
+- [accion: no] solo cambia la entrevista de instalaciones nuevas y de cambios de configuración
+
 ## 1.16.1
 
 Resumen: correcciones de la entrevista tras usarla en un proyecto real (una web Next.js con API pública y un pipeline Python).

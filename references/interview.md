@@ -50,10 +50,10 @@ El número de cada decisión se conserva porque otros documentos lo citan ("deci
 | 0 | Documentos del proyecto | Se leen los que haya (README, docs, instrucciones); se piden una sola vez, en la Fase 0 | Nunca como pregunta aparte; si no hay, se sigue |
 | 1 | Proyecto nuevo o existente | Análisis | Nunca |
 | 2 | Qué se busca con SFP | No se pregunta: se instala SFP completo y se respeta lo que la persona haya dicho | Nunca |
-| 3 | Cuánto puede cambiar el repositorio | Existente: **integrar** (añade sin mover nada). Nuevo: no aplica. Nunca se propone reestructurar si no se va a mover ni renombrar nada: reestructurar es solo para mover, y solo si la persona lo pide | La persona pidió reorganizar o no tocar carpetas, o sus documentos lo contradicen |
+| 3 | Cuánto puede cambiar el repositorio | **Lo decide siempre la persona** (regla inviolable 7). En un proyecto existente es una de las preguntas de la propuesta, con las tres opciones explicadas en palabras simples: **solo metodología** (no crea ni mueve carpetas), **integrar** (añade lo nuevo sin mover nada) o **reestructurar** (reorganiza todo el proyecto con las buenas prácticas de la skill: arquitectura de carpetas por funcionalidad y nombres estándar, según `project-structure.md`, con respaldo obligatorio y el mapa antes → después). La recomendación sale del análisis y se dice por qué, pero nunca se da por decidida. Nuevo: no aplica | Siempre, en un proyecto existente, salvo que la persona ya lo haya dicho |
 | 4 | Qué no se puede tocar | Análisis: carpetas generadas, de terceros y la CI | Los documentos o la persona mencionan otra restricción |
 | 5 | Tipo de proyecto | Análisis (`interfaz_web`, `estructura-de-codigo`) | El análisis no lo deja claro y cambia la propuesta |
-| 5.1 | Perfil de estructura de carpetas | Sin perfil: no se toca la estructura, y no aparece en la propuesta | Se eligió reestructurar, o la persona lo pide (sección 3 de `project-structure.md`) |
+| 5.1 | Arquitectura de carpetas y nombres | Si se eligió reestructurar: el perfil y la etapa que salen del análisis (sección 3 de `project-structure.md`), con la regla que los decidió, respetando lo que exija el framework (p. ej. `app/` en Next.js). Si no se reestructura: no se toca la estructura y no aparece en la propuesta | Nunca como pregunta aparte; va en la propuesta y en el mapa antes → después del plan |
 | 6, 7 | Tecnologías, madurez, pruebas y CI | Análisis | Nunca |
 | 8 | Señales de alto riesgo | Las del análisis (producción, inicio de sesión, pagos, datos personales, API pública) más la lista por defecto | Nunca; van en la propuesta |
 | 9 | Una persona o un equipo | Una persona, salvo que el análisis muestre varias (CODEOWNERS, varios autores recientes) | Nunca; va en la propuesta |
@@ -89,7 +89,9 @@ Una decisión se pregunta aparte solo si cumple las tres condiciones:
 2. Cambia lo que se va a instalar o el riesgo de hacerlo.
 3. No tiene un valor por defecto seguro.
 
-Ejemplos de lo que sí bloquea: una contradicción entre los documentos y el repositorio que cambia el plan, un orquestador nombrado (antes de planificar hay que resolver la sección B.1 de `orchestration.md`) o una reestructuración pedida sin decir cómo debe quedar.
+Siempre bloquea, en un proyecto existente: **integrar o reestructurar** (decisión 3), porque cambia todo lo que se va a hacer y es una decisión de la persona (regla inviolable 7). Se pregunta una vez, en la propuesta, salvo que ya lo haya dicho.
+
+Otros ejemplos de lo que sí bloquea: una contradicción entre los documentos y el repositorio que cambia el plan, un orquestador nombrado (antes de planificar hay que resolver la sección B.1 de `orchestration.md`) o una reestructuración pedida sin decir cómo debe quedar.
 
 Nunca bloquean, porque tienen un valor por defecto: modelos, roles, lecciones, perfil de estructura, README, ubicación de las pruebas, rigor, idioma o convenciones de Git. Van en la propuesta, y la persona los cambia si quiere.
 
