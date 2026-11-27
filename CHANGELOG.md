@@ -15,6 +15,15 @@ Cada versión tiene un resumen en prosa (para quien mantiene el skill) y una sec
 - `aplica-si` usa campos del manifiesto (`templates.md` sección 1) o hechos comprobables; si no se puede evaluar, se pregunta al usuario.
 - Las pruebas de mantenimiento (`project-setup-dev`, fuera del paquete) comprueban que toda entrada siga este formato.
 
+## 1.16.3
+
+Resumen: pedir empezar de nuevo vuelve a preguntar lo que es de la persona. En la práctica, al pedir "empieza el setup de 0", la skill reusó respuestas de antes y decidió sola integrar, sin preguntar.
+- El registro de respuestas vale solo para lo dicho en la instalación en curso. Si la persona pide empezar de nuevo, se vacía: lo anterior solo puede aparecer como sugerencia, marcado como "lo que dijiste antes".
+- Las decisiones que son de la persona, como integrar o reestructurar, nunca las responde el análisis.
+
+Delta para proyectos ya instalados:
+- [accion: no] solo cambia la entrevista
+
 ## 1.16.2
 
 Resumen: integrar o reestructurar vuelve a ser siempre una decisión de la persona. La 1.16.1 dejaba integrar como valor por defecto y solo ofrecía reestructurar si la persona lo pedía, así que quien no sabía que podía pedirlo nunca lo veía.

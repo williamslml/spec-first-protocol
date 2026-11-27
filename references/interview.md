@@ -8,7 +8,7 @@ La entrevista no es un cuestionario. Su fin es completar las decisiones de la in
 2. **Completar cada decisión** de la sección 3 con, en este orden: lo que la persona ya dijo, un hecho del análisis o el valor por defecto de la tabla.
 3. **Presentar una sola propuesta** con el formato de la sección 2. Incluye el resumen de lo entendido (el resumen de intake de `intake.md`) y todas las decisiones. La persona responde una vez: aprueba o dice qué cambiar.
 4. **Preguntar aparte solo lo que bloquea** (sección 4), dentro del mismo mensaje de la propuesta: como máximo 3 preguntas, nunca en rondas sueltas antes ni después.
-5. **Registro de respuestas.** Lo que la persona respondió o aprobó queda fijo para toda la instalación:
+5. **Registro de respuestas.** Lo que la persona respondió o aprobó queda fijo para toda la instalación. Vale solo para lo que dijo **en esta instalación**: si pide empezar de nuevo ("desde cero", "de 0", "otra vez"), el registro se vacía y nada de lo dicho antes se da por respondido; lo anterior solo puede aparecer como sugerencia en la propuesta, marcado como "lo que dijiste antes". Las decisiones que son de la persona (como la 3) nunca las responde el análisis:
    - No se vuelve a preguntar, ni con otras palabras.
    - Mientras haya preguntas sin responder, no se vuelven a mostrar ni se suman otras: se espera, o se sigue con lo que no depende de ellas.
    - Si un hallazgo posterior cambia una decisión ya aprobada, se dice en una línea qué cambió y por qué, y se pide confirmar solo esa decisión.
