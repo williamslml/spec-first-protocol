@@ -15,6 +15,14 @@ Cada versión tiene un resumen en prosa (para quien mantiene el skill) y una sec
 - `aplica-si` usa campos del manifiesto (`templates.md` sección 1) o hechos comprobables; si no se puede evaluar, se pregunta al usuario.
 - Las pruebas de mantenimiento (`project-setup-dev`, fuera del paquete) comprueban que toda entrada siga este formato.
 
+## 1.16.6
+
+Resumen: el adelanto del mapa al reestructurar tiene un lugar fijo en la propuesta. En la práctica, la skill decía "si eliges reestructurar, presentaré el mapa" y la persona decidía sin ver cómo quedarían las carpetas.
+- La plantilla de la propuesta (sección 2 de `interview.md`) tiene un apartado obligatorio en todo proyecto existente: "Si eliges reestructurar, así quedarían las carpetas principales", con 5 a 12 líneas antes → después y lo que se conserva por exigencia del framework, aunque la recomendación sea integrar.
+
+Delta para proyectos ya instalados:
+- [accion: no] solo cambia la entrevista
+
 ## 1.16.5
 
 Resumen: los asistentes se detectan en vez de preguntarse.

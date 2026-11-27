@@ -32,6 +32,12 @@ Herramientas opcionales que encajan con el proyecto (no se instalan si no las pi
 
 Una decisión que todavía es una pregunta (por ejemplo, integrar o reestructurar) aparece en la tabla como **"Pendiente de tu decisión"**, con la opción recomendada entre paréntesis. Nunca se muestra en la tabla como si ya estuviera decidida.
 
+### Si eliges reestructurar, así quedarían las carpetas principales
+<Obligatorio en todo proyecto existente mientras la decisión 3 esté pendiente o sea reestructurar. Un adelanto corto (5 a 12 líneas) de las carpetas de primer y segundo nivel, antes → después, según el perfil que sale del análisis (sección 3 de `project-structure.md`), y una línea con lo que se conserva por exigencia del framework. Por ejemplo:>
+    src/utils/pagos.py          →  src/features/pagos/pagos.py
+    apps/web/app/               →  apps/web/app/   (se conserva: lo exige Next.js)
+<Una línea final: "Es un adelanto; el mapa completo, archivo por archivo, va en el plan y nada se mueve hasta que lo apruebes.">
+
 ### Lo que necesito que decidas
 <Solo si hay algo que bloquea (sección 4). Si no, se omite este apartado.>
 1. <Pregunta>. Decide <qué>. Recomiendo <opción>, porque <motivo>. Otras: <opciones> · decide por mí.
