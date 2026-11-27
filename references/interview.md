@@ -30,6 +30,8 @@ La entrevista no es un cuestionario. Su fin es completar las decisiones de la in
 
 Herramientas opcionales que encajan con el proyecto (no se instalan si no las pides): <lista corta, o "ninguna">.
 
+Una decisión que todavía es una pregunta (por ejemplo, integrar o reestructurar) aparece en la tabla como **"Pendiente de tu decisión"**, con la opción recomendada entre paréntesis. Nunca se muestra en la tabla como si ya estuviera decidida.
+
 ### Lo que necesito que decidas
 <Solo si hay algo que bloquea (sección 4). Si no, se omite este apartado.>
 1. <Pregunta>. Decide <qué>. Recomiendo <opción>, porque <motivo>. Otras: <opciones> · decide por mí.
@@ -50,7 +52,7 @@ El número de cada decisión se conserva porque otros documentos lo citan ("deci
 | 0 | Documentos del proyecto | Se leen los que haya (README, docs, instrucciones); se piden una sola vez, en la Fase 0 | Nunca como pregunta aparte; si no hay, se sigue |
 | 1 | Proyecto nuevo o existente | Análisis | Nunca |
 | 2 | Qué se busca con SFP | No se pregunta: se instala SFP completo y se respeta lo que la persona haya dicho | Nunca |
-| 3 | Cuánto puede cambiar el repositorio | **Lo decide siempre la persona** (regla inviolable 7). En un proyecto existente es una de las preguntas de la propuesta, con las tres opciones explicadas en palabras simples: **solo metodología** (no crea ni mueve carpetas), **integrar** (añade lo nuevo sin mover nada) o **reestructurar** (reorganiza todo el proyecto con las buenas prácticas de la skill: arquitectura de carpetas por funcionalidad y nombres estándar, según `project-structure.md`, con respaldo obligatorio y el mapa antes → después). La recomendación sale del análisis y se dice por qué, pero nunca se da por decidida. Nuevo: no aplica | Siempre, en un proyecto existente, salvo que la persona ya lo haya dicho |
+| 3 | Cuánto puede cambiar el repositorio | **Lo decide siempre la persona** (regla inviolable 7). En un proyecto existente es una de las preguntas de la propuesta, con las tres opciones explicadas en palabras simples: **solo metodología** (no crea ni mueve carpetas), **integrar** (añade lo nuevo sin mover nada) o **reestructurar** (reorganiza todo el proyecto con las buenas prácticas de la skill: arquitectura de carpetas por funcionalidad y nombres estándar, según `project-structure.md`). Elegir reestructurar basta: el mapa antes → después, el respaldo obligatorio y la aprobación del mapa antes de mover nada van incluidos, sin que la persona tenga que pedirlos. Para que decida con información, la propuesta ya muestra junto a esta pregunta un **adelanto del mapa** (las carpetas principales, antes → después, y qué exige mantener el framework); el plan de la Fase 4 trae después el mapa completo, archivo por archivo, y nada se mueve hasta que se aprueba. La recomendación sale del análisis y se dice por qué, pero nunca se da por decidida. Nuevo: no aplica | Siempre, en un proyecto existente, salvo que la persona ya lo haya dicho |
 | 4 | Qué no se puede tocar | Análisis: carpetas generadas, de terceros y la CI | Los documentos o la persona mencionan otra restricción |
 | 5 | Tipo de proyecto | Análisis (`interfaz_web`, `estructura-de-codigo`) | El análisis no lo deja claro y cambia la propuesta |
 | 5.1 | Arquitectura de carpetas y nombres | Si se eligió reestructurar: el perfil y la etapa que salen del análisis (sección 3 de `project-structure.md`), con la regla que los decidió, respetando lo que exija el framework (p. ej. `app/` en Next.js). Si no se reestructura: no se toca la estructura y no aparece en la propuesta | Nunca como pregunta aparte; va en la propuesta y en el mapa antes → después del plan |
@@ -58,7 +60,7 @@ El número de cada decisión se conserva porque otros documentos lo citan ("deci
 | 8 | Señales de alto riesgo | Las del análisis (producción, inicio de sesión, pagos, datos personales, API pública) más la lista por defecto | Nunca; van en la propuesta |
 | 9 | Una persona o un equipo | Una persona, salvo que el análisis muestre varias (CODEOWNERS, varios autores recientes) | Nunca; va en la propuesta |
 | 9.1 | Producto repartido en varios repositorios | Un solo repositorio | La persona lo menciona (sección 5 de `scenarios.md`) |
-| 10 | Asistentes que se usan | El que ejecuta la skill y los que ya tienen instrucciones en el repositorio | Nunca; va en la propuesta |
+| 10 | Asistentes que se usan | El que ejecuta la skill y los que ya tienen instrucciones en el repositorio (o en la carpeta personal de la persona, como `~/.claude/` o `~/.codex/`) | Siempre, salvo que la persona ya lo haya dicho: "¿Usarás otro asistente además de <el actual>?", con los detectados como sugerencia. Con más de uno, se propone una guía común (`AGENTS.md`) que los demás importen, verificando en su documentación vigente cómo la carga cada uno |
 | 11 | Modelos por nivel | Sin reglas por modelo: se usa el modelo disponible | La persona dice que usa varios modelos o que le importa el costo |
 | 12 | Configuración que ya existe | Se conserva siempre; lo nuevo se añade con marcadores | Nunca |
 | 13 | Carpeta de metodología global | Instrucciones completas dentro del proyecto | El análisis encuentra una carpeta global (se propone usarla) |
@@ -77,7 +79,7 @@ El número de cada decisión se conserva porque otros documentos lo citan ("deci
 | 24 | Lecciones aprendidas | Registro en el proyecto (`docs/lessons/`), que se crea al anotar la primera | Nunca |
 | 25 | Convenciones de Git | Las del repositorio; si no hay, las de `git-practices.md`. El asistente propone los commits y no los hace por su cuenta | Nunca; va en la propuesta. Si el análisis avisa `remoto_con_credenciales`, se dice sin mostrar el valor |
 | 26 | Ver el plan antes de aplicar | Siempre: el plan se aprueba antes de escribir nada | Nunca |
-| 26.1 | Respaldo | Con Git, una rama o etiqueta antes de escribir. Sin Git: si el análisis dice `copia_sin_historial: posible`, recomendar trabajar sobre un clon; si no, `git init` o una copia fuera del proyecto (Fase 5 de `SKILL.md`) | Nunca; va en la propuesta, y la contradicción en "Lo que entendí" |
+| 26.1 | Sobre qué copia y rama se trabaja, dónde se publica y el respaldo | Se detecta con el análisis (sección `git`): si la carpeta es un repositorio, su rama actual, si tiene cambios sin guardar y su remoto (dirección sin credenciales); si no tiene Git, si hay señales de que es una copia sin historial (`copia_sin_historial`); y, si `gh` está listo, con qué cuenta tiene sesión iniciada. Valor recomendado: con Git, una rama nueva para la instalación (el respaldo es la rama de partida); sin Git y con señales de repositorio, un clon; sin Git ni señales, `git init` | **Siempre.** Se dice lo detectado y se pregunta: (1) sobre qué trabajar: esta carpeta tal cual, una rama nueva o un clon; (2) si no hay remoto, dónde se publicará: "¿ya existe un repositorio? Pásame su enlace" o "¿lo creo?", y en ese caso en qué cuenta u organización y si será privado o público. Si se elige clonar, la skill da los pasos exactos sin que se los pidan. Crear el repositorio remoto (con `gh repo create`, si está disponible) y subir algo requieren aprobación explícita aparte, y nunca se ponen contraseñas ni tokens en la dirección del remoto (sección 6 de `git-practices.md`) |
 | 27 | Idioma de los archivos | El de la persona; en español, neutro y con tuteo | Nunca |
 | 28 | Dónde se guarda el registro de lo instalado | `.sfp/` dentro del proyecto | La persona pide no dejar rastros en el repositorio |
 | 29 | Reporte de problemas de SFP con `gh` | Desactivado; si `gh` está listo, se menciona en una línea que se puede activar | Nunca |
@@ -89,7 +91,7 @@ Una decisión se pregunta aparte solo si cumple las tres condiciones:
 2. Cambia lo que se va a instalar o el riesgo de hacerlo.
 3. No tiene un valor por defecto seguro.
 
-Siempre bloquea, en un proyecto existente: **integrar o reestructurar** (decisión 3), porque cambia todo lo que se va a hacer y es una decisión de la persona (regla inviolable 7). Se pregunta una vez, en la propuesta, salvo que ya lo haya dicho.
+Siempre se pregunta, además, qué asistentes se usarán (decisión 10), porque la skill solo ve el que la está ejecutando, y sobre qué copia y rama se trabaja (decisión 26.1), con lo que detectó el análisis. Y siempre bloquea, en un proyecto existente: **integrar o reestructurar** (decisión 3), porque cambia todo lo que se va a hacer y es una decisión de la persona (regla inviolable 7). Se pregunta una vez, en la propuesta, salvo que ya lo haya dicho.
 
 Otros ejemplos de lo que sí bloquea: una contradicción entre los documentos y el repositorio que cambia el plan, un orquestador nombrado (antes de planificar hay que resolver la sección B.1 de `orchestration.md`) o una reestructuración pedida sin decir cómo debe quedar.
 

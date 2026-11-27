@@ -15,6 +15,17 @@ Cada versión tiene un resumen en prosa (para quien mantiene el skill) y una sec
 - `aplica-si` usa campos del manifiesto (`templates.md` sección 1) o hechos comprobables; si no se puede evaluar, se pregunta al usuario.
 - Las pruebas de mantenimiento (`project-setup-dev`, fuera del paquete) comprueban que toda entrada siga este formato.
 
+## 1.16.4
+
+Resumen: lo que la persona no debería tener que pedir, visto al usar la 1.16.3 en un proyecto real.
+- Una decisión que todavía es una pregunta aparece en la tabla de la propuesta como "Pendiente de tu decisión", con la opción recomendada entre paréntesis, y no como si ya estuviera decidida.
+- Git, siempre detectado y preguntado (decisión 26.1): la propuesta dice en qué situación está el proyecto (repositorio y rama, remoto, copia sin historial o sin Git, cuenta de `gh`) y pregunta sobre qué trabajar (esta carpeta, una rama nueva o un clon) y, si no hay remoto, dónde se publicará: el enlace de un repositorio existente, o crearlo, en qué cuenta y si privado o público. Si se elige clonar, la skill da los pasos sin que se los pidan. Crear el repositorio y subir algo llevan aprobación aparte.
+- Reestructurar se muestra antes de decidir: junto a la pregunta va un adelanto del mapa antes → después (carpetas principales y lo que exige el framework), y el plan trae el mapa completo antes de mover nada. Elegir reestructurar basta: mapa, respaldo y aprobación van incluidos.
+- La propuesta siempre pregunta qué asistentes se usarán (decisión 10), porque la skill solo ve el que la ejecuta: antes preparaba instrucciones solo para ese y olvidaba los demás. Con más de uno, propone una guía común (`AGENTS.md`) que los demás importen.
+
+Delta para proyectos ya instalados:
+- [accion: no] solo cambia la entrevista
+
 ## 1.16.3
 
 Resumen: pedir empezar de nuevo vuelve a preguntar lo que es de la persona. En la práctica, al pedir "empieza el setup de 0", la skill reusó respuestas de antes y decidió sola integrar, sin preguntar.
