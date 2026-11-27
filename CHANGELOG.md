@@ -15,6 +15,15 @@ Cada versión tiene un resumen en prosa (para quien mantiene el skill) y una sec
 - `aplica-si` usa campos del manifiesto (`templates.md` sección 1) o hechos comprobables; si no se puede evaluar, se pregunta al usuario.
 - Las pruebas de mantenimiento (`project-setup-dev`, fuera del paquete) comprueban que toda entrada siga este formato.
 
+## 1.16.5
+
+Resumen: los asistentes se detectan en vez de preguntarse.
+- `discover.sh` tiene una sección nueva, `asistentes-instalados`: lista los asistentes del equipo (Claude Code, Codex, Cursor, Gemini CLI, GitHub Copilot, OpenCode, Windsurf) por su comando, su carpeta de configuración y si tienen la skill SFP instalada, sin leer el contenido de nada. Marca cada uno con señal `fuerte` (comando o skill instalada) o `debil` (solo una carpeta, posible resto de una instalación vieja).
+- La propuesta confirma en una línea los de señal fuerte ("Veo Claude Code y Codex instalados: preparo instrucciones para los dos") en vez de preguntar. Solo pregunta si no detecta ninguno además del actual.
+
+Delta para proyectos ya instalados:
+- [accion: no] solo cambia el análisis y la entrevista
+
 ## 1.16.4
 
 Resumen: lo que la persona no debería tener que pedir, visto al usar la 1.16.3 en un proyecto real.

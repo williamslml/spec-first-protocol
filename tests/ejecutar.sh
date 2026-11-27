@@ -79,6 +79,10 @@ mkdir -p "$TMP/copia-sin-git/.github/workflows"
 sh "$SCRIPTS/discover.sh" "$TMP/copia-sin-git" >"$TMP/discover-copia.txt" 2>&1
 contiene "discover.sh avisa una copia sin historial de un proyecto con CI de GitHub" "copia_sin_historial: posible" "$TMP/discover-copia.txt"
 no_contiene "discover.sh no avisa copia sin historial en una carpeta vacía" "copia_sin_historial" "$TMP/discover.txt"
+mkdir -p "$TMP/casa-asistentes/.gemini"
+HOME="$TMP/casa-asistentes" sh "$SCRIPTS/discover.sh" "$TMP/vacio" >"$TMP/discover-asistentes.txt" 2>&1
+if command -v gemini >/dev/null 2>&1; then omitida "asistente solo con carpeta" "gemini está instalado en este equipo"
+else contiene "discover.sh marca como señal débil un asistente que solo tiene su carpeta" "Gemini CLI [debil]: carpeta ~/.gemini" "$TMP/discover-asistentes.txt"; fi
 mkdir -p "$TMP/con-tests/src" "$TMP/con-tests/tests" "$TMP/con-tests/api"
 : >"$TMP/con-tests/src/email.test.js"; : >"$TMP/con-tests/tests/registro.test.js"; : >"$TMP/con-tests/api/openapi.yaml"
 sh "$SCRIPTS/discover.sh" "$TMP/con-tests" >"$TMP/discover-tests.txt" 2>&1

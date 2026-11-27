@@ -355,6 +355,29 @@ for c in "$GLOBAL_HINT" "${SFP_METHODOLOGY_DIR:-}" "$HOME/sfp" "$HOME/.sfp" "$HO
 done
 [ "$FOUND" -eq 0 ] && echo "carpeta: no encontrada en ubicaciones estándar (preguntar al usuario)"
 
+section "asistentes-instalados (en este equipo; solo existencia de comandos y carpetas, nunca su contenido)"
+# Para no preguntar qué asistentes usa la persona: se detectan y se confirman en una línea.
+H=${HOME:-}
+asistente() { # asistente <nombre> <comando> <carpeta de configuración> [carpeta de skills]
+  _c=""; _d=""; _s=""
+  have "$2" && _c="comando $2"
+  [ -n "$H" ] && [ -d "$H/$3" ] && _d="carpeta ~/$3"
+  [ -n "${4:-}" ] && [ -n "$H" ] && [ -f "$H/$4/spec-first-protocol/SKILL.md" ] && _s="skill SFP instalada en ~/$4"
+  # señal fuerte: el comando existe o la skill SFP está instalada para él; débil: solo su carpeta de configuración
+  _f=debil; [ -n "$_c$_s" ] && _f=fuerte
+  [ -n "$_c$_d" ] && echo "  $1 [$_f]: $(printf '%s' "$_c${_c:+${_d:+, }}$_d${_s:+, }$_s")"
+}
+NA=$(
+  asistente "Claude Code" claude .claude .claude/skills
+  asistente "Codex" codex .codex .agents/skills
+  asistente "Cursor" cursor .cursor .cursor/skills
+  asistente "Gemini CLI" gemini .gemini .gemini/skills
+  asistente "GitHub Copilot" copilot .copilot .copilot/skills
+  asistente "OpenCode" opencode .config/opencode .config/opencode/skills
+  asistente "Windsurf" windsurf .codeium/windsurf .codeium/windsurf/skills
+)
+if [ -n "$NA" ]; then echo "detectados:"; printf '%s\n' "$NA"; else echo "detectados: ninguno (preguntar al usuario)"; fi
+
 section "riesgos-secretos (SOLO rutas, nunca contenido)"
 echo "archivos_sensibles_por_nombre:"
 find . \( $PRUNE \) -prune -o -type f \( -name '.env' -o -name '.env.*' -o -name '*.pem' -o -name '*.key' -o -name '*.p12' -o -name '*.pfx' -o -name 'id_rsa*' -o -name 'id_ed25519*' -o -name 'credentials*' -o -name 'secrets*' -o -name '*.keystore' -o -name '.npmrc' -o -name '.pypirc' -o -name 'service-account*.json' \) -print 2>/dev/null | sed 's#^\./##' | grep -v -e '\.example$' -e '\.sample$' -e '\.template$' | sort | head -20 | sed 's/^/  /'

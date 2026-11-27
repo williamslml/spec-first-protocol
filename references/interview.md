@@ -60,7 +60,7 @@ El número de cada decisión se conserva porque otros documentos lo citan ("deci
 | 8 | Señales de alto riesgo | Las del análisis (producción, inicio de sesión, pagos, datos personales, API pública) más la lista por defecto | Nunca; van en la propuesta |
 | 9 | Una persona o un equipo | Una persona, salvo que el análisis muestre varias (CODEOWNERS, varios autores recientes) | Nunca; va en la propuesta |
 | 9.1 | Producto repartido en varios repositorios | Un solo repositorio | La persona lo menciona (sección 5 de `scenarios.md`) |
-| 10 | Asistentes que se usan | El que ejecuta la skill y los que ya tienen instrucciones en el repositorio (o en la carpeta personal de la persona, como `~/.claude/` o `~/.codex/`) | Siempre, salvo que la persona ya lo haya dicho: "¿Usarás otro asistente además de <el actual>?", con los detectados como sugerencia. Con más de uno, se propone una guía común (`AGENTS.md`) que los demás importen, verificando en su documentación vigente cómo la carga cada uno |
+| 10 | Asistentes que se usan | **Se detectan**, no se preguntan: la sección `asistentes-instalados` del análisis lista los que hay en el equipo (por su comando, su carpeta de configuración y si tienen la skill SFP instalada), más el que ejecuta la skill y los que ya tienen instrucciones en el repositorio. Se proponen los de señal `fuerte`; los de señal `debil` (solo una carpeta, posible resto de una instalación vieja) se mencionan en una línea y no se incluyen. Con más de uno, se propone una guía común (`AGENTS.md`) que los demás importen, verificando en su documentación vigente cómo la carga cada uno | Solo si el análisis no detecta ninguno además del actual, o la persona dice otra cosa. Si no, se confirma en la propuesta: "Veo Claude Code y Codex instalados: preparo instrucciones para los dos" |
 | 11 | Modelos por nivel | Sin reglas por modelo: se usa el modelo disponible | La persona dice que usa varios modelos o que le importa el costo |
 | 12 | Configuración que ya existe | Se conserva siempre; lo nuevo se añade con marcadores | Nunca |
 | 13 | Carpeta de metodología global | Instrucciones completas dentro del proyecto | El análisis encuentra una carpeta global (se propone usarla) |
@@ -91,7 +91,7 @@ Una decisión se pregunta aparte solo si cumple las tres condiciones:
 2. Cambia lo que se va a instalar o el riesgo de hacerlo.
 3. No tiene un valor por defecto seguro.
 
-Siempre se pregunta, además, qué asistentes se usarán (decisión 10), porque la skill solo ve el que la está ejecutando, y sobre qué copia y rama se trabaja (decisión 26.1), con lo que detectó el análisis. Y siempre bloquea, en un proyecto existente: **integrar o reestructurar** (decisión 3), porque cambia todo lo que se va a hacer y es una decisión de la persona (regla inviolable 7). Se pregunta una vez, en la propuesta, salvo que ya lo haya dicho.
+Siempre se pregunta, además, sobre qué copia y rama se trabaja (decisión 26.1), con lo que detectó el análisis. Los asistentes (decisión 10) no se preguntan: se detectan y se confirman en la propuesta. Y siempre bloquea, en un proyecto existente: **integrar o reestructurar** (decisión 3), porque cambia todo lo que se va a hacer y es una decisión de la persona (regla inviolable 7). Se pregunta una vez, en la propuesta, salvo que ya lo haya dicho.
 
 Otros ejemplos de lo que sí bloquea: una contradicción entre los documentos y el repositorio que cambia el plan, un orquestador nombrado (antes de planificar hay que resolver la sección B.1 de `orchestration.md`) o una reestructuración pedida sin decir cómo debe quedar.
 
