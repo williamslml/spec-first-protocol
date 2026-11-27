@@ -12,7 +12,9 @@ La entrevista no es un cuestionario. Su fin es completar las decisiones de la in
    - No se vuelve a preguntar, ni con otras palabras.
    - Mientras haya preguntas sin responder, no se vuelven a mostrar ni se suman otras: se espera, o se sigue con lo que no depende de ellas.
    - Si un hallazgo posterior cambia una decisión ya aprobada, se dice en una línea qué cambió y por qué, y se pide confirmar solo esa decisión.
-6. **Lenguaje claro** (regla inviolable 11): cada decisión y cada pregunta dice en una línea qué decide para la persona. Sin jerga sin explicar. Cada pregunta trae una opción **recomendada**, con su motivo en pocas palabras, y la opción "decide por mí".
+6. **Lenguaje claro** (regla inviolable 11): cada decisión y cada pregunta dice en una línea qué decide para la persona. Sin jerga sin explicar. Cada pregunta trae una opción **recomendada**, con su motivo en pocas palabras, y la opción "decide por mí". No usar términos internos de la skill en lo que ve la persona: "setup", "plan exacto", "espacios de trabajo", "workspace", "etapa", "perfil", "tier", "gates", "capa" o "intrusión", salvo explicados en la misma frase.
+7. **La instalación no cambia el producto.** Se instalan instrucciones, documentos de trabajo y, si se aprueban, herramientas del catálogo. Nunca se agregan en la propuesta dependencias o librerías del proyecto, cambios de su código ni pasos nuevos de su CI: si hacen falta (por ejemplo, para generar la documentación de la API), se anotan como **primer cambio sugerido**, que se hará después con su propia especificación.
+8. **Contradicciones primero.** Si el análisis o los documentos se contradicen (por ejemplo, `copia_sin_historial: posible` en el análisis: hay CI de GitHub pero la carpeta no tiene Git), se dice en "Lo que entendí" y se recomienda cómo resolverlo antes de planificar (aquí: trabajar sobre un clon con Git, para que el respaldo sea una rama).
 
 ## 2. Formato de la propuesta
 
@@ -35,6 +37,8 @@ Herramientas opcionales que encajan con el proyecto (no se instalan si no las pi
 ¿Lo apruebas así o cambias algo? Basta con decir qué cambiar.
 ```
 
+**La pregunta de aprobación se entiende sola.** La herramienta de preguntas suele tapar el texto de arriba, así que la pregunta repite en una o dos líneas lo principal que se aprueba, dice que todavía no se escribe nada y qué viene después. Por ejemplo: "Propongo: añadir instrucciones comunes para Codex y Claude Code sin mover nada, controles estrictos en cambios de riesgo y especificaciones en `specs/`. ¿Lo apruebas? Después te muestro la lista de archivos que crearía o cambiaría, y tampoco se escribe nada hasta que la apruebes." Opciones: "Sí, muéstrame la lista de archivos" (recomendada) y "Quiero cambiar algo".
+
 La propuesta no escribe nada: las Fases 0 a 4 siguen siendo de solo lectura. Aprobada, se pasa a la Fase 3 y al plan de cambios de la Fase 4, sin volver a preguntar lo decidido.
 
 ## 3. Decisiones, valor por defecto y cuándo se pregunta
@@ -46,10 +50,10 @@ El número de cada decisión se conserva porque otros documentos lo citan ("deci
 | 0 | Documentos del proyecto | Se leen los que haya (README, docs, instrucciones); se piden una sola vez, en la Fase 0 | Nunca como pregunta aparte; si no hay, se sigue |
 | 1 | Proyecto nuevo o existente | Análisis | Nunca |
 | 2 | Qué se busca con SFP | No se pregunta: se instala SFP completo y se respeta lo que la persona haya dicho | Nunca |
-| 3 | Cuánto puede cambiar el repositorio | Existente: **integrar** (añade sin mover nada). Nuevo: no aplica | La persona pidió reorganizar o no tocar carpetas, o sus documentos lo contradicen |
+| 3 | Cuánto puede cambiar el repositorio | Existente: **integrar** (añade sin mover nada). Nuevo: no aplica. Nunca se propone reestructurar si no se va a mover ni renombrar nada: reestructurar es solo para mover, y solo si la persona lo pide | La persona pidió reorganizar o no tocar carpetas, o sus documentos lo contradicen |
 | 4 | Qué no se puede tocar | Análisis: carpetas generadas, de terceros y la CI | Los documentos o la persona mencionan otra restricción |
 | 5 | Tipo de proyecto | Análisis (`interfaz_web`, `estructura-de-codigo`) | El análisis no lo deja claro y cambia la propuesta |
-| 5.1 | Perfil de estructura de carpetas | Sin perfil: no se toca la estructura | Se eligió reestructurar, o la persona lo pide (sección 3 de `project-structure.md`) |
+| 5.1 | Perfil de estructura de carpetas | Sin perfil: no se toca la estructura, y no aparece en la propuesta | Se eligió reestructurar, o la persona lo pide (sección 3 de `project-structure.md`) |
 | 6, 7 | Tecnologías, madurez, pruebas y CI | Análisis | Nunca |
 | 8 | Señales de alto riesgo | Las del análisis (producción, inicio de sesión, pagos, datos personales, API pública) más la lista por defecto | Nunca; van en la propuesta |
 | 9 | Una persona o un equipo | Una persona, salvo que el análisis muestre varias (CODEOWNERS, varios autores recientes) | Nunca; va en la propuesta |
@@ -64,7 +68,7 @@ El número de cada decisión se conserva porque otros documentos lo citan ("deci
 | 19 | Herramientas complementarias | Ninguna; las que encajan se listan como opcionales en la propuesta | La persona elige alguna (entonces, su fila de la sección 6.1 de `architecture.md` y el instalador con el gestor de paquetes del proyecto) |
 | 20 | Rigor de los controles de calidad | Estándar, con los comandos que el proyecto ya tiene; estricto en los cambios que tocan una señal de alto riesgo | Nunca; va en la propuesta |
 | 20.1 | Dónde viven las pruebas | La carpeta que detecte el análisis; si no hay, la convención del framework (sección 5 de `development-practices.md`) | Hay pruebas repartidas de varias formas y ninguna predomina |
-| 20.2 | Documentación de la API | Solo si el proyecto expone una: lo que ya exista; si no hay nada, generarla desde el código si el framework lo permite (sección 7 de `development-practices.md`) | Nunca; va en la propuesta |
+| 20.2 | Documentación de la API | Solo si el proyecto expone una: lo que ya exista. Si no hay nada, se anota la convención (generarla desde el código o un archivo junto a los endpoints, sección 7 de `development-practices.md`), y crearla queda como primer cambio sugerido: la instalación no agrega dependencias ni toca el código | Nunca; va en la propuesta |
 | 20.3 | README | Añadir con marcadores lo que falte, sin reescribir lo que hay (sección 9 de `development-practices.md`) | Nunca; va en la propuesta |
 | 21 | Qué cambios llevan especificación | El criterio de SFP (varios archivos, cambia el comportamiento o un contrato, riesgo medio o alto), y un cambio que toca una señal de alto riesgo también la lleva | Nunca; va en la propuesta |
 | 22 | Acciones que requieren tu aprobación | La lista por defecto: producción, operaciones destructivas, secretos, pagos, infraestructura crítica, borrados masivos, cambios globales o de metodología | Nunca; va en la propuesta |
@@ -73,6 +77,7 @@ El número de cada decisión se conserva porque otros documentos lo citan ("deci
 | 24 | Lecciones aprendidas | Registro en el proyecto (`docs/lessons/`), que se crea al anotar la primera | Nunca |
 | 25 | Convenciones de Git | Las del repositorio; si no hay, las de `git-practices.md`. El asistente propone los commits y no los hace por su cuenta | Nunca; va en la propuesta. Si el análisis avisa `remoto_con_credenciales`, se dice sin mostrar el valor |
 | 26 | Ver el plan antes de aplicar | Siempre: el plan se aprueba antes de escribir nada | Nunca |
+| 26.1 | Respaldo | Con Git, una rama o etiqueta antes de escribir. Sin Git: si el análisis dice `copia_sin_historial: posible`, recomendar trabajar sobre un clon; si no, `git init` o una copia fuera del proyecto (Fase 5 de `SKILL.md`) | Nunca; va en la propuesta, y la contradicción en "Lo que entendí" |
 | 27 | Idioma de los archivos | El de la persona; en español, neutro y con tuteo | Nunca |
 | 28 | Dónde se guarda el registro de lo instalado | `.sfp/` dentro del proyecto | La persona pide no dejar rastros en el repositorio |
 | 29 | Reporte de problemas de SFP con `gh` | Desactivado; si `gh` está listo, se menciona en una línea que se puede activar | Nunca |

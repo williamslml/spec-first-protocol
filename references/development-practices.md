@@ -95,7 +95,7 @@ Solo aplica si el proyecto expone una API compatible con OpenAPI (por ejemplo, R
 1. **El documento de OpenAPI es la fuente única del contrato de la API.** Se usa la versión del estándar que el proyecto ya tenga o, si empieza de cero, la más reciente que admitan sus herramientas (3.1 o posterior). Si el framework lo genera desde el código (anotaciones, tipos, decoradores), se usa esa vía. Si no, el archivo se mantiene junto al código de los endpoints que describe.
 2. **Se actualiza en la misma tarea** que crea o modifica un endpoint, no en una tarea aparte ni al final.
 3. **SFP no elige la herramienta que lo muestra** (Swagger UI, Redocly, Scalar u otra): eso lo decide el proyecto. SFP solo exige un documento válido y al día.
-4. **Primero se respeta lo que exista**: un documento o una herramienta ya elegida. Solo si no hay nada se pregunta (pregunta 20.2 de `interview.md`). El análisis inicial lista los archivos `openapi.*` y `swagger.*` que encuentre.
+4. **Primero se respeta lo que exista**: un documento o una herramienta ya elegida. Si no hay nada, la instalación solo anota la convención (decisión 20.2 de `interview.md`); crear el documento, con las dependencias que haga falta, es un cambio aparte con su especificación. El análisis inicial lista los archivos `openapi.*` y `swagger.*` que encuentre.
 5. La revisión independiente comprueba que el documento quedó al día con el cambio, no solo que el endpoint funcione. Si el proyecto tiene un validador del documento, se añade a los controles de calidad (campo `contract` de `gates.yml`, sección 14 de `templates.md`).
 
 ## 8. Revisión independiente, también con una sola sesión

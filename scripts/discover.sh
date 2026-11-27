@@ -115,7 +115,14 @@ if have git && git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   exists_any .husky .pre-commit-config.yaml lefthook.yml .lefthook.yml
 else
   echo "repo: no"
-  echo "advertencia: sin git no hay respaldo ni diff; proponer git init o copia manual"
+  # Señales de que el proyecto sí vive en un repositorio y esta carpeta es una copia sin historial (p. ej. un ZIP)
+  SG=""
+  for p in .github/workflows .gitlab-ci.yml .gitignore .gitattributes .github/CODEOWNERS; do [ -e "$p" ] && SG="$SG $p"; done
+  if [ -n "$SG" ]; then
+    echo "copia_sin_historial: posible (hay${SG}, pero no .git): probablemente el proyecto vive en un repositorio y esta carpeta es una copia; preguntar y recomendar trabajar sobre un clon, para que el respaldo sea una rama"
+  else
+    echo "advertencia: sin git no hay respaldo ni diff; proponer git init o copia manual"
+  fi
 fi
 
 section "tamano-y-estructura"

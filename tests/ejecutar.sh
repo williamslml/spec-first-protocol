@@ -75,6 +75,10 @@ codigo "discover.sh termina bien" 0 sh "$SCRIPTS/discover.sh" "$TMP/vacio"
 sh "$SCRIPTS/discover.sh" "$TMP/vacio" >"$TMP/discover.txt" 2>&1
 contiene "discover.sh informa el proyecto analizado" "# Discovery" "$TMP/discover.txt"
 codigo "verify.sh sin manifiesto ni git devuelve 3 (incompleto), no 0" 3 sh "$SCRIPTS/verify.sh" "$TMP/vacio"
+mkdir -p "$TMP/copia-sin-git/.github/workflows"
+sh "$SCRIPTS/discover.sh" "$TMP/copia-sin-git" >"$TMP/discover-copia.txt" 2>&1
+contiene "discover.sh avisa una copia sin historial de un proyecto con CI de GitHub" "copia_sin_historial: posible" "$TMP/discover-copia.txt"
+no_contiene "discover.sh no avisa copia sin historial en una carpeta vacía" "copia_sin_historial" "$TMP/discover.txt"
 mkdir -p "$TMP/con-tests/src" "$TMP/con-tests/tests" "$TMP/con-tests/api"
 : >"$TMP/con-tests/src/email.test.js"; : >"$TMP/con-tests/tests/registro.test.js"; : >"$TMP/con-tests/api/openapi.yaml"
 sh "$SCRIPTS/discover.sh" "$TMP/con-tests" >"$TMP/discover-tests.txt" 2>&1

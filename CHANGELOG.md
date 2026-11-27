@@ -15,6 +15,17 @@ Cada versión tiene un resumen en prosa (para quien mantiene el skill) y una sec
 - `aplica-si` usa campos del manifiesto (`templates.md` sección 1) o hechos comprobables; si no se puede evaluar, se pregunta al usuario.
 - Las pruebas de mantenimiento (`project-setup-dev`, fuera del paquete) comprueban que toda entrada siga este formato.
 
+## 1.16.1
+
+Resumen: correcciones de la entrevista tras usarla en un proyecto real (una web Next.js con API pública y un pipeline Python).
+- Nunca se propone reestructurar si no se va a mover nada: lo normal en un proyecto existente es integrar, y el perfil de estructura no aparece en la propuesta salvo que se reestructure.
+- La instalación no cambia el producto: no agrega dependencias, cambios de código ni pasos nuevos de CI del proyecto. Si hacen falta (por ejemplo, para generar la documentación de la API), se anotan como primer cambio sugerido, que se hace después con su propia especificación.
+- Contradicciones primero: `discover.sh` informa `copia_sin_historial: posible` cuando la carpeta no tiene Git pero sí CI o archivos de Git, y la propuesta recomienda trabajar sobre un clon para que el respaldo sea una rama. Nueva decisión 26.1 (respaldo) en la entrevista.
+- La pregunta de aprobación se entiende sola: resume lo que se aprueba, dice que todavía no se escribe nada y qué viene después. Se prohíben en lo que ve la persona términos internos como "setup", "plan exacto", "espacios de trabajo", "etapa" o "tier", salvo explicados.
+
+Delta para proyectos ya instalados:
+- [accion: no] solo cambia la entrevista y el análisis de instalaciones nuevas
+
 ## 1.16.0
 
 Resumen: la entrevista deja de ser un cuestionario. En la práctica preguntaba lo mismo varias veces, hacía demasiadas preguntas sin decir para qué servían, usaba jerga y preguntaba cosas que no aplicaban (por ejemplo, roles de agente sin orquestador).
